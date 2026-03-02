@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository;
 
 // Interface Segregation: Only exposes CRUD operations for Client
 @Repository
-public interface ClientRepository extends JpaRepository<Client, Long> {
+public interface ClientRepository extends JpaRepository<Client, Integer> {
     // You can add custom query methods if needed
 }
