@@ -30,12 +30,12 @@ public class ClientService {
     }
 
     // Retrieve client by ID
-    public Optional<Client> getClientById(Long id) {
+    public Optional<Client> getClientById(Integer id) {
         return clientRepository.findById(id);
     }
 
     // Delete client by ID
-    public void deleteClientById(Long id) {
+    public void deleteClientById(Integer id) {
         clientRepository.deleteById(id);
     }
 }

@@ -8,19 +8,22 @@ import jakarta.persistence.Table;
 
 // Single Responsibility: This class only represents the Client entity
 @Entity
-@Table(name = "clients")
+@Table(name = "client")
 public class Client {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     private String name;
     private String email;
+
+    @jakarta.persistence.Column(name = "contact_number")
     private String phone;
 
     // Default constructor
-    public Client() {}
+    public Client() {
+    }
 
     // Parameterized constructor
     public Client(String name, String email, String phone) {
@@ -30,11 +33,11 @@ public class Client {
     }
 
     // Getters and Setters (Encapsulation)
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
