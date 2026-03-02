@@ -61,7 +61,7 @@ CREATE TABLE finance(
                         id SERIAL PRIMARY KEY ,
                         project_id INTEGER REFERENCES project(id),
                         freelancer_id INTEGER REFERENCES freelancer(user_id),
-                        manager_id INTEGER REFERENCES manager(id),
+                        manager_id INTEGER REFERENCES users(id),
                         amount DECIMAL(12,2) NOT NULL ,
                         flag VARCHAR(20), -- to hold payment status: done, due
                         type VARCHAR(20), -- to hold income, expense
