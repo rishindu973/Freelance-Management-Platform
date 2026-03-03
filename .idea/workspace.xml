@@ -4,7 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77e3cec8-5553-4439-b779-de9397a4b224" name="Changes" comment="" />
+    <list default="true" id="77e3cec8-5553-4439-b779-de9397a4b224" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/controller/ClientController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/controller/ClientController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/model/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/model/Client.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/repository/ClientRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/repository/ClientRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/service/ClientService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/service/ClientService.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />

@@ -9,9 +9,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 
-// Open/Closed Principle: Controller handles HTTP requests, can be extended without modifying existing code
+// Open/Closed Principle- Controller handles HTTP requests, can be extended without modifying existing code
 @RestController
 @RequestMapping("/clients")
+@CrossOrigin(origins = "http://localhost:5173")
 public class ClientController {
 
     private final ClientService clientService;
@@ -37,7 +38,7 @@ public class ClientController {
 
     // Delete client by ID
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<String> deleteClient(@PathVariable Long id) {
+    public ResponseEntity<String> deleteClient(@PathVariable Integer id) {
         Optional<Client> clientOptional = clientService.getClientById(id);
         if (clientOptional.isPresent()) {
             clientService.deleteClientById(id);
