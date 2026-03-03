@@ -16,12 +16,11 @@ public class Manager {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @Column(name = "full_name",length = 255,nullable = false)
+    @Column(name = "full_name", length = 255, nullable = false)
     private String fullName;
-    @Column(name = "company_name",length = 255)
+    @Column(name = "company_name", length = 255)
     private String companyName;
-    @Column(name = "contact_number",length = 20)
+    @Column(name = "contact_number", length = 20)
     private String contactNumber;
-
 
 }

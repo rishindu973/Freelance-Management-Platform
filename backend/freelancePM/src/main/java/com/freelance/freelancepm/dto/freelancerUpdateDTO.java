@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class freelancerUpdateDTO {
-//    private String fullName;
+    // private String fullName;
     private String contactNumber;
     private String title;
     private String driveLink;
