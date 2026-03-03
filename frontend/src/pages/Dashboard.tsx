@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,15 +25,10 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import { DashboardService, DashboardResponse } from "@/api/dashboardService";
+import { format } from "date-fns";
 
-// Mock data
-const kpis = [
-  { label: "Monthly Income", value: "$18,400", change: "+12%", icon: DollarSign, positive: true },
-  { label: "Monthly Expenses", value: "$6,200", change: "+3%", icon: TrendingDown, positive: false },
-  { label: "Profit", value: "$12,200", change: "+18%", icon: TrendingUp, positive: true },
-  { label: "Outstanding", value: "$4,800", change: "3 invoices", icon: AlertCircle, positive: false },
-];
-
+// Mock revenue data since backend does not track invoices yet
 const revenueData = [
   { month: "Jul", income: 12000, expenses: 5200 },
   { month: "Aug", income: 14500, expenses: 5800 },
@@ -42,32 +38,59 @@ const revenueData = [
   { month: "Dec", income: 18400, expenses: 6200 },
 ];
 
-const projectStatus = [
-  { name: "Active", value: 8, color: "hsl(140, 25%, 48%)" },
-  { name: "Completed", value: 12, color: "hsl(36, 14%, 89%)" },
-  { name: "On Hold", value: 3, color: "hsl(38, 60%, 55%)" },
-  { name: "Overdue", value: 2, color: "hsl(0, 45%, 55%)" },
-];
-
-const upcomingDeadlines = [
-  { task: "Brand guidelines v2", project: "Acme Rebrand", due: "Mar 3", assignee: "Sarah K." },
-  { task: "Landing page mockup", project: "TechStart Website", due: "Mar 5", assignee: "Mike R." },
-  { task: "API documentation", project: "FinFlow App", due: "Mar 7", assignee: "Alex P." },
-];
-
-const recentJobs = [
-  { task: "Logo design final", project: "Bloom Studio", completed: "Feb 28", assignee: "Sarah K." },
-  { task: "Mobile wireframes", project: "HealthTrack", completed: "Feb 27", assignee: "Mike R." },
-  { task: "User research report", project: "EduLearn", completed: "Feb 26", assignee: "Priya M." },
-];
-
-const pendingWork = [
-  { task: "Social media assets", project: "Acme Rebrand", priority: "High", assignee: "Sarah K." },
-  { task: "Backend integration", project: "FinFlow App", priority: "Medium", assignee: "Alex P." },
-  { task: "Content writing", project: "TechStart Website", priority: "Low", assignee: "Jordan L." },
-];
-
 const Dashboard = () => {
+  const [data, setData] = useState<DashboardResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await DashboardService.getDashboard();
+        setData(res);
+      } catch (err) {
+        console.error("Failed to fetch dashboard data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) return <div className="flex h-64 items-center justify-center text-muted-foreground">Loading dashboard data...</div>;
+  if (!data) return <div className="flex h-64 items-center justify-center text-destructive">Failed to load dashboard</div>;
+
+  const kpis = [
+    { label: "Total Projects", value: data.totalProjects, change: "All time", icon: FolderPlus, positive: true },
+    { label: "Active", value: data.activeProjects, change: "In progress", icon: TrendingUp, positive: true },
+    { label: "Completed", value: data.completedProjects, change: "Finished", icon: CheckCircle2, positive: true },
+    { label: "Pending", value: data.pendingProjects, change: "Awaiting start", icon: Clock, positive: false },
+  ];
+
+  const projectStatus = [
+    { name: "Active", value: data.activeProjects, color: "hsl(140, 25%, 48%)" },
+    { name: "Completed", value: data.completedProjects, color: "hsl(36, 14%, 89%)" },
+    { name: "Pending", value: data.pendingProjects, color: "hsl(38, 60%, 55%)" },
+    { name: "Overdue", value: data.overdueProjects, color: "hsl(0, 45%, 55%)" },
+  ].filter(s => s.value > 0);
+
+  const upcomingDeadlines = data.upcomingDeadlines.map((p) => ({
+    task: p.name,
+    project: p.type || "Project",
+    due: p.deadline ? format(new Date(p.deadline), "MMM d") : "No date",
+  }));
+
+  const recentJobs = data.recentCompleted.map((p) => ({
+    task: p.name,
+    project: p.type || "Project",
+    completed: p.deadline ? format(new Date(p.deadline), "MMM d") : "No date",
+  }));
+
+  const pendingWorkList = data.pendingWork.map((p) => ({
+    task: p.name,
+    project: p.type || "Project",
+    priority: "Normal",
+  }));
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       {/* KPI Cards */}
@@ -79,7 +102,7 @@ const Dashboard = () => {
               <kpi.icon className="h-4 w-4 text-muted-foreground" />
             </div>
             <p className="mt-2 text-2xl font-semibold text-foreground">{kpi.value}</p>
-            <p className={`mt-1 text-xs ${kpi.positive ? "text-success" : "text-warning"}`}>
+            <p className={`mt-1 text-xs ${kpi.positive ? "text-success" : "text-muted-foreground"}`}>
               {kpi.change}
             </p>
           </div>
@@ -117,7 +140,7 @@ const Dashboard = () => {
         {/* Project status pie */}
         <div className="rounded-xl border bg-card p-5 shadow-sm">
           <h3 className="text-sm font-medium text-foreground">Project Status</h3>
-          <p className="mt-0.5 text-xs text-muted-foreground">25 total projects</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{data.totalProjects} total projects</p>
           <div className="mt-4 h-48">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -157,10 +180,11 @@ const Dashboard = () => {
             <h3 className="text-sm font-medium text-foreground">Upcoming Deadlines</h3>
           </div>
           <div className="mt-4 space-y-3">
-            {upcomingDeadlines.map((item) => (
-              <div key={item.task} className="rounded-lg border bg-cream p-3">
+            {upcomingDeadlines.length === 0 && <p className="text-xs text-muted-foreground">No upcoming deadlines.</p>}
+            {upcomingDeadlines.map((item, idx) => (
+              <div key={idx} className="rounded-lg border bg-cream p-3">
                 <p className="text-sm font-medium text-foreground">{item.task}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">{item.project} · {item.assignee}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{item.project}</p>
                 <p className="mt-1 text-xs text-warning">{item.due}</p>
               </div>
             ))}
@@ -174,10 +198,11 @@ const Dashboard = () => {
             <h3 className="text-sm font-medium text-foreground">Recently Finished</h3>
           </div>
           <div className="mt-4 space-y-3">
-            {recentJobs.map((item) => (
-              <div key={item.task} className="rounded-lg border bg-cream p-3">
+            {recentJobs.length === 0 && <p className="text-xs text-muted-foreground">No recently finished projects.</p>}
+            {recentJobs.map((item, idx) => (
+              <div key={idx} className="rounded-lg border bg-cream p-3">
                 <p className="text-sm font-medium text-foreground">{item.task}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">{item.project} · {item.assignee}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{item.project}</p>
                 <p className="mt-1 text-xs text-success">{item.completed}</p>
               </div>
             ))}
@@ -191,17 +216,12 @@ const Dashboard = () => {
             <h3 className="text-sm font-medium text-foreground">Pending This Month</h3>
           </div>
           <div className="mt-4 space-y-3">
-            {pendingWork.map((item) => (
-              <div key={item.task} className="rounded-lg border bg-cream p-3">
+            {pendingWorkList.length === 0 && <p className="text-xs text-muted-foreground">No pending projects.</p>}
+            {pendingWorkList.map((item, idx) => (
+              <div key={idx} className="rounded-lg border bg-cream p-3">
                 <p className="text-sm font-medium text-foreground">{item.task}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">{item.project} · {item.assignee}</p>
-                <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs ${
-                  item.priority === "High"
-                    ? "bg-destructive/10 text-destructive"
-                    : item.priority === "Medium"
-                    ? "bg-warning/10 text-warning"
-                    : "bg-muted text-muted-foreground"
-                }`}>
+                <p className="mt-0.5 text-xs text-muted-foreground">{item.project}</p>
+                <span className="bg-muted text-muted-foreground mt-1 inline-block rounded-full px-2 py-0.5 text-xs">
                   {item.priority}
                 </span>
               </div>

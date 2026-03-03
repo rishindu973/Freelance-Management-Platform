@@ -38,6 +38,25 @@ public interface ProjectRepository extends JpaRepository<Project, Integer>, JpaS
   long countActiveByManager(Integer managerId);
 
   @Query(value = """
+      SELECT COUNT(*) FROM project p
+      WHERE p.manager_id = :managerId
+        AND p.deadline IS NOT NULL
+        AND p.deadline < :today
+        AND LOWER(p.status) NOT IN ('completed')
+      """, nativeQuery = true)
+  long countOverdueByManager(Integer managerId, LocalDate today);
+
+  @Query(value = """
+      SELECT COUNT(*) FROM project p
+      WHERE p.manager_id = :managerId
+        AND p.deadline IS NOT NULL
+        AND p.deadline >= :today
+        AND p.deadline <= :until
+        AND LOWER(p.status) NOT IN ('completed')
+      """, nativeQuery = true)
+  long countDueSoonByManager(Integer managerId, LocalDate today, LocalDate until);
+
+  @Query(value = """
       SELECT COALESCE(LOWER(p.status), 'unknown') AS status, COUNT(*) AS total
       FROM project p
       WHERE p.manager_id = :managerId
