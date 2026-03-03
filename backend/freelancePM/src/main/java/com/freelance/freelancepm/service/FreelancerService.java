@@ -37,6 +37,7 @@ public class FreelancerService {
         newUser.setEmail(freelancerDTO.getEmail());
         newUser.setPassword(encodedPassword);
         newUser.setRole("Freelancer");
+        userRepository.save(newUser);
 
         Freelancer freelancer = new Freelancer();
         freelancer.setFullName(freelancerDTO.getFullName());
