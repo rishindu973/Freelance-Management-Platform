@@ -1,0 +1,36 @@
+export default function Projects() {
+  const [projects, setProjects] = useState<ProjectResponse[]>([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // SCRUM-29: Load the list
+  const fetchProjects = async () => {
+    const data = await ProjectService.getAllProjects();
+    setProjects(data);
+  };
+
+  useEffect(() => { fetchProjects(); }, []);
+
+  // SCRUM-28: Create logic
+  const handleCreateProject = async () => {
+    await ProjectService.createProject(newProject);
+    setIsDialogOpen(false);
+    fetchProjects(); // Refresh the list
+  };
+
+  return (
+    <div>
+       {/* Button to open Dialog for SCRUM-28 */}
+       <Button onClick={() => setIsDialogOpen(true)}>New Project</Button>
+
+       {/* Table for SCRUM-29 */}
+       <Table>
+         {projects.map(p => (
+           <TableRow key={p.id}>
+             <TableCell>{p.name}</TableCell>
+             <TableCell>{p.status}</TableCell>
+           </TableRow>
+         ))}
+       </Table>
+    </div>
+  );
+}

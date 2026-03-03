@@ -1,0 +1,24 @@
+const API_BASE_URL = "http://localhost:8081";
+
+export const ProjectService = {
+    // SCRUM-29
+    getAllProjects: async (): Promise<ProjectResponse[]> => {
+        const response = await fetch(`${API_BASE_URL}/api/projects`, {
+            headers: { "X-Manager-Id": "1" },
+        });
+        return response.json();
+    },
+
+    // SCRUM-28
+    createProject: async (project: ProjectCreateRequest): Promise<ProjectResponse> => {
+        const response = await fetch(`${API_BASE_URL}/api/projects`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-Manager-Id": "1",
+            },
+            body: JSON.stringify(project),
+        });
+        return response.json();
+    }
+};
