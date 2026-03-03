@@ -16,4 +16,5 @@ public class ProjectResponse {
     private LocalDate startDate;
     private LocalDate deadline;
     private String status;
+    private java.util.List<TeamMemberDTO> team;
 }
