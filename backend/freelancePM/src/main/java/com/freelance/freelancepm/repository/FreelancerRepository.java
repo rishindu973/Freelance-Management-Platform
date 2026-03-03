@@ -7,8 +7,9 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface FreelancerRepository extends JpaRepository<Freelancer,Integer> {
-        Boolean existsByFullName(String fullName);
+public interface FreelancerRepository extends JpaRepository<Freelancer, Integer> {
+    Boolean existsByFullName(String fullName);
+
     Optional<Freelancer> findByFullName(String fullName);
-//        String findByFullName(String fullName);
+    // String findByFullName(String fullName);
 }

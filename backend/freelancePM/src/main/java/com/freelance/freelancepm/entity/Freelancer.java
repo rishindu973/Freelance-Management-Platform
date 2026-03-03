@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 
 @Entity
 @Data
-@Table(name="freelancer")
+@Table(name = "freelancer")
 public class Freelancer {
     @Id
     @Column(name = "user_id")
@@ -20,16 +20,16 @@ public class Freelancer {
     @JoinColumn(name = "manager_id")
     private User manager;
 
-    @Column(name = "full_name",length = 255,nullable = false)
+    @Column(name = "full_name", length = 255, nullable = false)
     private String fullName;
-    @Column(name = "title",length = 255)
+    @Column(name = "title", length = 255)
     private String title;
-    @Column(name = "contact_number",length = 20)
+    @Column(name = "contact_number", length = 20)
     private String contactNumber;
-    @Column(name = "salary",precision = 10,scale = 2)
+    @Column(name = "salary", precision = 10, scale = 2)
     private BigDecimal salary;
-    @Column(name = "status",length = 50)
+    @Column(name = "status", length = 50)
     private String status;
-    @Column(name = "drive_link",columnDefinition = "TEXT")
+    @Column(name = "drive_link", columnDefinition = "TEXT")
     private String driveLink;
 }
