@@ -10,7 +10,7 @@ import java.time.LocalDate;
 public class ProjectCreateRequest {
 
     @NotNull
-    private Long clientId;
+    private Integer clientId;
 
     @NotBlank
     private String name;
