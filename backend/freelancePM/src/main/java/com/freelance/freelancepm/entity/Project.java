@@ -1,9 +1,12 @@
 package com.freelance.freelancepm.entity;
 
+import com.freelance.freelancepm.model.Client;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "project")
@@ -18,8 +21,10 @@ public class Project {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "client_id")
-    private Integer clientId;
+    // Link to client
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "client_id")
+    private Client client;
 
     @Column(name = "manager_id", nullable = false)
     private Integer managerId;
@@ -43,7 +48,11 @@ public class Project {
     private String status = "pending";
 
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "project_freelancer", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "freelancer_id"))
+    @JoinTable(
+            name = "project_freelancer",
+            joinColumns = @JoinColumn(name = "project_id"),
+            inverseJoinColumns = @JoinColumn(name = "freelancer_id")
+    )
     @Builder.Default
-    private java.util.List<Freelancer> team = new java.util.ArrayList<>();
+    private List<com.freelance.freelancepm.entity.Freelancer> team = new ArrayList<>();
 }

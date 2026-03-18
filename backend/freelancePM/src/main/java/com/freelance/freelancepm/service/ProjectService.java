@@ -22,6 +22,7 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final FreelancerRepository freelancerRepository;
 
+    // ----------------- Manager Methods (unchanged) -----------------
     public ProjectResponse create(Integer managerId, ProjectCreateRequest req) {
         Project p = Project.builder()
                 .managerId(managerId)
@@ -34,11 +35,11 @@ public class ProjectService {
                 .status(req.getStatus() != null ? req.getStatus() : "pending")
                 .build();
 
-        return toResponse(projectRepository.save(p));
+        return toResponse(p, p.getClientId());
     }
 
     public List<ProjectResponse> list(Integer managerId, String status, Integer clientId, String search, LocalDate from,
-            LocalDate to, Boolean isCritical) {
+                                      LocalDate to, Boolean isCritical) {
         Specification<Project> spec = Specification.where(ProjectSpecifications.managerIdEquals(managerId));
 
         if (status != null && !status.isBlank()) {
@@ -58,13 +59,14 @@ public class ProjectService {
         }
 
         return projectRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "id"))
-                .stream().map(this::toResponse).toList();
+                .stream().map(p -> toResponse(p, p.getClientId()))
+                .toList();
     }
 
     public ProjectResponse get(Integer managerId, Integer projectId) {
         Project p = projectRepository.findByIdAndManagerId(projectId, managerId)
                 .orElseThrow(() -> new NotFoundException("Project not found"));
-        return toResponse(p);
+        return toResponse(p, p.getClientId());
     }
 
     public ProjectResponse update(Integer managerId, Integer projectId, ProjectUpdateRequest req) {
@@ -86,7 +88,7 @@ public class ProjectService {
         if (req.getStatus() != null)
             p.setStatus(req.getStatus());
 
-        return toResponse(projectRepository.save(p));
+        return toResponse(p, p.getClientId());
     }
 
     @org.springframework.transaction.annotation.Transactional
@@ -97,7 +99,7 @@ public class ProjectService {
         List<com.freelance.freelancepm.entity.Freelancer> freelancers = freelancerRepository.findAllById(freelancerIds);
         p.setTeam(freelancers);
 
-        return toResponse(projectRepository.save(p));
+        return toResponse(p, p.getClientId());
     }
 
     public void delete(Integer managerId, Integer projectId) {
@@ -106,19 +108,37 @@ public class ProjectService {
         projectRepository.delete(p);
     }
 
-    private ProjectResponse toResponse(Project p) {
-        java.util.List<com.freelance.freelancepm.dto.TeamMemberDTO> teamDto = p.getTeam() != null ? p.getTeam().stream()
+    // ----------------- Client Methods -----------------
+    public List<ProjectResponse> getProjectsByClient(Integer clientId, String status, LocalDate from, LocalDate to) {
+        List<Project> projects;
+
+        if (status != null || from != null || to != null) {
+            projects = projectRepository.filterProjects(clientId, status, from, to);
+        } else {
+            projects = projectRepository.findByClientId(clientId);
+        }
+
+        return projects.stream()
+                .map(p -> toResponse(p, p.getClient() != null ? p.getClient().getId() : clientId))
+                .toList();
+    }
+
+    // ----------------- Mapper -----------------
+    private ProjectResponse toResponse(Project p, Integer clientId) {
+        List<com.freelance.freelancepm.dto.TeamMemberDTO> teamDto = p.getTeam() != null
+                ? p.getTeam().stream()
                 .map(f -> com.freelance.freelancepm.dto.TeamMemberDTO.builder()
                         .id(f.getId())
                         .name(f.getFullName())
                         .role(f.getTitle())
                         .initials(getInitials(f.getFullName()))
                         .build())
-                .toList() : new java.util.ArrayList<>();
+                .toList()
+                : new java.util.ArrayList<>();
 
         return ProjectResponse.builder()
                 .id(p.getId())
-                .clientId(p.getClientId())
+                .clientId(clientId)
                 .managerId(p.getManagerId())
                 .name(p.getName())
                 .description(p.getDescription())
