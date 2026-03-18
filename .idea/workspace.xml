@@ -4,7 +4,97 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77e3cec8-5553-4439-b779-de9397a4b224" name="Changes" comment="" />
+    <list default="true" id="77e3cec8-5553-4439-b779-de9397a4b224" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/Client Management API – Test &amp; Verification Document.pdf" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/backend/controller/ClientController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/backend/model/Client.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/backend/repository/ClientRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/backend/service/ClientService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/components.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/eslint.config.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/gitignore.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/index.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/package-lock.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/package.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/postcss.config.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/App.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/App.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/api/clientService.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/NavLink.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/clients/ClientFormDialog.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/layout/AppLayout.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/layout/AppSidebar.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/layout/TopBar.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/accordion.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/alert-dialog.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/alert.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/aspect-ratio.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/avatar.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/badge.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/breadcrumb.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/button.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/calendar.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/card.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/carousel.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/chart.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/checkbox.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/collapsible.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/command.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/context-menu.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/dialog.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/drawer.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/dropdown-menu.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/form.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/hover-card.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/input-otp.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/input.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/label.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/menubar.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/navigation-menu.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/pagination.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/popover.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/progress.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/radio-group.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/resizable.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/scroll-area.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/select.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/separator.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/sheet.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/sidebar.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/skeleton.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/slider.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/sonner.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/switch.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/table.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/tabs.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/textarea.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/toast.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/toaster.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/toggle-group.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/toggle.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/tooltip.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/components/ui/use-toast.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/hooks/use-mobile.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/hooks/use-toast.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/index.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/lib/utils.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/main.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/pages/Clients.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/pages/NotFound.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/test/example.test.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/test/setup.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/src/vite-env.d.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/tailwind.config.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/tsconfig.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/tsconfig.node.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/vite.config.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/client-management/client-management/frontend/vitest.config.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/entity/Project.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/entity/Project.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/repository/ProjectRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/repository/ProjectRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/service/ProjectService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/service/ProjectService.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -48,7 +138,7 @@
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "client-management",
+    "git-widget-placeholder": "dev",
     "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
     "to.speed.mode.migration.done": "true"
