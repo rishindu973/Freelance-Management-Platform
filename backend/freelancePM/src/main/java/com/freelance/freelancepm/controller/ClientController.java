@@ -38,7 +38,7 @@ public class ClientController {
 
     // Delete client by ID
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<String> deleteClient(@PathVariable Integer id) {
+    public ResponseEntity<String> deleteClient(@PathVariable("id") Integer id) {
         Optional<Client> clientOptional = clientService.getClientById(id);
         if (clientOptional.isPresent()) {
             clientService.deleteClientById(id);

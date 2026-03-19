@@ -1,16 +1,34 @@
-# IntelliJ IDEA
-.idea/
-*.iml
-
-# Spring Boot / Java
-backend/freelancePM/src/main/resources/application.properties
-/target/
-*.class
-*.jar
-*.war
-*.log
-*.tmp
-
-# OS files
+# --- System / OS ---
 .DS_Store
 Thumbs.db
+
+# --- Java / Maven (Backend) ---
+target/
+*.class
+*.log
+backend/freelancePM/*.log
+backend/freelancePM/target/
+
+# --- Node / React (Frontend) ---
+# VERY IMPORTANT: Never push node_modules to GitHub
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.*.local
+
+# --- Scripts & Local Utilities ---
+# These are local helper scripts that aren't part of the app code
+*.bat
+*.ps1
+backend/freelancePM/check_api.js
+backend/freelancePM/create_projects.js
+test_api.js
+test_api.ps1
+compile.bat
+run.bat
+
+# --- IDE / Editors ---
+.idea/
+.vscode/
+*.swp
+*.sublime-project

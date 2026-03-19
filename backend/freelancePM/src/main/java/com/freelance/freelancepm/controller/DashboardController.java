@@ -24,8 +24,8 @@ public class DashboardController {
     @GetMapping
     public ResponseEntity<DashboardResponse> getDashboard(
             @RequestHeader(value = "X-Manager-Id", required = false) String managerHeader,
-            @RequestParam(defaultValue = "7") int dueSoonDays,
-            @RequestParam(defaultValue = "5") int limit) {
+            @RequestParam(value = "dueSoonDays", defaultValue = "7") int dueSoonDays,
+            @RequestParam(value = "limit", defaultValue = "5") int limit) {
         Integer managerId = requireManagerId(managerHeader);
         return ResponseEntity.ok(dashboardService.getDashboard(managerId, dueSoonDays, limit));
     }
