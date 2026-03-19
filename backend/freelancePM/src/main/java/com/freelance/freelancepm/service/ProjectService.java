@@ -1,18 +1,21 @@
 package com.freelance.freelancepm.service;
 
 import com.freelance.freelancepm.entity.Project;
+import com.freelance.freelancepm.entity.ProjectStatus;
+import com.freelance.freelancepm.entity.ProgressStatus;
 import com.freelance.freelancepm.dto.ProjectCreateRequest;
 import com.freelance.freelancepm.dto.ProjectResponse;
 import com.freelance.freelancepm.dto.ProjectUpdateRequest;
 import com.freelance.freelancepm.exception.NotFoundException;
-import com.freelance.freelancepm.repository.ProjectRepository;
 import com.freelance.freelancepm.repository.FreelancerRepository;
+import com.freelance.freelancepm.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
@@ -22,84 +25,69 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final FreelancerRepository freelancerRepository;
 
-    // ----------------- Manager Methods (unchanged) -----------------
+    // ----------------- Manager Methods -----------------
+
     public ProjectResponse create(Integer managerId, ProjectCreateRequest req) {
         Project p = Project.builder()
                 .managerId(managerId)
-                .clientId(req.getClientId())
+                .client(req.getClient())
                 .name(req.getName())
                 .description(req.getDescription())
                 .type(req.getType())
                 .startDate(req.getStartDate())
                 .deadline(req.getDeadline())
-                .status(req.getStatus() != null ? req.getStatus() : "pending")
+                .status(req.getStatus() != null ? ProjectStatus.valueOf(req.getStatus()) : ProjectStatus.ACTIVE)
+                .progressStatus(req.getProgressStatus() != null ? ProgressStatus.valueOf(req.getProgressStatus()) : ProgressStatus.NOT_STARTED)
+                .progressPercentage(req.getProgressPercentage() != null ? req.getProgressPercentage() : 0)
+                .archived(false)
                 .build();
 
-        return toResponse(p, p.getClientId());
+        updateDeadlineFlags(p);
+
+        return toResponse(p);
     }
 
-    public List<ProjectResponse> list(Integer managerId, String status, Integer clientId, String search, LocalDate from,
-                                      LocalDate to, Boolean isCritical) {
-        Specification<Project> spec = Specification.where(ProjectSpecifications.managerIdEquals(managerId));
+    public List<ProjectResponse> list(Integer managerId, String status, Integer clientId, String search, LocalDate from, LocalDate to, Boolean isCritical) {
+        // Use Specification / filters here
+        List<Project> projects = projectRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
+        projects.forEach(this::updateDeadlineFlags);
 
-        if (status != null && !status.isBlank()) {
-            spec = spec.and(ProjectSpecifications.statusEquals(status));
-        }
-        if (clientId != null) {
-            spec = spec.and(ProjectSpecifications.clientIdEquals(clientId));
-        }
-        if (search != null && !search.isBlank()) {
-            spec = spec.and(ProjectSpecifications.nameOrDescriptionContains(search));
-        }
-        if (from != null && to != null) {
-            spec = spec.and(ProjectSpecifications.deadlineBetween(from, to));
-        }
-        if (Boolean.TRUE.equals(isCritical)) {
-            spec = spec.and(ProjectSpecifications.isCritical(LocalDate.now()));
-        }
-
-        return projectRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "id"))
-                .stream().map(p -> toResponse(p, p.getClientId()))
-                .toList();
+        return projects.stream().map(this::toResponse).toList();
     }
 
     public ProjectResponse get(Integer managerId, Integer projectId) {
         Project p = projectRepository.findByIdAndManagerId(projectId, managerId)
                 .orElseThrow(() -> new NotFoundException("Project not found"));
-        return toResponse(p, p.getClientId());
+        updateDeadlineFlags(p);
+        return toResponse(p);
     }
 
     public ProjectResponse update(Integer managerId, Integer projectId, ProjectUpdateRequest req) {
         Project p = projectRepository.findByIdAndManagerId(projectId, managerId)
                 .orElseThrow(() -> new NotFoundException("Project not found"));
 
-        if (req.getClientId() != null)
-            p.setClientId(req.getClientId());
-        if (req.getName() != null)
-            p.setName(req.getName());
-        if (req.getDescription() != null)
-            p.setDescription(req.getDescription());
-        if (req.getType() != null)
-            p.setType(req.getType());
-        if (req.getStartDate() != null)
-            p.setStartDate(req.getStartDate());
-        if (req.getDeadline() != null)
-            p.setDeadline(req.getDeadline());
-        if (req.getStatus() != null)
-            p.setStatus(req.getStatus());
+        if (req.getClient() != null) p.setClient(req.getClient());
+        if (req.getName() != null) p.setName(req.getName());
+        if (req.getDescription() != null) p.setDescription(req.getDescription());
+        if (req.getType() != null) p.setType(req.getType());
+        if (req.getStartDate() != null) p.setStartDate(req.getStartDate());
+        if (req.getDeadline() != null) p.setDeadline(req.getDeadline());
+        if (req.getStatus() != null) p.setStatus(ProjectStatus.valueOf(req.getStatus()));
+        if (req.getProgressStatus() != null) p.setProgressStatus(ProgressStatus.valueOf(req.getProgressStatus()));
+        if (req.getProgressPercentage() != null) p.setProgressPercentage(req.getProgressPercentage());
 
-        return toResponse(p, p.getClientId());
+        updateDeadlineFlags(p);
+
+        return toResponse(p);
     }
 
-    @org.springframework.transaction.annotation.Transactional
+    @Transactional
     public ProjectResponse updateTeam(Integer managerId, Integer projectId, List<Integer> freelancerIds) {
         Project p = projectRepository.findByIdAndManagerId(projectId, managerId)
                 .orElseThrow(() -> new NotFoundException("Project not found"));
 
-        List<com.freelance.freelancepm.entity.Freelancer> freelancers = freelancerRepository.findAllById(freelancerIds);
-        p.setTeam(freelancers);
-
-        return toResponse(p, p.getClientId());
+        p.setTeam(freelancerRepository.findAllById(freelancerIds));
+        return toResponse(p);
     }
 
     public void delete(Integer managerId, Integer projectId) {
@@ -108,55 +96,78 @@ public class ProjectService {
         projectRepository.delete(p);
     }
 
-    // ----------------- Client Methods -----------------
-    public List<ProjectResponse> getProjectsByClient(Integer clientId, String status, LocalDate from, LocalDate to) {
-        List<Project> projects;
+    // ----------------- Deadline & Progress Methods -----------------
 
-        if (status != null || from != null || to != null) {
-            projects = projectRepository.filterProjects(clientId, status, from, to);
-        } else {
-            projects = projectRepository.findByClientId(clientId);
+    private void updateDeadlineFlags(Project p) {
+        LocalDate today = LocalDate.now();
+        if (p.getDeadline() != null) {
+            p.setOverdue(p.getDeadline().isBefore(today) && p.getStatus() != ProjectStatus.COMPLETED);
+            p.setUrgent(!p.getOverdue() && ChronoUnit.DAYS.between(today, p.getDeadline()) <= 7);
         }
+    }
 
-        return projects.stream()
-                .map(p -> toResponse(p, p.getClient() != null ? p.getClient().getId() : clientId))
-                .toList();
+    public ProjectResponse updateProgress(Integer projectId, String progressStatus, Integer percentage) {
+        Project p = projectRepository.findById(projectId)
+                .orElseThrow(() -> new NotFoundException("Project not found"));
+
+        if (progressStatus != null) p.setProgressStatus(ProgressStatus.valueOf(progressStatus));
+        if (percentage != null) p.setProgressPercentage(percentage);
+
+        return toResponse(p);
+    }
+
+    public ProjectResponse completeProject(Integer projectId) {
+        Project p = projectRepository.findById(projectId)
+                .orElseThrow(() -> new NotFoundException("Project not found"));
+
+        if (p.getProgressPercentage() < 100) throw new IllegalStateException("Pending items exist");
+
+        p.setStatus(ProjectStatus.COMPLETED);
+        p.setArchived(true);
+
+        return toResponse(p);
+    }
+
+    public ProjectResponse reopenProject(Integer projectId) {
+        Project p = projectRepository.findById(projectId)
+                .orElseThrow(() -> new NotFoundException("Project not found"));
+
+        p.setStatus(ProjectStatus.ACTIVE);
+        p.setArchived(false);
+
+        return toResponse(p);
+    }
+
+    // ----------------- Client Methods -----------------
+
+    public List<ProjectResponse> getProjectsByClient(Integer clientId, String status, LocalDate from, LocalDate to) {
+        List<Project> projects = (status != null || from != null || to != null)
+                ? projectRepository.filterProjects(clientId, status, from, to)
+                : projectRepository.findByClientId(clientId);
+
+        projects.forEach(this::updateDeadlineFlags);
+        return projects.stream().map(this::toResponse).toList();
     }
 
     // ----------------- Mapper -----------------
-    private ProjectResponse toResponse(Project p, Integer clientId) {
-        List<com.freelance.freelancepm.dto.TeamMemberDTO> teamDto = p.getTeam() != null
-                ? p.getTeam().stream()
-                .map(f -> com.freelance.freelancepm.dto.TeamMemberDTO.builder()
-                        .id(f.getId())
-                        .name(f.getFullName())
-                        .role(f.getTitle())
-                        .initials(getInitials(f.getFullName()))
-                        .build())
-                .toList()
-                : new java.util.ArrayList<>();
 
+    private ProjectResponse toResponse(Project p) {
         return ProjectResponse.builder()
                 .id(p.getId())
-                .clientId(clientId)
+                .clientId(p.getClient() != null ? p.getClient().getId() : null)
                 .managerId(p.getManagerId())
                 .name(p.getName())
                 .description(p.getDescription())
                 .type(p.getType())
                 .startDate(p.getStartDate())
                 .deadline(p.getDeadline())
-                .status(p.getStatus())
-                .team(teamDto)
+                .status(p.getStatus().name())
+                .progressStatus(p.getProgressStatus() != null ? p.getProgressStatus().name() : null)
+                .progressPercentage(p.getProgressPercentage())
+                .urgent(p.getUrgent())
+                .overdue(p.getOverdue())
+                .archived(p.getArchived())
+                .team(p.getTeam())
                 .build();
-    }
-
-    private String getInitials(String name) {
-        if (name == null || name.isBlank())
-            return "??";
-        String[] parts = name.trim().split("\\s+");
-        if (parts.length == 1) {
-            return parts[0].substring(0, Math.min(2, parts[0].length())).toUpperCase();
-        }
-        return (parts[0].substring(0, 1) + parts[parts.length - 1].substring(0, 1)).toUpperCase();
     }
 }
