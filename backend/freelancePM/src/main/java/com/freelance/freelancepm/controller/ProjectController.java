@@ -39,12 +39,12 @@ public class ProjectController {
     @GetMapping
     public ResponseEntity<List<ProjectResponse>> list(
             @RequestHeader(value = "X-Manager-Id", required = false) String managerHeader,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) Integer clientId,
-            @RequestParam(required = false) String search,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
-            @RequestParam(required = false) Boolean isCritical) {
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "clientId", required = false) Integer clientId,
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "from", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(value = "to", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(value = "isCritical", required = false) Boolean isCritical) {
         Integer managerId = requireManagerId(managerHeader);
         return ResponseEntity.ok(projectService.list(managerId, status, clientId, search, from, to, isCritical));
     }
@@ -52,7 +52,7 @@ public class ProjectController {
     @GetMapping("/{id}")
     public ResponseEntity<ProjectResponse> get(
             @RequestHeader(value = "X-Manager-Id", required = false) String managerHeader,
-            @PathVariable Integer id) {
+            @PathVariable("id") Integer id) {
         Integer managerId = requireManagerId(managerHeader);
         return ResponseEntity.ok(projectService.get(managerId, id));
     }
@@ -60,7 +60,7 @@ public class ProjectController {
     @PutMapping("/{id}")
     public ResponseEntity<ProjectResponse> update(
             @RequestHeader(value = "X-Manager-Id", required = false) String managerHeader,
-            @PathVariable Integer id,
+            @PathVariable("id") Integer id,
             @RequestBody ProjectUpdateRequest req) {
         Integer managerId = requireManagerId(managerHeader);
         return ResponseEntity.ok(projectService.update(managerId, id, req));
@@ -69,7 +69,7 @@ public class ProjectController {
     @PutMapping("/{id}/team")
     public ResponseEntity<ProjectResponse> updateTeam(
             @RequestHeader(value = "X-Manager-Id", required = false) String managerHeader,
-            @PathVariable Integer id,
+            @PathVariable("id") Integer id,
             @RequestBody List<Integer> freelancerIds) {
         Integer managerId = requireManagerId(managerHeader);
         return ResponseEntity.ok(projectService.updateTeam(managerId, id, freelancerIds));
@@ -78,7 +78,7 @@ public class ProjectController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(
             @RequestHeader(value = "X-Manager-Id", required = false) String managerHeader,
-            @PathVariable Integer id) {
+            @PathVariable("id") Integer id) {
         Integer managerId = requireManagerId(managerHeader);
         projectService.delete(managerId, id);
         return ResponseEntity.noContent().build();

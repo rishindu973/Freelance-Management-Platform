@@ -33,20 +33,20 @@ public class FreelancerController {
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<Freelancer> getFreelancerById(@PathVariable Integer id) {
+  public ResponseEntity<Freelancer> getFreelancerById(@PathVariable("id") Integer id) {
     Freelancer freelancer = freelancerService.getFreelancerById(id);
     return new ResponseEntity<>(freelancer, HttpStatus.OK);
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<Freelancer> updateFreelancer(@PathVariable Integer id,
+  public ResponseEntity<Freelancer> updateFreelancer(@PathVariable("id") Integer id,
       @RequestBody FreelancerDTO freelancerDTO) {
     Freelancer freelancer = freelancerService.updateFreelancer(id, freelancerDTO);
     return new ResponseEntity<>(freelancer, HttpStatus.OK);
   }
 
   @DeleteMapping("/{id}")
-  public ResponseEntity<Freelancer> deleteFreelancerById(@PathVariable Integer id) {
+  public ResponseEntity<Freelancer> deleteFreelancerById(@PathVariable("id") Integer id) {
     freelancerService.deleteFreelancer(id);
     return new ResponseEntity<>(HttpStatus.OK);
   }

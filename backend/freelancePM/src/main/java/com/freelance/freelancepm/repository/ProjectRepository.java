@@ -14,28 +14,28 @@ public interface ProjectRepository extends JpaRepository<Project, Integer>, JpaS
   Optional<Project> findByIdAndManagerId(Integer id, Integer managerId);
 
   @Query(value = "SELECT COUNT(*) FROM project p WHERE p.manager_id = :managerId", nativeQuery = true)
-  long countAllByManager(Integer managerId);
+  long countAllByManager(@org.springframework.data.repository.query.Param("managerId") Integer managerId);
 
   @Query(value = """
       SELECT COUNT(*) FROM project p
       WHERE p.manager_id = :managerId
         AND LOWER(p.status) = 'completed'
       """, nativeQuery = true)
-  long countCompletedByManager(Integer managerId);
+  long countCompletedByManager(@org.springframework.data.repository.query.Param("managerId") Integer managerId);
 
   @Query(value = """
       SELECT COUNT(*) FROM project p
       WHERE p.manager_id = :managerId
         AND LOWER(p.status) = 'pending'
       """, nativeQuery = true)
-  long countPendingByManager(Integer managerId);
+  long countPendingByManager(@org.springframework.data.repository.query.Param("managerId") Integer managerId);
 
   @Query(value = """
       SELECT COUNT(*) FROM project p
       WHERE p.manager_id = :managerId
         AND LOWER(p.status) NOT IN ('pending','completed')
       """, nativeQuery = true)
-  long countActiveByManager(Integer managerId);
+  long countActiveByManager(@org.springframework.data.repository.query.Param("managerId") Integer managerId);
 
   @Query(value = """
       SELECT COUNT(*) FROM project p
@@ -44,7 +44,8 @@ public interface ProjectRepository extends JpaRepository<Project, Integer>, JpaS
         AND p.deadline < :today
         AND LOWER(p.status) NOT IN ('completed')
       """, nativeQuery = true)
-  long countOverdueByManager(Integer managerId, LocalDate today);
+  long countOverdueByManager(@org.springframework.data.repository.query.Param("managerId") Integer managerId,
+      @org.springframework.data.repository.query.Param("today") LocalDate today);
 
   @Query(value = """
       SELECT COUNT(*) FROM project p
@@ -54,7 +55,9 @@ public interface ProjectRepository extends JpaRepository<Project, Integer>, JpaS
         AND p.deadline <= :until
         AND LOWER(p.status) NOT IN ('completed')
       """, nativeQuery = true)
-  long countDueSoonByManager(Integer managerId, LocalDate today, LocalDate until);
+  long countDueSoonByManager(@org.springframework.data.repository.query.Param("managerId") Integer managerId,
+      @org.springframework.data.repository.query.Param("today") LocalDate today,
+      @org.springframework.data.repository.query.Param("until") LocalDate until);
 
   @Query(value = """
       SELECT COALESCE(LOWER(p.status), 'unknown') AS status, COUNT(*) AS total
@@ -63,7 +66,7 @@ public interface ProjectRepository extends JpaRepository<Project, Integer>, JpaS
       GROUP BY COALESCE(LOWER(p.status), 'unknown')
       ORDER BY total DESC
       """, nativeQuery = true)
-  List<Object[]> statusBreakdown(Integer managerId);
+  List<Object[]> statusBreakdown(@org.springframework.data.repository.query.Param("managerId") Integer managerId);
 
   @Query(value = """
       SELECT * FROM project p
@@ -74,7 +77,9 @@ public interface ProjectRepository extends JpaRepository<Project, Integer>, JpaS
       ORDER BY p.deadline ASC
       LIMIT :limit
       """, nativeQuery = true)
-  List<Project> upcomingDeadlines(Integer managerId, LocalDate today, int limit);
+  List<Project> upcomingDeadlines(@org.springframework.data.repository.query.Param("managerId") Integer managerId,
+      @org.springframework.data.repository.query.Param("today") LocalDate today,
+      @org.springframework.data.repository.query.Param("limit") int limit);
 
   @Query(value = """
       SELECT * FROM project p
@@ -83,7 +88,8 @@ public interface ProjectRepository extends JpaRepository<Project, Integer>, JpaS
       ORDER BY p.id DESC
       LIMIT :limit
       """, nativeQuery = true)
-  List<Project> recentCompleted(Integer managerId, int limit);
+  List<Project> recentCompleted(@org.springframework.data.repository.query.Param("managerId") Integer managerId,
+      @org.springframework.data.repository.query.Param("limit") int limit);
 
   @Query(value = """
       SELECT * FROM project p
@@ -92,5 +98,6 @@ public interface ProjectRepository extends JpaRepository<Project, Integer>, JpaS
       ORDER BY p.id DESC
       LIMIT :limit
       """, nativeQuery = true)
-  List<Project> pendingProjects(Integer managerId, int limit);
+  List<Project> pendingProjects(@org.springframework.data.repository.query.Param("managerId") Integer managerId,
+      @org.springframework.data.repository.query.Param("limit") int limit);
 }
