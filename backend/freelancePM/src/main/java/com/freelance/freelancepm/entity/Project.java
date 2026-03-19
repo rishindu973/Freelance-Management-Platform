@@ -1,6 +1,5 @@
 package com.freelance.freelancepm.entity;
 
-import com.freelance.freelancepm.model.Client;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -21,15 +20,18 @@ public class Project {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    // Link to client
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "client_id")
     private Client client;
+
+    @ManyToOne
+    @JoinColumn(name = "contract_type_id")
+    private ContractType contractType;
 
     @Column(name = "manager_id", nullable = false)
     private Integer managerId;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false)
     private String name;
 
     @Column(columnDefinition = "text")
@@ -38,14 +40,23 @@ public class Project {
     @Column(length = 100)
     private String type;
 
-    @Column(name = "start_date")
     private LocalDate startDate;
 
     private LocalDate deadline;
 
-    @Builder.Default
-    @Column(length = 50)
-    private String status = "pending";
+    @Enumerated(EnumType.STRING)
+    private ProjectStatus status = ProjectStatus.ACTIVE;
+
+    @Enumerated(EnumType.STRING)
+    private ProgressStatus progressStatus = ProgressStatus.NOT_STARTED;
+
+    private Integer progressPercentage = 0;
+
+    private Boolean urgent = false;
+
+    private Boolean overdue = false;
+
+    private Boolean archived = false;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
@@ -54,5 +65,5 @@ public class Project {
             inverseJoinColumns = @JoinColumn(name = "freelancer_id")
     )
     @Builder.Default
-    private List<com.freelance.freelancepm.entity.Freelancer> team = new ArrayList<>();
+    private List<Freelancer> team = new ArrayList<>();
 }
