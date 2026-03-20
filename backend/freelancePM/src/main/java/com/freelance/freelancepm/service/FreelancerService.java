@@ -8,6 +8,7 @@ import com.freelance.freelancepm.exception.ResourceNotFoundException;
 import com.freelance.freelancepm.repository.FreelancerRepository;
 import com.freelance.freelancepm.repository.ManagerRepository;
 import com.freelance.freelancepm.repository.UserRepository;
+import com.freelance.freelancepm.entity.Manager;
 import com.freelance.freelancepm.util.PasswordGenerator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -34,8 +35,12 @@ public class FreelancerService implements IFreelancerService {
         }
         String rawPassword = PasswordGenerator.generatePassword(12);
         String encodedPassword = passwordEncoder.encode(rawPassword);
-        User systemManager = userRepository.findById(managerId)
-                .orElseThrow(() -> new RuntimeException("Manager not found"));
+
+        // Fetch the Manager entity, then get the underlying User for the foreign key
+        Manager managerEntity = managerRepository.findById(managerId)
+                .orElseThrow(() -> new RuntimeException("Manager not found with id: " + managerId));
+        User managerUser = managerEntity.getUser();
+
         User newUser = new User();
         newUser.setEmail(freelancerDTO.getEmail());
         newUser.setPassword(encodedPassword);
@@ -49,7 +54,7 @@ public class FreelancerService implements IFreelancerService {
         freelancer.setTitle(freelancerDTO.getTitle());
         freelancer.setStatus(freelancerDTO.getStatus());
         freelancer.setDriveLink(freelancerDTO.getDriveLink());
-        freelancer.setManager(systemManager);
+        freelancer.setManager(managerUser);
         freelancer.setUser(newUser);
         freelancerRepository.save(freelancer);
 

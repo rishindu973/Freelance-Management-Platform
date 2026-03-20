@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/freelancer")
+@RequestMapping("/api/freelancers")
 @CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174" })
 public class FreelancerController {
   private final IFreelancerService freelancerService;
@@ -29,7 +29,7 @@ public class FreelancerController {
     if (principal == null) {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
-    Integer managerId = managerService.getManagerProfile(principal.getName()).getId();
+    Integer managerId = managerService.getManagerIdByEmail(principal.getName());
     Object createdFreelancer = freelancerService.createFreelancer(freelancerDTO, managerId);
     return new ResponseEntity<>(createdFreelancer, HttpStatus.CREATED);
   }

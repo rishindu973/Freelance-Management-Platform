@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
+import { useEffect, useState } from "react";
+import { ManagerService, ManagerProfile } from "@/api/managerService";
 import {
   Sidebar,
   SidebarContent,
@@ -47,9 +49,20 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
+  const [manager, setManager] = useState<ManagerProfile | null>(null);
+
+  useEffect(() => {
+    ManagerService.getManagerProfile()
+      .then(setManager)
+      .catch(() => { /* silently fail */ });
+  }, []);
 
   const isActive = (url: string) =>
     location.pathname === url || location.pathname.startsWith(url + "/");
+
+  const initials = manager?.fullName
+    ? manager.fullName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+    : "M";
 
   return (
     <Sidebar collapsible="icon" className="border-r bg-cream">
@@ -128,12 +141,16 @@ export function AppSidebar() {
       <SidebarFooter className="border-t p-3">
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
-            JD
+            {initials}
           </div>
           {!collapsed && (
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-foreground">Jane Doe</p>
-              <p className="truncate text-xs text-muted-foreground">Manager</p>
+              <p className="truncate text-sm font-medium text-foreground">
+                {manager?.fullName ?? "Loading..."}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                {manager?.companyName ?? ""}
+              </p>
             </div>
           )}
         </div>
