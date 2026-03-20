@@ -1,7 +1,8 @@
 package com.freelance.freelancepm.controller;
 
 import com.freelance.freelancepm.dto.DashboardResponse;
-import com.freelance.freelancepm.service.DashboardService;
+import com.freelance.freelancepm.service.IDashboardService;
+import com.freelance.freelancepm.service.IManagerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,22 +12,23 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class DashboardController {
 
-    private final DashboardService dashboardService;
+    private final IDashboardService dashboardService;
+    private final IManagerService managerService;
 
-    // TEMP: until JWT exists (same pattern as ProjectController)
-    private Integer requireManagerId(String headerValue) {
-        if (headerValue == null || headerValue.isBlank()) {
-            throw new IllegalArgumentException("Missing X-Manager-Id header");
+    // Use JWT Principal
+    private Integer requireManagerId(java.security.Principal principal) {
+        if (principal == null) {
+            throw new IllegalArgumentException("Not authenticated");
         }
-        return Integer.parseInt(headerValue.trim());
+        return managerService.getManagerProfile(principal.getName()).getId();
     }
 
     @GetMapping
     public ResponseEntity<DashboardResponse> getDashboard(
-            @RequestHeader(value = "X-Manager-Id", required = false) String managerHeader,
+            java.security.Principal principal,
             @RequestParam(value = "dueSoonDays", defaultValue = "7") int dueSoonDays,
             @RequestParam(value = "limit", defaultValue = "5") int limit) {
-        Integer managerId = requireManagerId(managerHeader);
+        Integer managerId = requireManagerId(principal);
         return ResponseEntity.ok(dashboardService.getDashboard(managerId, dueSoonDays, limit));
     }
 }

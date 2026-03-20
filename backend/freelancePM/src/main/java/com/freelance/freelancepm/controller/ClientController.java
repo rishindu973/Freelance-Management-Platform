@@ -1,7 +1,7 @@
 package com.freelance.freelancepm.controller;
 
 import com.freelance.freelancepm.model.Client;
-import com.freelance.freelancepm.service.ClientService;
+import com.freelance.freelancepm.service.IClientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,10 +15,10 @@ import java.util.Optional;
 @CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174" })
 public class ClientController {
 
-    private final ClientService clientService;
+    private final IClientService clientService;
 
     @Autowired
-    public ClientController(ClientService clientService) {
+    public ClientController(IClientService clientService) {
         this.clientService = clientService;
     }
 

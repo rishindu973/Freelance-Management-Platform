@@ -14,10 +14,11 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class DashboardService {
+public class DashboardService implements IDashboardService {
 
     private final ProjectRepository projectRepository;
 
+    @Override
     public DashboardResponse getDashboard(Integer managerId, int dueSoonDays, int listLimit) {
         LocalDate today = LocalDate.now();
         LocalDate until = today.plusDays(Math.max(dueSoonDays, 0));
