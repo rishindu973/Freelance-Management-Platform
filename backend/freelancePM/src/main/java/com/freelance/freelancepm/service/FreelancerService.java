@@ -19,20 +19,23 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class FreelancerService {
+public class FreelancerService implements IFreelancerService {
     private final FreelancerRepository freelancerRepository;
     private final UserRepository userRepository;
     private final ManagerRepository managerRepository;
     private final PasswordEncoder passwordEncoder;
+    private final IEmailService emailService;
 
     @Transactional
-    public Object createFreelancer(FreelancerDTO freelancerDTO) {
+    @Override
+    public TeamResponseDTO createFreelancer(FreelancerDTO freelancerDTO, Integer managerId) {
         if (freelancerRepository.existsByFullName(freelancerDTO.getFullName())) {
             throw new IllegalArgumentException("Freelancer already exists");
         }
         String rawPassword = PasswordGenerator.generatePassword(12);
         String encodedPassword = passwordEncoder.encode(rawPassword);
-        User systemManager = userRepository.findById(1).orElseThrow(() -> new RuntimeException("Manager not found"));
+        User systemManager = userRepository.findById(managerId)
+                .orElseThrow(() -> new RuntimeException("Manager not found"));
         User newUser = new User();
         newUser.setEmail(freelancerDTO.getEmail());
         newUser.setPassword(encodedPassword);
@@ -50,6 +53,9 @@ public class FreelancerService {
         freelancer.setUser(newUser);
         freelancerRepository.save(freelancer);
 
+        // SRP: Delegate credential delivery to EmailService
+        emailService.sendWelcomeEmail(newUser.getEmail(), rawPassword);
+
         TeamResponseDTO response = new TeamResponseDTO();
         response.setMemberName(freelancerDTO.getFullName());
         response.setEmail(newUser.getEmail());
@@ -57,15 +63,18 @@ public class FreelancerService {
         return response;
     }
 
+    @Override
     public List<Freelancer> getAllFreelancers() {
         return freelancerRepository.findAll();
     }
 
+    @Override
     public Freelancer getFreelancerById(Integer user_id) {
         return freelancerRepository.findById(user_id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + user_id));
     }
 
+    @Override
     public Freelancer updateFreelancer(Integer user_id, FreelancerDTO freelancerDTO) {
         Freelancer FreelancerToUpdate = getFreelancerById(user_id);
         Optional<Freelancer> freelancerWithNewUsername = freelancerRepository
@@ -88,6 +97,7 @@ public class FreelancerService {
         return freelancerRepository.save(FreelancerToUpdate);
     }
 
+    @Override
     public void deleteFreelancer(Integer user_id) {
         if (!userRepository.existsById(user_id)) {
             throw new IllegalArgumentException("Freelancer not found with id: " + user_id);

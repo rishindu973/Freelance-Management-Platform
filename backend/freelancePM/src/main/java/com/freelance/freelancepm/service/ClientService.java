@@ -10,7 +10,7 @@ import java.util.Optional;
 
 // Single Responsibility: Handles business logic for Clients
 @Service
-public class ClientService {
+public class ClientService implements IClientService {
 
     private final ClientRepository clientRepository;
 
@@ -20,21 +20,25 @@ public class ClientService {
     }
 
     // Create or update a client
+    @Override
     public Client saveClient(Client client) {
         return clientRepository.save(client);
     }
 
     // Retrieve all clients
+    @Override
     public List<Client> getAllClients() {
         return clientRepository.findAll();
     }
 
     // Retrieve client by ID
+    @Override
     public Optional<Client> getClientById(Integer id) {
         return clientRepository.findById(id);
     }
 
     // Delete client by ID
+    @Override
     public void deleteClientById(Integer id) {
         clientRepository.deleteById(id);
     }
