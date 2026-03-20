@@ -82,4 +82,11 @@ public class ManagerService implements IManagerService {
         }
         return dto;
     }
+
+    @Override
+    public Integer getManagerIdByEmail(String email) {
+        return managerRepository.findByUserEmail(email)
+                .map(Manager::getId)
+                .orElseThrow(() -> new ResourceNotFoundException("Manager not found for email: " + email));
+    }
 }

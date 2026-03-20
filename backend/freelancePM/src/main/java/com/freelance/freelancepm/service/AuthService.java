@@ -41,14 +41,11 @@ public class AuthService implements IAuthService {
 
     @Override
     public void requestPasswordReset(String email) {
-        User user = userRepository.findByEmail(email)
+        // Verify the user exists before generating a reset token
+        userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // In a real system, you'd save this token to DB with an expiration time.
-        // For simplicity, we are generating a stateless token that uses the email as
-        // subject.
         String resetToken = jwtUtil.generateToken(userDetailsService.loadUserByUsername(email));
-
         emailService.sendPasswordResetEmail(email, resetToken);
     }
 

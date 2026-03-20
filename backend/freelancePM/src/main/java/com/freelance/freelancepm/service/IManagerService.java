@@ -7,4 +7,6 @@ public interface IManagerService {
     Manager registerNewManager(ManagerDTO managerDTO);
 
     ManagerDTO getManagerProfile(String email);
+
+    Integer getManagerIdByEmail(String email);
 }

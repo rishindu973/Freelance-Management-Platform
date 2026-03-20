@@ -17,6 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/projects")
 @RequiredArgsConstructor
+@CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174" })
 public class ProjectController {
 
     private final IProjectService projectService;
@@ -27,7 +28,7 @@ public class ProjectController {
         if (principal == null) {
             throw new IllegalArgumentException("Not authenticated");
         }
-        return managerService.getManagerProfile(principal.getName()).getId();
+        return managerService.getManagerIdByEmail(principal.getName());
     }
 
     @PostMapping

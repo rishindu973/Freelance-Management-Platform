@@ -4,6 +4,8 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState, useRef } from "react";
 import { ManagerService, ManagerProfile } from "@/api/managerService";
+import { useAuth } from "@/context/AuthContext";
+import { LogOut } from "lucide-react";
 
 const routeTitles: Record<string, string> = {
   "/dashboard": "Dashboard",
@@ -21,6 +23,7 @@ const routeTitles: Record<string, string> = {
 
 export function TopBar() {
   const location = useLocation();
+  const { logout } = useAuth();
   const [manager, setManager] = useState<ManagerProfile | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -91,7 +94,7 @@ export function TopBar() {
                 <p className="font-semibold text-foreground text-sm">{manager?.fullName || "N/A"}</p>
                 <p className="text-xs text-muted-foreground">{manager?.email || "N/A"}</p>
               </div>
-              <div className="space-y-2 text-sm text-muted-foreground">
+              <div className="space-y-2 text-sm text-muted-foreground mb-4">
                 <div className="flex justify-between">
                   <span className="font-medium">Company:</span>
                   <span className="text-foreground">{manager?.companyName || "N/A"}</span>
@@ -101,6 +104,14 @@ export function TopBar() {
                   <span className="text-foreground">{manager?.contactNumber || "N/A"}</span>
                 </div>
               </div>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="w-full flex items-center justify-center gap-2"
+                onClick={logout}
+              >
+                <LogOut className="h-4 w-4" /> Sign out
+              </Button>
             </div>
           )}
         </div>

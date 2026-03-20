@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8081";
+import { apiClient } from "./axiosClient";
 
 export interface ManagerProfile {
     id: number;
@@ -10,10 +10,7 @@ export interface ManagerProfile {
 
 export const ManagerService = {
     getManagerProfile: async (): Promise<ManagerProfile> => {
-        const response = await fetch(`${API_BASE_URL}/api/manager/profile`);
-        if (!response.ok) {
-            throw new Error(`Error fetching manager profile: ${response.statusText}`);
-        }
-        return response.json();
+        const response = await apiClient.get('/api/manager/profile');
+        return response.data;
     },
 };
