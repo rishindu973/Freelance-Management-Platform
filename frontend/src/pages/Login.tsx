@@ -41,12 +41,20 @@ export default function Login() {
             const response = await apiClient.post("/api/auth/login", values);
 
             const token = response.data.token;
+            const role = response.data.role;
             if (token) {
                 // Store directly AND via context to guarantee it's in localStorage immediately
                 localStorage.setItem('token', token);
-                login(token);
+                localStorage.setItem('role', role || 'MANAGER');
+                login(token, role || 'MANAGER');
                 toast.success("Welcome back!");
-                navigate("/dashboard", { replace: true });
+
+                // Route based on role
+                if (role === 'FREELANCER') {
+                    navigate("/freelancer/dashboard", { replace: true });
+                } else {
+                    navigate("/dashboard", { replace: true });
+                }
             } else {
                 console.error('[Login] Backend response:', response.data);
                 throw new Error("Token missing from response");

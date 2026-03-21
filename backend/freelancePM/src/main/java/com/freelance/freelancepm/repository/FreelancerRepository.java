@@ -10,5 +10,6 @@ import java.util.Optional;
 public interface FreelancerRepository extends JpaRepository<Freelancer,Integer> {
         Boolean existsByFullName(String fullName);
     Optional<Freelancer> findByFullName(String fullName);
+    Optional<Freelancer> findByUserEmail(String email);
 //        String findByFullName(String fullName);
 }

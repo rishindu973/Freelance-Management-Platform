@@ -100,4 +100,12 @@ public interface ProjectRepository extends JpaRepository<Project, Integer>, JpaS
       """, nativeQuery = true)
   List<Project> pendingProjects(@org.springframework.data.repository.query.Param("managerId") Integer managerId,
       @org.springframework.data.repository.query.Param("limit") int limit);
+
+  @Query(value = """
+      SELECT p.* FROM project p
+      INNER JOIN project_freelancer pf ON p.id = pf.project_id
+      WHERE pf.freelancer_id = :freelancerId
+      ORDER BY p.deadline ASC
+      """, nativeQuery = true)
+  List<Project> findAllByFreelancerId(@org.springframework.data.repository.query.Param("freelancerId") Integer freelancerId);
 }
