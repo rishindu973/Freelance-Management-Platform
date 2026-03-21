@@ -28,6 +28,7 @@ public class ManagerService implements IManagerService {
         if (userRepository.existsByEmail(managerDTO.getEmail())) {
             throw new RuntimeException("Email is already registered");
         }
+        String token = UUID.randomUUID().toString();
 
         // Generate temporary password
         String tempPassword = UUID.randomUUID().toString().substring(0, 8);
@@ -37,6 +38,7 @@ public class ManagerService implements IManagerService {
         user.setEmail(managerDTO.getEmail());
         user.setPassword(passwordEncoder.encode(tempPassword));
         user.setRole("MANAGER");
+        user.setVerificationToken(token);
         user = userRepository.saveAndFlush(user);
 
         // Create Manager profile linked to User
