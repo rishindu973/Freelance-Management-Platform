@@ -17,11 +17,12 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class ProjectService {
+public class ProjectService implements IProjectService {
 
     private final ProjectRepository projectRepository;
     private final FreelancerRepository freelancerRepository;
 
+    @Override
     public ProjectResponse create(Integer managerId, ProjectCreateRequest req) {
         Project p = Project.builder()
                 .managerId(managerId)
@@ -37,6 +38,7 @@ public class ProjectService {
         return toResponse(projectRepository.save(p));
     }
 
+    @Override
     public List<ProjectResponse> list(Integer managerId, String status, Integer clientId, String search, LocalDate from,
             LocalDate to, Boolean isCritical) {
         Specification<Project> spec = Specification.where(ProjectSpecifications.managerIdEquals(managerId));
@@ -61,12 +63,14 @@ public class ProjectService {
                 .stream().map(this::toResponse).toList();
     }
 
+    @Override
     public ProjectResponse get(Integer managerId, Integer projectId) {
         Project p = projectRepository.findByIdAndManagerId(projectId, managerId)
                 .orElseThrow(() -> new NotFoundException("Project not found"));
         return toResponse(p);
     }
 
+    @Override
     public ProjectResponse update(Integer managerId, Integer projectId, ProjectUpdateRequest req) {
         Project p = projectRepository.findByIdAndManagerId(projectId, managerId)
                 .orElseThrow(() -> new NotFoundException("Project not found"));
@@ -90,6 +94,7 @@ public class ProjectService {
     }
 
     @org.springframework.transaction.annotation.Transactional
+    @Override
     public ProjectResponse updateTeam(Integer managerId, Integer projectId, List<Integer> freelancerIds) {
         Project p = projectRepository.findByIdAndManagerId(projectId, managerId)
                 .orElseThrow(() -> new NotFoundException("Project not found"));
@@ -100,6 +105,7 @@ public class ProjectService {
         return toResponse(projectRepository.save(p));
     }
 
+    @Override
     public void delete(Integer managerId, Integer projectId) {
         Project p = projectRepository.findByIdAndManagerId(projectId, managerId)
                 .orElseThrow(() -> new NotFoundException("Project not found"));

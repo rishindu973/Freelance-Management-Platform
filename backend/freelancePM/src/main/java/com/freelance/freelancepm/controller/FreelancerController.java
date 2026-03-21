@@ -2,7 +2,8 @@ package com.freelance.freelancepm.controller;
 
 import com.freelance.freelancepm.dto.FreelancerDTO;
 import com.freelance.freelancepm.entity.Freelancer;
-import com.freelance.freelancepm.service.FreelancerService;
+import com.freelance.freelancepm.service.IFreelancerService;
+import com.freelance.freelancepm.service.IManagerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,19 +12,25 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/freelancer")
+@RequestMapping("/api/freelancers")
 @CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174" })
 public class FreelancerController {
-  private final FreelancerService freelancerService;
+  private final IFreelancerService freelancerService;
+  private final IManagerService managerService;
 
   @Autowired
-  public FreelancerController(FreelancerService freelancerService) {
+  public FreelancerController(IFreelancerService freelancerService, IManagerService managerService) {
     this.freelancerService = freelancerService;
+    this.managerService = managerService;
   }
 
   @PostMapping("/create")
-  public ResponseEntity<Object> create(@RequestBody FreelancerDTO freelancerDTO) {
-    Object createdFreelancer = freelancerService.createFreelancer(freelancerDTO);
+  public ResponseEntity<Object> create(@RequestBody FreelancerDTO freelancerDTO, java.security.Principal principal) {
+    if (principal == null) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+    Integer managerId = managerService.getManagerIdByEmail(principal.getName());
+    Object createdFreelancer = freelancerService.createFreelancer(freelancerDTO, managerId);
     return new ResponseEntity<>(createdFreelancer, HttpStatus.CREATED);
   }
 

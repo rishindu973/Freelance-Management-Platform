@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8081";
+import { apiClient } from "./axiosClient";
 
 export interface Freelancer {
     id?: number;
@@ -15,55 +15,26 @@ export interface Freelancer {
 
 export const FreelancerService = {
     getAllFreelancers: async (): Promise<Freelancer[]> => {
-        const response = await fetch(`${API_BASE_URL}/api/freelancer`);
-        if (!response.ok) {
-            throw new Error(`Error fetching freelancers: ${response.statusText}`);
-        }
-        return response.json();
+        const response = await apiClient.get('/api/freelancers');
+        return response.data;
     },
 
     getFreelancerById: async (id: number): Promise<Freelancer> => {
-        const response = await fetch(`${API_BASE_URL}/api/freelancer/${id}`);
-        if (!response.ok) {
-            throw new Error(`Error fetching freelancer: ${response.statusText}`);
-        }
-        return response.json();
+        const response = await apiClient.get(`/api/freelancers/${id}`);
+        return response.data;
     },
 
     createFreelancer: async (freelancer: Freelancer): Promise<Freelancer> => {
-        const response = await fetch(`${API_BASE_URL}/api/freelancer/create`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(freelancer),
-        });
-        if (!response.ok) {
-            throw new Error(`Error creating freelancer: ${response.statusText}`);
-        }
-        return response.json();
+        const response = await apiClient.post('/api/freelancers/create', freelancer);
+        return response.data;
     },
 
     updateFreelancer: async (id: number, freelancer: Freelancer): Promise<Freelancer> => {
-        const response = await fetch(`${API_BASE_URL}/api/freelancer/${id}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(freelancer),
-        });
-        if (!response.ok) {
-            throw new Error(`Error updating freelancer: ${response.statusText}`);
-        }
-        return response.json();
+        const response = await apiClient.put(`/api/freelancers/${id}`, freelancer);
+        return response.data;
     },
 
     deleteFreelancer: async (id: number): Promise<void> => {
-        const response = await fetch(`${API_BASE_URL}/api/freelancer/${id}`, {
-            method: "DELETE",
-        });
-        if (!response.ok) {
-            throw new Error(`Error deleting freelancer: ${response.statusText}`);
-        }
+        await apiClient.delete(`/api/freelancers/${id}`);
     },
 };
