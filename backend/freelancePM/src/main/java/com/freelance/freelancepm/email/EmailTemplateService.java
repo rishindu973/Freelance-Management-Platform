@@ -12,4 +12,10 @@ public class EmailTemplateService {
     public String projectTemplate(String name, String project) {
         return "<h2>Hello " + name + "</h2><p>Project: " + project + "</p>";
     }
+
+    public String welcomeTemplate(String name, String password) {
+        return "<h2>Welcome to FreelanceFlow!</h2>" +
+                "<p>Your temporary password is: <strong>" + password + "</strong></p>" +
+                "<p>Please log in and change it immediately.</p>";
+    }
 }
