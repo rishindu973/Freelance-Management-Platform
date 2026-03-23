@@ -49,8 +49,16 @@ public class ManagerService implements IManagerService {
         manager.setContactNumber(managerDTO.getContactNumber());
         manager = managerRepository.save(manager);
 
+        // Log the credentials to terminal for easy access during development
+        System.out.println("\n==============================================");
+        System.out.println("MANAGER SUCCESSFULLY REGISTERED");
+        System.out.println("Email: " + user.getEmail());
+        System.out.println("Password: " + tempPassword);
+        System.out.println("==============================================\n");
+
         // Send credentials via email
         emailService.sendWelcomeEmail(user.getEmail(), tempPassword);
+        emailService.sendVerificationEmail(user.getEmail(), token);
 
         return manager;
     }

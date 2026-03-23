@@ -52,7 +52,7 @@ public class EmailService implements IEmailService {
 
     @Override
     public void sendVerificationEmail(String to, String token) {
-        String verificationLink = "http://localhost:8081/api/auth/verify?token=" + token;
+        String verificationLink = "http://localhost:5173/verify?token=" + token;
 
         String body = "<h2>Verify Your Account</h2>" +
                 "<p>Thank you for joining FreelanceFlow. Please click the button below to verify your email:</p>" +
