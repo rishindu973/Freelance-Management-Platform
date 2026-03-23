@@ -1,6 +1,7 @@
 package com.freelance.freelancepm.service;
 
-import com.freelance.freelancepm.domain.Project;
+import com.freelance.freelancepm.entity.Project;
+import com.freelance.freelancepm.entity.Activity;
 import com.freelance.freelancepm.dto.ProjectCreateRequest;
 import com.freelance.freelancepm.dto.ProjectResponse;
 import com.freelance.freelancepm.dto.ProjectUpdateRequest;
@@ -19,6 +20,7 @@ import java.util.List;
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
+    private final ActivityService activityService;
 
     public ProjectResponse create(Long managerId, ProjectCreateRequest req) {
         Project p = Project.builder()
@@ -32,7 +34,15 @@ public class ProjectService {
                 .status(req.getStatus() != null ? req.getStatus() : "pending")
                 .build();
 
-        return toResponse(projectRepository.save(p));
+        Project savedProject = projectRepository.save(p);
+        
+        activityService.logActivity(
+                managerId, 
+                Activity.ActivityType.PROJECT_CREATED, 
+                "Project '" + savedProject.getName() + "' was created."
+        );
+
+        return toResponse(savedProject);
     }
 
     public List<ProjectResponse> list(Long managerId, String status, Long clientId, String search, LocalDate from, LocalDate to, Boolean isCritical) {

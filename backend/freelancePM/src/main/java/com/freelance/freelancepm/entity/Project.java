@@ -1,4 +1,4 @@
-package com.freelance.freelancepm.domain;
+package com.freelance.freelancepm.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

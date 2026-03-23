@@ -1,6 +1,6 @@
 package com.freelance.freelancepm.service;
 
-import com.freelance.freelancepm.domain.Project;
+import com.freelance.freelancepm.entity.Project;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;

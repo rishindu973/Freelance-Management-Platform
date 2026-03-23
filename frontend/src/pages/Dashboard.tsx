@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { NearDeadlineProjects } from "@/components/dashboard/NearDeadlineProjects";
+import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import {
   DollarSign,
   TrendingDown,
@@ -56,11 +57,6 @@ const upcomingDeadlines = [
   { task: "API documentation", project: "FinFlow App", due: "Mar 7", assignee: "Alex P." },
 ];
 
-const recentJobs = [
-  { task: "Logo design final", project: "Bloom Studio", completed: "Feb 28", assignee: "Sarah K." },
-  { task: "Mobile wireframes", project: "HealthTrack", completed: "Feb 27", assignee: "Mike R." },
-  { task: "User research report", project: "EduLearn", completed: "Feb 26", assignee: "Priya M." },
-];
 
 const pendingWork = [
   { task: "Social media assets", project: "Acme Rebrand", priority: "High", assignee: "Sarah K." },
@@ -154,22 +150,8 @@ const Dashboard = () => {
         {/* Upcoming deadlines */}
         <NearDeadlineProjects />
 
-        {/* Recently finished */}
-        <div className="rounded-xl border bg-card p-5 shadow-sm">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-success" />
-            <h3 className="text-sm font-medium text-foreground">Recently Finished</h3>
-          </div>
-          <div className="mt-4 space-y-3">
-            {recentJobs.map((item) => (
-              <div key={item.task} className="rounded-lg border bg-cream p-3">
-                <p className="text-sm font-medium text-foreground">{item.task}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">{item.project} · {item.assignee}</p>
-                <p className="mt-1 text-xs text-success">{item.completed}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Recent Activity Feed */}
+        <ActivityFeed />
 
         {/* Pending work */}
         <div className="rounded-xl border bg-card p-5 shadow-sm">

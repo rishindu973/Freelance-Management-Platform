@@ -1,6 +1,6 @@
 package com.freelance.freelancepm.repository;
 
-import com.freelance.freelancepm.domain.Project;
+import com.freelance.freelancepm.entity.Project;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -74,4 +74,21 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpec
         LIMIT :limit
         """, nativeQuery = true)
     List<Project> pendingProjects(Long managerId, int limit);
+
+    @Query(value = """
+        SELECT COUNT(*) FROM project p
+        WHERE p.manager_id = :managerId
+          AND p.deadline < :today
+          AND LOWER(p.status) <> 'completed'
+        """, nativeQuery = true)
+    long countOverdueByManager(Long managerId, LocalDate today);
+
+    @Query(value = """
+        SELECT COUNT(*) FROM project p
+        WHERE p.manager_id = :managerId
+          AND p.deadline >= :today
+          AND p.deadline <= :until
+          AND LOWER(p.status) <> 'completed'
+        """, nativeQuery = true)
+    long countDueSoonByManager(Long managerId, LocalDate today, LocalDate until);
 }
