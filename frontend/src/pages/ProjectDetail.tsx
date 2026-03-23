@@ -311,22 +311,38 @@ export default function ProjectDetail() {
           {isEditingTeam ? (
             <div className="rounded-md border p-4 space-y-4 bg-card">
               <Label>Select Freelancers</Label>
-              <select
-                multiple
-                className="w-full rounded-md border border-input bg-background p-2 text-sm max-h-48 focus:outline-none focus:ring-2 focus:ring-ring"
-                value={selectedFreelancerIds}
-                onChange={(e) => {
-                  const values = Array.from(e.target.selectedOptions, (option) => option.value);
-                  setSelectedFreelancerIds(values);
-                }}
-              >
-                {freelancers.map((f) => (
-                  <option key={f.id} value={String(f.id)} className="p-1">
-                    {f.fullName} {f.title ? `(${f.title})` : ""}
-                  </option>
-                ))}
-              </select>
-              <p className="text-xs text-muted-foreground">Hold Ctrl/Cmd to select multiple members.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto p-2 border rounded-md">
+                {freelancers.length === 0 ? (
+                  <p className="text-sm text-muted-foreground p-2">No freelancers available.</p>
+                ) : (
+                  freelancers.map((f) => {
+                    const isSelected = selectedFreelancerIds.includes(String(f.id));
+                    return (
+                      <label
+                        key={f.id}
+                        className={`flex items-center space-x-3 p-3 border rounded-md cursor-pointer transition-colors ${isSelected ? 'bg-primary/5 border-primary/30' : 'bg-background hover:bg-accent'}`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedFreelancerIds([...selectedFreelancerIds, String(f.id)]);
+                            } else {
+                              setSelectedFreelancerIds(selectedFreelancerIds.filter(id => id !== String(f.id)));
+                            }
+                          }}
+                        />
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium leading-none">{f.fullName}</span>
+                          {f.title && <span className="text-xs text-muted-foreground mt-1">{f.title}</span>}
+                        </div>
+                      </label>
+                    );
+                  })
+                )}
+              </div>
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

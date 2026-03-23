@@ -35,6 +35,7 @@ public class FreelancerService implements IFreelancerService {
         }
         String rawPassword = PasswordGenerator.generatePassword(12);
         String encodedPassword = passwordEncoder.encode(rawPassword);
+        String token = java.util.UUID.randomUUID().toString();
 
         // Fetch the Manager entity, then get the underlying User for the foreign key
         Manager managerEntity = managerRepository.findById(managerId)
@@ -45,6 +46,7 @@ public class FreelancerService implements IFreelancerService {
         newUser.setEmail(freelancerDTO.getEmail());
         newUser.setPassword(encodedPassword);
         newUser.setRole("Freelancer");
+        newUser.setVerificationToken(token);
         userRepository.save(newUser);
 
         Freelancer freelancer = new Freelancer();
@@ -58,8 +60,16 @@ public class FreelancerService implements IFreelancerService {
         freelancer.setUser(newUser);
         freelancerRepository.save(freelancer);
 
+        // Log the credentials to terminal for easy access during development
+        System.out.println("\n==============================================");
+        System.out.println("FREELANCER SUCCESSFULLY CREATED");
+        System.out.println("Email: " + newUser.getEmail());
+        System.out.println("Password: " + rawPassword);
+        System.out.println("==============================================\n");
+
         // SRP: Delegate credential delivery to EmailService
         emailService.sendWelcomeEmail(newUser.getEmail(), rawPassword);
+        emailService.sendVerificationEmail(newUser.getEmail(), token);
 
         TeamResponseDTO response = new TeamResponseDTO();
         response.setMemberName(freelancerDTO.getFullName());
