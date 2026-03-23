@@ -40,7 +40,18 @@ public class EmailService implements IEmailService {
 
     @Override
     public void sendPasswordResetEmail(String to, String resetToken) {
-        String body = "<p>Use this token to reset your password: " + resetToken + "</p>";
+        String resetLink = "http://localhost:5173/reset-password?token=" + resetToken;
+
+        String body = "<h2>Password Reset Request</h2>" +
+                "<p>We received a request to reset your password. Click the button below to choose a new one:</p>" +
+                "<br>" +
+                "<a href=\"" + resetLink
+                + "\" style=\"background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;\">Reset Password</a>"
+                +
+                "<br><br>" +
+                "<p style=\"color: #666; font-size: 14px;\">If the button doesn't work, copy and paste this link into your browser:<br>"
+                + resetLink + "</p>" +
+                "<p style=\"color: #666; font-size: 14px;\">If you did not request a password reset, you can safely ignore this email. This link will expire in 1 hour.</p>";
 
         try {
             sendEmail(to, "Password Reset Request", body);

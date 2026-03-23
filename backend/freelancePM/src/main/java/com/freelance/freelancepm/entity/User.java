@@ -2,6 +2,7 @@ package com.freelance.freelancepm.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
@@ -24,5 +25,11 @@ public class User {
 
     @Column(name = "enabled", nullable = false)
     private boolean enabled = false;
+
+    @Column(name = "reset_password_token", length = 100)
+    private String resetPasswordToken;
+
+    @Column(name = "reset_password_expires")
+    private LocalDateTime resetPasswordExpires;
 
 }

@@ -13,6 +13,8 @@ import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import VerifyEmail from "./pages/VerifyEmail";
+import ResetPassword from "./pages/ResetPassword";
 import { AuthProvider } from "./context/AuthContext";
 import { ProtectedRoute } from "./components/layout/ProtectedRoute";
 
@@ -30,6 +32,8 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/verify" element={<VerifyEmail />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
             {/* App routes */}
             <Route element={<ProtectedRoute />}>

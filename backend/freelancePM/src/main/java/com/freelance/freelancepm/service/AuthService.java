@@ -41,25 +41,35 @@ public class AuthService implements IAuthService {
 
     @Override
     public void requestPasswordReset(String email) {
-        // Verify the user exists before generating a reset token
-        userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        // Find user by email. If not found, do nothing silently (prevents email
+        // enumeration).
+        userRepository.findByEmail(email).ifPresent(user -> {
+            String resetToken = java.util.UUID.randomUUID().toString();
+            user.setResetPasswordToken(resetToken);
+            user.setResetPasswordExpires(java.time.LocalDateTime.now().plusHours(1));
+            userRepository.save(user);
 
-        String resetToken = jwtUtil.generateToken(userDetailsService.loadUserByUsername(email));
-        emailService.sendPasswordResetEmail(email, resetToken);
+            emailService.sendPasswordResetEmail(email, resetToken);
+            System.out.println("Password reset token generated for: " + email);
+        });
     }
 
     @Override
     public void resetPassword(String token, String newPassword) {
-        String email = jwtUtil.extractEmail(token);
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByResetPasswordToken(token)
                 .orElseThrow(() -> new RuntimeException("Invalid token or user not found"));
 
-        if (!jwtUtil.isTokenValid(token, userDetailsService.loadUserByUsername(email))) {
-            throw new RuntimeException("Invalid or expired token");
+        if (user.getResetPasswordExpires() == null
+                || user.getResetPasswordExpires().isBefore(java.time.LocalDateTime.now())) {
+            throw new RuntimeException("Reset link expired");
         }
 
+        // Successfully verified. Hash new password.
         user.setPassword(passwordEncoder.encode(newPassword));
+
+        // Explicitly invalidate token so it can never be used again.
+        user.setResetPasswordToken(null);
+        user.setResetPasswordExpires(null);
         userRepository.save(user);
     }
 }
