@@ -16,6 +16,12 @@ import Register from "./pages/Register";
 import { AuthProvider } from "./context/AuthContext";
 import { ProtectedRoute } from "./components/layout/ProtectedRoute";
 
+// Freelancer portal
+import { FreelancerProtectedRoute } from "./components/layout/FreelancerProtectedRoute";
+import { FreelancerLayout } from "./components/layout/FreelancerLayout";
+import FreelancerDashboard from "./pages/freelancer/FreelancerDashboard";
+import FreelancerProjectDetail from "./pages/freelancer/FreelancerProjectDetail";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -31,7 +37,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
-            {/* App routes */}
+            {/* Manager app routes */}
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
@@ -39,6 +45,14 @@ const App = () => (
                 <Route path="/freelancers" element={<Freelancers />} />
                 <Route path="/projects" element={<Projects />} />
                 <Route path="/projects/:id" element={<ProjectDetail />} />
+              </Route>
+            </Route>
+
+            {/* Freelancer portal routes */}
+            <Route element={<FreelancerProtectedRoute />}>
+              <Route element={<FreelancerLayout />}>
+                <Route path="/freelancer/dashboard" element={<FreelancerDashboard />} />
+                <Route path="/freelancer/projects/:id" element={<FreelancerProjectDetail />} />
               </Route>
             </Route>
 
