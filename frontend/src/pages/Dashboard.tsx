@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { NearDeadlineProjects } from "@/components/dashboard/NearDeadlineProjects";
 import {
   DollarSign,
   TrendingDown,
@@ -151,21 +152,7 @@ const Dashboard = () => {
       {/* Three column sections */}
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Upcoming deadlines */}
-        <div className="rounded-xl border bg-card p-5 shadow-sm">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-warning" />
-            <h3 className="text-sm font-medium text-foreground">Upcoming Deadlines</h3>
-          </div>
-          <div className="mt-4 space-y-3">
-            {upcomingDeadlines.map((item) => (
-              <div key={item.task} className="rounded-lg border bg-cream p-3">
-                <p className="text-sm font-medium text-foreground">{item.task}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">{item.project} · {item.assignee}</p>
-                <p className="mt-1 text-xs text-warning">{item.due}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+        <NearDeadlineProjects />
 
         {/* Recently finished */}
         <div className="rounded-xl border bg-card p-5 shadow-sm">

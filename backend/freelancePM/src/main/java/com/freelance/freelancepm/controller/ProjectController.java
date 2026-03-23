@@ -44,10 +44,11 @@ public class ProjectController {
             @RequestParam(required = false) Long clientId,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) Boolean isCritical
     ) {
         Long managerId = requireManagerId(managerHeader);
-        return ResponseEntity.ok(projectService.list(managerId, status, clientId, search, from, to));
+        return ResponseEntity.ok(projectService.list(managerId, status, clientId, search, from, to, isCritical));
     }
 
     @GetMapping("/{id}")

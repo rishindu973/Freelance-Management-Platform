@@ -35,7 +35,7 @@ public class ProjectService {
         return toResponse(projectRepository.save(p));
     }
 
-    public List<ProjectResponse> list(Long managerId, String status, Long clientId, String search, LocalDate from, LocalDate to) {
+    public List<ProjectResponse> list(Long managerId, String status, Long clientId, String search, LocalDate from, LocalDate to, Boolean isCritical) {
         Specification<Project> spec = Specification.where(ProjectSpecifications.managerIdEquals(managerId));
 
         if (status != null && !status.isBlank()) {
@@ -49,6 +49,11 @@ public class ProjectService {
         }
         if (from != null && to != null) {
             spec = spec.and(ProjectSpecifications.deadlineBetween(from, to));
+        }
+        if (Boolean.TRUE.equals(isCritical)) {
+            LocalDate inSevenDays = LocalDate.now().plusDays(7);
+            spec = spec.and(ProjectSpecifications.deadlineBeforeOrEquals(inSevenDays));
+            spec = spec.and((root, query, cb) -> cb.notEqual(cb.lower(root.get("status")), "completed"));
         }
 
         return projectRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "id"))

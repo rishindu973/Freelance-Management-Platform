@@ -30,4 +30,8 @@ public class ProjectSpecifications {
     public static Specification<Project> deadlineBetween(LocalDate from, LocalDate to) {
         return (root, query, cb) -> cb.between(root.get("deadline"), from, to);
     }
+
+    public static Specification<Project> deadlineBeforeOrEquals(LocalDate date) {
+        return (root, query, cb) -> cb.lessThanOrEqualTo(root.get("deadline"), date);
+    }
 }
