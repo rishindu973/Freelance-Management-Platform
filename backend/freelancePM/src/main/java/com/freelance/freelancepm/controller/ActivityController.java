@@ -3,6 +3,7 @@ package com.freelance.freelancepm.controller;
 import com.freelance.freelancepm.dto.ActivityResponse;
 import com.freelance.freelancepm.entity.Activity;
 import com.freelance.freelancepm.service.ActivityService;
+import com.freelance.freelancepm.service.IManagerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -11,33 +12,36 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/activities")
 @RequiredArgsConstructor
+@CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174" })
 public class ActivityController {
 
     private final ActivityService activityService;
+    private final IManagerService managerService;
 
-    // TEMP: until JWT exists
-    private Long requireManagerId(String headerValue) {
-        if (headerValue == null || headerValue.isBlank()) {
-            throw new IllegalArgumentException("Missing X-Manager-Id header");
+    // Reject the vulnerable unauthenticated X-Manager-Id headers and rely uniformly
+    // on the core JWT resolution logic
+    private Integer requireManagerId(Principal principal) {
+        if (principal == null) {
+            throw new IllegalArgumentException("Not authenticated");
         }
-        return Long.parseLong(headerValue.trim());
+        return managerService.getManagerIdByEmail(principal.getName());
     }
 
     @GetMapping
     public ResponseEntity<Page<ActivityResponse>> list(
-            @RequestHeader(value = "X-Manager-Id", required = false) String managerHeader,
+            Principal principal,
             @RequestParam(required = false) Activity.ActivityType type,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
-    ) {
-        Long managerId = requireManagerId(managerHeader);
+            @RequestParam(defaultValue = "20") int size) {
+        Integer managerId = requireManagerId(principal);
         // Default sort by timestamp descending (newest first)
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "timestamp"));
         return ResponseEntity.ok(activityService.list(managerId, type, startDate, endDate, pageRequest));

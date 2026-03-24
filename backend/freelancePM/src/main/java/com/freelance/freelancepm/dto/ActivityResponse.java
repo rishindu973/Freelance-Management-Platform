@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Builder
 public class ActivityResponse {
     private Long id;
-    private Long managerId;
+    private Integer managerId;
     private Activity.ActivityType type;
     private String description;
     private LocalDateTime timestamp;

@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 public class ActivitySpecifications {
 
-    public static Specification<Activity> managerIdEquals(Long managerId) {
+    public static Specification<Activity> managerIdEquals(Integer managerId) {
         return (root, query, cb) -> cb.equal(root.get("managerId"), managerId);
     }
 
@@ -18,7 +18,7 @@ public class ActivitySpecifications {
     public static Specification<Activity> timestampBetween(LocalDateTime from, LocalDateTime to) {
         return (root, query, cb) -> cb.between(root.get("timestamp"), from, to);
     }
-    
+
     public static Specification<Activity> timestampGreaterThanEqual(LocalDateTime from) {
         return (root, query, cb) -> cb.greaterThanOrEqualTo(root.get("timestamp"), from);
     }

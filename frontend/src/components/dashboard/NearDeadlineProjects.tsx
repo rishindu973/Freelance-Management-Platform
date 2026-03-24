@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Clock } from "lucide-react";
-import { ProjectService, ProjectResponse } from "@/data/projectService";
+import { ProjectService, ProjectResponse } from "@/api/projectService";
 import {
   Select,
   SelectContent,
@@ -48,16 +48,16 @@ export function NearDeadlineProjects() {
 
   const getDaysRemaining = (deadline: string) => {
     const today = new Date();
-    today.setHours(0, 0, 0, 0); 
+    today.setHours(0, 0, 0, 0);
     const due = new Date(deadline);
     due.setHours(0, 0, 0, 0);
     return Math.floor((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   };
 
   const getUrgencyClasses = (days: number) => {
-    if (days <= 2) return "bg-destructive/10 text-destructive border-destructive/20";
-    if (days <= 5) return "bg-warning/10 text-warning border-warning/20";
-    return "bg-success/10 text-success border-success/20";
+    if (days <= 2) return "bg-red-100 text-red-600 border-red-200";
+    if (days <= 5) return "bg-orange-100 text-orange-600 border-orange-200";
+    return "bg-green-100 text-green-600 border-green-200";
   };
 
   const getUrgencyLabel = (days: number) => {
@@ -68,12 +68,12 @@ export function NearDeadlineProjects() {
   };
 
   return (
-    <div className="rounded-xl border bg-card p-5 shadow-sm">
-      <div className="flex items-center gap-2">
-        <Clock className="h-4 w-4 text-warning" />
+    <div className="rounded-xl border bg-card p-5 shadow-sm flex flex-col flex-1 h-full min-h-0">
+      <div className="flex items-center gap-2 mb-4">
+        <Clock className="h-4 w-4 text-orange-500" />
         <h3 className="text-sm font-medium text-foreground">Upcoming Deadlines</h3>
       </div>
-      <div className="mt-4 space-y-3">
+      <div className="space-y-3 overflow-y-auto pr-2">
         {loading ? (
           <p className="text-sm text-muted-foreground p-2">Loading...</p>
         ) : projects.length === 0 ? (

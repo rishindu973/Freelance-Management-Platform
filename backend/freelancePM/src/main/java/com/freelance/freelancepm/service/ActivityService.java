@@ -19,24 +19,24 @@ public class ActivityService {
     private final ActivityRepository activityRepository;
 
     @Transactional
-    public void logActivity(Long managerId, Activity.ActivityType type, String description) {
+    public void logActivity(Integer managerId, Activity.ActivityType type, String description) {
         Activity activity = Activity.builder()
                 .managerId(managerId)
                 .type(type)
                 .description(description)
                 .timestamp(LocalDateTime.now())
                 .build();
-        
+
         activityRepository.save(activity);
     }
 
     public Page<ActivityResponse> list(
-            Long managerId, 
-            Activity.ActivityType type, 
-            LocalDateTime from, 
-            LocalDateTime to, 
+            Integer managerId,
+            Activity.ActivityType type,
+            LocalDateTime from,
+            LocalDateTime to,
             Pageable pageable) {
-            
+
         Specification<Activity> spec = Specification.where(ActivitySpecifications.managerIdEquals(managerId));
 
         if (type != null) {

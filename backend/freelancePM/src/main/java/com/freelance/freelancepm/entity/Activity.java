@@ -7,16 +7,19 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "activity")
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Activity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name="manager_id", nullable = false)
-    private Long managerId;
+    @Column(name = "manager_id", nullable = false)
+    private Integer managerId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)

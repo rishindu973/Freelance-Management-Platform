@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ActivityService, ActivityResponse } from "@/data/activityService";
+import { ActivityService, ActivityResponse } from "@/api/activityService";
 import { Activity, UserPlus, FolderPlus, FileText, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -86,7 +86,7 @@ export function ActivityFeed() {
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-2 text-foreground">
-          <select 
+          <select
             className="h-8 max-w-[110px] sm:max-w-[140px] rounded-md border border-input bg-background px-2 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
@@ -98,15 +98,15 @@ export function ActivityFeed() {
           </select>
 
           <div className="flex items-center gap-1">
-            <input 
-              type="date" 
+            <input
+              type="date"
               className="h-8 w-[100px] sm:w-[120px] rounded-md border border-input bg-background px-1.5 sm:px-2 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
             />
             <span className="text-muted-foreground text-xs font-medium">-</span>
-            <input 
-              type="date" 
+            <input
+              type="date"
               className="h-8 w-[100px] sm:w-[120px] rounded-md border border-input bg-background px-1.5 sm:px-2 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
@@ -114,7 +114,7 @@ export function ActivityFeed() {
           </div>
         </div>
       </div>
-      
+
       <div className="space-y-3 overflow-y-auto pr-2">
         {loading ? (
           <div className="h-20 animate-pulse rounded-lg bg-cream flex items-center justify-center">
