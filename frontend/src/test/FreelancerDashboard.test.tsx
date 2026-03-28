@@ -2,19 +2,20 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
+import { vi, type Mock } from 'vitest';
 import FreelancerDashboard from '../pages/freelancer/FreelancerDashboard';
 import { FreelancerPortalService } from '@/api/freelancerPortalService';
 
 // Mock the API service
-jest.mock('@/api/freelancerPortalService', () => ({
+vi.mock('@/api/freelancerPortalService', () => ({
     FreelancerPortalService: {
-        getAssignments: jest.fn(),
+        getAssignments: vi.fn(),
     },
 }));
 
 describe('FreelancerDashboard', () => {
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     const renderWithRouter = (ui: React.ReactElement) => {
@@ -22,13 +23,13 @@ describe('FreelancerDashboard', () => {
     };
 
     it('shows loading state initially', () => {
-        (FreelancerPortalService.getAssignments as jest.Mock).mockReturnValue(new Promise(() => { }));
+        (FreelancerPortalService.getAssignments as Mock).mockReturnValue(new Promise(() => { }));
         renderWithRouter(<FreelancerDashboard />);
         expect(screen.getByText(/Loading assignments/i)).toBeInTheDocument();
     });
 
     it('renders empty state when no projects exist', async () => {
-        (FreelancerPortalService.getAssignments as jest.Mock).mockResolvedValue([]);
+        (FreelancerPortalService.getAssignments as Mock).mockResolvedValue([]);
         renderWithRouter(<FreelancerDashboard />);
 
         await waitFor(() => {
@@ -47,7 +48,7 @@ describe('FreelancerDashboard', () => {
             { id: 3, name: 'Project Gamma', status: 'completed', deadline: '2026-12-31', startDate: '2026-01-01' }
         ];
 
-        (FreelancerPortalService.getAssignments as jest.Mock).mockResolvedValue(mockProjects);
+        (FreelancerPortalService.getAssignments as Mock).mockResolvedValue(mockProjects);
         renderWithRouter(<FreelancerDashboard />);
 
         await waitFor(() => {
