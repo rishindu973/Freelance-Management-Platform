@@ -15,10 +15,10 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ClientController {
 
-    private final ClientService clientService;
+    private final IClientService clientService;
 
     @Autowired
-    public ClientController(ClientService clientService) {
+    public ClientController(IClientService clientService) {
         this.clientService = clientService;
     }
 
