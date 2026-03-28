@@ -1,22 +1,20 @@
 package com.freelance.freelancepm.service;
 
 import com.freelance.freelancepm.entity.Project;
-import com.freelance.freelancepm.entity.ProjectStatus;
-import com.freelance.freelancepm.entity.ProgressStatus;
 import com.freelance.freelancepm.dto.ProjectCreateRequest;
 import com.freelance.freelancepm.dto.ProjectResponse;
 import com.freelance.freelancepm.dto.ProjectUpdateRequest;
 import com.freelance.freelancepm.exception.NotFoundException;
+import com.freelance.freelancepm.repository.ProjectRepository;
 import com.freelance.freelancepm.repository.FreelancerRepository;
 import com.freelance.freelancepm.repository.ClientRepository;
 import com.freelance.freelancepm.model.Client;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
@@ -27,9 +25,6 @@ public class ProjectService implements IProjectService {
     private final FreelancerRepository freelancerRepository;
     private final ClientRepository clientRepository;
 
-    // ----------------- Manager Methods -----------------
-
-    @Override
     public ProjectResponse create(Integer managerId, ProjectCreateRequest req) {
         Client client = null;
         if (req.getClientId() != null) {
@@ -52,10 +47,9 @@ public class ProjectService implements IProjectService {
         return toResponse(projectRepository.save(p), req.getClientId());
     }
 
-    public List<ProjectResponse> list(Integer managerId, String status, Integer clientId, String search, LocalDate from, LocalDate to, Boolean isCritical) {
-        // Use Specification / filters here
-        List<Project> projects = projectRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
-        projects.forEach(this::updateDeadlineFlags);
+    public List<ProjectResponse> list(Integer managerId, String status, Integer clientId, String search, LocalDate from,
+            LocalDate to, Boolean isCritical) {
+        Specification<Project> spec = Specification.where(ProjectSpecifications.managerIdEquals(managerId));
 
         if (status != null && !status.isBlank()) {
             spec = spec.and(ProjectSpecifications.statusEquals(status));
@@ -78,14 +72,12 @@ public class ProjectService implements IProjectService {
                 .toList();
     }
 
-    @Override
     public ProjectResponse get(Integer managerId, Integer projectId) {
         Project p = projectRepository.findByIdAndManagerId(projectId, managerId)
                 .orElseThrow(() -> new NotFoundException("Project not found"));
         return toResponse(p, p.getClient() != null ? p.getClient().getId() : null);
     }
 
-    @Override
     public ProjectResponse update(Integer managerId, Integer projectId, ProjectUpdateRequest req) {
         Project p = projectRepository.findByIdAndManagerId(projectId, managerId)
                 .orElseThrow(() -> new NotFoundException("Project not found"));
@@ -113,7 +105,7 @@ public class ProjectService implements IProjectService {
         return toResponse(projectRepository.save(p), p.getClient() != null ? p.getClient().getId() : null);
     }
 
-    @Transactional
+    @org.springframework.transaction.annotation.Transactional
     public ProjectResponse updateTeam(Integer managerId, Integer projectId, List<Integer> freelancerIds) {
         Project p = projectRepository.findByIdAndManagerId(projectId, managerId)
                 .orElseThrow(() -> new NotFoundException("Project not found"));
@@ -124,7 +116,6 @@ public class ProjectService implements IProjectService {
         return toResponse(projectRepository.save(p), p.getClient() != null ? p.getClient().getId() : null);
     }
 
-    @Override
     public void delete(Integer managerId, Integer projectId) {
         Project p = projectRepository.findByIdAndManagerId(projectId, managerId)
                 .orElseThrow(() -> new NotFoundException("Project not found"));
@@ -190,60 +181,6 @@ public class ProjectService implements IProjectService {
                         .toList()
                 : new java.util.ArrayList<>();
 
-    private void updateDeadlineFlags(Project p) {
-        LocalDate today = LocalDate.now();
-        if (p.getDeadline() != null) {
-            p.setOverdue(p.getDeadline().isBefore(today) && p.getStatus() != ProjectStatus.COMPLETED);
-            p.setUrgent(!p.getOverdue() && ChronoUnit.DAYS.between(today, p.getDeadline()) <= 7);
-        }
-    }
-
-    public ProjectResponse updateProgress(Integer projectId, String progressStatus, Integer percentage) {
-        Project p = projectRepository.findById(projectId)
-                .orElseThrow(() -> new NotFoundException("Project not found"));
-
-        if (progressStatus != null) p.setProgressStatus(ProgressStatus.valueOf(progressStatus));
-        if (percentage != null) p.setProgressPercentage(percentage);
-
-        return toResponse(p);
-    }
-
-    public ProjectResponse completeProject(Integer projectId) {
-        Project p = projectRepository.findById(projectId)
-                .orElseThrow(() -> new NotFoundException("Project not found"));
-
-        if (p.getProgressPercentage() < 100) throw new IllegalStateException("Pending items exist");
-
-        p.setStatus(ProjectStatus.COMPLETED);
-        p.setArchived(true);
-
-        return toResponse(p);
-    }
-
-    public ProjectResponse reopenProject(Integer projectId) {
-        Project p = projectRepository.findById(projectId)
-                .orElseThrow(() -> new NotFoundException("Project not found"));
-
-        p.setStatus(ProjectStatus.ACTIVE);
-        p.setArchived(false);
-
-        return toResponse(p);
-    }
-
-    // ----------------- Client Methods -----------------
-
-    public List<ProjectResponse> getProjectsByClient(Integer clientId, String status, LocalDate from, LocalDate to) {
-        List<Project> projects = (status != null || from != null || to != null)
-                ? projectRepository.filterProjects(clientId, status, from, to)
-                : projectRepository.findByClientId(clientId);
-
-        projects.forEach(this::updateDeadlineFlags);
-        return projects.stream().map(this::toResponse).toList();
-    }
-
-    // ----------------- Mapper -----------------
-
-    private ProjectResponse toResponse(Project p) {
         return ProjectResponse.builder()
                 .id(p.getId())
                 .clientId(clientId)
@@ -258,5 +195,15 @@ public class ProjectService implements IProjectService {
                 .progressPercentage(p.getProgressPercentage())
                 .team(teamDto)
                 .build();
+    }
+
+    private String getInitials(String name) {
+        if (name == null || name.isBlank())
+            return "??";
+        String[] parts = name.trim().split("\\s+");
+        if (parts.length == 1) {
+            return parts[0].substring(0, Math.min(2, parts[0].length())).toUpperCase();
+        }
+        return (parts[0].substring(0, 1) + parts[parts.length - 1].substring(0, 1)).toUpperCase();
     }
 }
