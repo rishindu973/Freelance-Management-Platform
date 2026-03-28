@@ -29,6 +29,7 @@ public class ProjectService implements IProjectService {
 
     // ----------------- Manager Methods -----------------
 
+    @Override
     public ProjectResponse create(Integer managerId, ProjectCreateRequest req) {
         Client client = null;
         if (req.getClientId() != null) {
@@ -77,12 +78,14 @@ public class ProjectService implements IProjectService {
                 .toList();
     }
 
+    @Override
     public ProjectResponse get(Integer managerId, Integer projectId) {
         Project p = projectRepository.findByIdAndManagerId(projectId, managerId)
                 .orElseThrow(() -> new NotFoundException("Project not found"));
         return toResponse(p, p.getClient() != null ? p.getClient().getId() : null);
     }
 
+    @Override
     public ProjectResponse update(Integer managerId, Integer projectId, ProjectUpdateRequest req) {
         Project p = projectRepository.findByIdAndManagerId(projectId, managerId)
                 .orElseThrow(() -> new NotFoundException("Project not found"));
@@ -121,6 +124,7 @@ public class ProjectService implements IProjectService {
         return toResponse(projectRepository.save(p), p.getClient() != null ? p.getClient().getId() : null);
     }
 
+    @Override
     public void delete(Integer managerId, Integer projectId) {
         Project p = projectRepository.findByIdAndManagerId(projectId, managerId)
                 .orElseThrow(() -> new NotFoundException("Project not found"));

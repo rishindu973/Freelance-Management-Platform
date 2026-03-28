@@ -2,7 +2,9 @@ CREATE TABLE users (
                        id SERIAL PRIMARY KEY,
                        email VARCHAR(255) UNIQUE NOT NULL,
                        password VARCHAR(255) NOT NULL, --BCrypt hash only no raw text
-                       role VARCHAR(20) NOT NULL
+                       role VARCHAR(20) NOT NULL,
+                       verification_token VARCHAR(255),
+                       enabled BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE manager(
