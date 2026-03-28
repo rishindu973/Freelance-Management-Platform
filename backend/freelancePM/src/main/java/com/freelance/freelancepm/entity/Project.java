@@ -30,7 +30,7 @@ public class Project {
     @Column(name = "manager_id", nullable = false)
     private Integer managerId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 255)
     private String name;
 
     @Column(columnDefinition = "text")
@@ -39,23 +39,14 @@ public class Project {
     @Column(length = 100)
     private String type;
 
+    @Column(name = "start_date")
     private LocalDate startDate;
 
     private LocalDate deadline;
 
-    @Enumerated(EnumType.STRING)
-    private ProjectStatus status = ProjectStatus.ACTIVE;
-
-    @Enumerated(EnumType.STRING)
-    private ProgressStatus progressStatus = ProgressStatus.NOT_STARTED;
-
-    private Integer progressPercentage = 0;
-
-    private Boolean urgent = false;
-
-    private Boolean overdue = false;
-
-    private Boolean archived = false;
+    @Builder.Default
+    @Column(length = 50)
+    private String status = "pending";
 
     @Column(precision = 15, scale = 2)
     private BigDecimal budget;
@@ -65,11 +56,7 @@ public class Project {
     private Integer progressPercentage = 0;
 
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "project_freelancer",
-            joinColumns = @JoinColumn(name = "project_id"),
-            inverseJoinColumns = @JoinColumn(name = "freelancer_id")
-    )
+    @JoinTable(name = "project_freelancer", joinColumns = @JoinColumn(name = "project_id"), inverseJoinColumns = @JoinColumn(name = "freelancer_id"))
     @Builder.Default
     private List<com.freelance.freelancepm.entity.Freelancer> team = new ArrayList<>();
 }
