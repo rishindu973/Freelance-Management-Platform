@@ -2,17 +2,17 @@ package com.freelance.freelancepm.controller;
 
 import com.freelance.freelancepm.model.Client;
 import com.freelance.freelancepm.service.ClientService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
 
-// Open/Closed Principle: Controller handles HTTP requests, can be extended without modifying existing code
 @RestController
 @RequestMapping("/api/clients")
 @CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174" })
+@RequiredArgsConstructor
 public class ClientController {
 
     private final ClientService clientService;
@@ -24,14 +24,12 @@ public class ClientController {
 
     @PostMapping
     public ResponseEntity<Client> addClient(@RequestBody Client client) {
-        Client savedClient = clientService.saveClient(client);
-        return ResponseEntity.ok(savedClient);
+        return ResponseEntity.ok(clientService.saveClient(client));
     }
 
     @GetMapping
     public ResponseEntity<List<Client>> getAllClients() {
-        List<Client> clients = clientService.getAllClients();
-        return ResponseEntity.ok(clients);
+        return ResponseEntity.ok(clientService.getAllClients());
     }
 
     @GetMapping("/{id}")
@@ -57,12 +55,10 @@ public class ClientController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteClient(@PathVariable Integer id) {
-        Optional<Client> clientOptional = clientService.getClientById(id);
-        if (clientOptional.isPresent()) {
-            clientService.deleteClientById(id);
-            return ResponseEntity.ok("Client deleted successfully");
-        } else {
-            return ResponseEntity.status(404).body("Client not found");
-        }
+        Optional<Client> clientOpt = clientService.getClientById(id);
+        if (clientOpt.isEmpty()) return ResponseEntity.status(404).body("Client not found");
+
+        clientService.deleteClientById(id);
+        return ResponseEntity.ok("Client deleted successfully");
     }
 }

@@ -4,7 +4,18 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77e3cec8-5553-4439-b779-de9397a4b224" name="Changes" comment="" />
+    <list default="true" id="77e3cec8-5553-4439-b779-de9397a4b224" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/controller/ClientController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/controller/ClientController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/controller/ProjectController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/controller/ProjectController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/entity/Project.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/entity/Project.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/model/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/model/Client.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/repository/ClientRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/repository/ClientRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/repository/ProjectRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/repository/ProjectRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/service/ClientService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/service/ClientService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/service/ProjectService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/freelancePM/src/main/java/com/freelance/freelancepm/service/ProjectService.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -41,19 +52,19 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "client-management",
-    "junie.onboarding.icon.badge.shown": "true",
-    "kotlin-language-version-configured": "true",
-    "to.speed.mode.migration.done": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;client-management&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
