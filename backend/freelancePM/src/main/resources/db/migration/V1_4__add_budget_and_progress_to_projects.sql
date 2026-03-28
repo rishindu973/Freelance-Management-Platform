@@ -1,0 +1,2 @@
+ALTER TABLE project ADD COLUMN budget DECIMAL(15,2);
+ALTER TABLE project ADD COLUMN progress_percentage INTEGER DEFAULT 0;
