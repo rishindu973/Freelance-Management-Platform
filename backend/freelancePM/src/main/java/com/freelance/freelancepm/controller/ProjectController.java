@@ -78,6 +78,25 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.updateTeam(managerId, id, freelancerIds));
     }
 
+    // ----------------- Progress -----------------
+    @PutMapping("/{id}/progress")
+    public ResponseEntity<ProjectResponse> updateProgress(@PathVariable Integer id,
+                                                          @RequestParam String progressStatus,
+                                                          @RequestParam Integer percentage) {
+        return ResponseEntity.ok(projectService.updateProgress(id, progressStatus, percentage));
+    }
+
+    // ----------------- Complete / Reopen -----------------
+    @PutMapping("/{id}/complete")
+    public ResponseEntity<ProjectResponse> completeProject(@PathVariable Integer id) {
+        return ResponseEntity.ok(projectService.completeProject(id));
+    }
+
+    @PutMapping("/{id}/reopen")
+    public ResponseEntity<ProjectResponse> reopenProject(@PathVariable Integer id) {
+        return ResponseEntity.ok(projectService.reopenProject(id));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(
             java.security.Principal principal,

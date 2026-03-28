@@ -1,18 +1,14 @@
 package com.freelance.freelancepm.model;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
-import java.util.ArrayList;
-import java.util.List;
-
+// Single Responsibility: This class only represents the Client entity
 @Entity
 @Table(name = "client")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Client {
 
     @Id
@@ -20,14 +16,10 @@ public class Client {
     private Integer id;
 
     private String name;
-
     private String email;
 
-    @Column(name = "contact_number")
+    @jakarta.persistence.Column(name = "contact_number")
     private String phone;
-
-    @jakarta.persistence.Column(length = 255)
-    private String address;
 
     // Default constructor
     public Client() {
@@ -71,13 +63,5 @@ public class Client {
 
     public void setPhone(String phone) {
         this.phone = phone;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
     }
 }
