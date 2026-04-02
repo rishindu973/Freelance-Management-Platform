@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useMutation } from '@tanstack/react-query';
 import { Plus, Trash2, Loader2, FileText } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 import { 
   Form, 
@@ -49,6 +50,7 @@ const TAX_RATE = 0.10; // 10% tax baseline matching backend
 
 export default function InvoiceForm() {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [validatedData, setValidatedData] = useState<InvoiceFormValues | null>(null);
 
@@ -97,8 +99,17 @@ export default function InvoiceForm() {
     mutationFn: async (data: InvoiceFormValues) => {
       return await InvoiceService.createInvoice(data as any);
     },
-    onSuccess: () => {
-      toast({ title: 'Success', description: 'Invoice created successfully!' });
+    onSuccess: (data: any) => {
+      const invNum = data.invoiceNumber || 'N/A';
+      toast({ 
+        title: 'Invoice Created', 
+        description: `Successfully generated invoice: ${invNum}`,
+        action: (
+          <Button onClick={() => navigate(`/invoices/${data.id}`)} variant="outline" size="sm">
+            View Details
+          </Button>
+        )
+      });
       form.reset();
       setIsPreviewOpen(false);
     },
@@ -352,6 +363,9 @@ export default function InvoiceForm() {
             <div className="bg-slate-900 p-8 text-white flex justify-between items-start">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight uppercase tracking-[0.2em] mb-1">Invoice</h2>
+                    <div className="text-lg font-bold mb-2">
+                        Invoice No: [DRAFT]
+                    </div>
                     <p className="text-slate-400 text-xs font-mono">DATE: {new Date().toLocaleDateString()}</p>
                 </div>
                 <div className="text-right">

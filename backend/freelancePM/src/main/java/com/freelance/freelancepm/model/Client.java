@@ -24,15 +24,19 @@ public class Client {
     @jakarta.persistence.Column(length = 255)
     private String address;
 
+    @jakarta.persistence.Column(length = 10)
+    private String code;
+
     // Default constructor
     public Client() {
     }
 
     // Parameterized constructor
-    public Client(String name, String email, String phone) {
+    public Client(String name, String email, String phone, String code) {
         this.name = name;
         this.email = email;
         this.phone = phone;
+        this.code = code;
     }
 
     // Getters and Setters (Encapsulation)
@@ -74,5 +78,13 @@ public class Client {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
     }
 }

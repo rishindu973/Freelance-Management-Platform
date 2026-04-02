@@ -11,6 +11,9 @@ import java.util.List;
 public class InvoiceResponse {
     
     private Long id;
+    private String invoiceNumber;
+    private Integer sequenceNumber;
+    private Integer year;
     private Integer clientId;
     private Integer projectId;
     private Invoice.Status status;
