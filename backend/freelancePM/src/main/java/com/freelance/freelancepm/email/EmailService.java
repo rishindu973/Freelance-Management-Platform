@@ -3,7 +3,7 @@ package com.freelance.freelancepm.email;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-@Service
+@Service("standaloneEmailService")
 public class EmailService {
 
     @Value("${sendgrid.api.key}")
