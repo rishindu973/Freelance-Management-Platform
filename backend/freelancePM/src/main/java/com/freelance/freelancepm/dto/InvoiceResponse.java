@@ -19,6 +19,7 @@ public class InvoiceResponse {
     private BigDecimal total;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private Long version;
     
     private List<InvoiceLineItemResponse> lineItems;
 }
