@@ -28,6 +28,9 @@ public class Invoice {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    private Long version;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "client_id", nullable = false)
     private Client client;
@@ -62,6 +65,8 @@ public class Invoice {
     @Builder.Default
     private List<InvoiceLineItem> lineItems = new ArrayList<>();
 
+    public static final BigDecimal TAX_RATE = new BigDecimal("0.10");
+
     // Helper methods for bidirectional relationship
     public void addLineItem(InvoiceLineItem lineItem) {
         lineItems.add(lineItem);
@@ -71,5 +76,13 @@ public class Invoice {
     public void removeLineItem(InvoiceLineItem lineItem) {
         lineItems.remove(lineItem);
         lineItem.setInvoice(null);
+    }
+
+    public void recalculateTotals() {
+        this.subtotal = lineItems.stream()
+                .map(InvoiceLineItem::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        this.tax = this.subtotal.multiply(TAX_RATE);
+        this.total = this.subtotal.add(this.tax);
     }
 }

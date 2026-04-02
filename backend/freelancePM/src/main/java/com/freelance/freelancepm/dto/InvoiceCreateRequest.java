@@ -4,6 +4,7 @@ import com.freelance.freelancepm.entity.Invoice;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -13,8 +14,10 @@ import java.util.List;
 public class InvoiceCreateRequest {
 
     @NotNull(message = "Client ID is required")
+    @Positive(message = "Client ID must be positive")
     private Integer clientId;
 
+    @Positive(message = "Project ID must be positive")
     private Integer projectId;
 
     private Invoice.Status status;
