@@ -16,6 +16,9 @@ public class InvoiceMapper {
     public InvoiceResponse toResponse(Invoice invoice) {
         InvoiceResponse response = new InvoiceResponse();
         response.setId(invoice.getId());
+        response.setInvoiceNumber(invoice.getInvoiceNumber());
+        response.setSequenceNumber(invoice.getSequenceNumber());
+        response.setYear(invoice.getYear());
         response.setClientId(invoice.getClient().getId());
         response.setProjectId(invoice.getProject() != null ? invoice.getProject().getId() : null);
         response.setStatus(invoice.getStatus());

@@ -9,15 +9,19 @@ export interface InvoiceLineItem {
 
 export interface Invoice {
   id?: number;
+  invoiceNumber?: string;
+  sequenceNumber?: number;
+  year?: number;
   clientId: number;
   projectId?: number;
   status: 'DRAFT' | 'FINAL';
   lineItems: InvoiceLineItem[];
   subtotal?: number;
   tax?: number;
-  totalAmount?: number;
+  total?: number;
   createdAt?: string;
   updatedAt?: string;
+  version?: number;
 }
 
 export const InvoiceService = {

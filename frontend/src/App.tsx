@@ -11,6 +11,9 @@ import Clients from "./pages/Clients";
 import Freelancers from "./pages/Freelancers";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
+import Invoices from "./pages/Invoices";
+import NewInvoice from "./pages/NewInvoice";
+import InvoiceDetail from "./pages/InvoiceDetail";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import VerifyEmail from "./pages/VerifyEmail";
@@ -48,6 +51,9 @@ const App = () => (
                 <Route path="/freelancers" element={<Freelancers />} />
                 <Route path="/projects" element={<Projects />} />
                 <Route path="/projects/:id" element={<ProjectDetail />} />
+                <Route path="/invoices" element={<Invoices />} />
+                <Route path="/invoices/new" element={<NewInvoice />} />
+                <Route path="/invoices/:id" element={<InvoiceDetail />} />
               </Route>
             </Route>
 

@@ -53,6 +53,15 @@ public class Invoice {
     @Column(precision = 15, scale = 2)
     private BigDecimal total;
 
+    @Column(name = "invoice_number", length = 50, unique = true, nullable = false)
+    private String invoiceNumber;
+
+    @Column(name = "sequence_number", nullable = false)
+    private Integer sequenceNumber;
+
+    @Column(nullable = false)
+    private int year;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
