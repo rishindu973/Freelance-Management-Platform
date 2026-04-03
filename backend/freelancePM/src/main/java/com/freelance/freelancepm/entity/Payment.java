@@ -19,8 +19,9 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "invoice_id")
-    private Integer invoiceId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "invoice_id", insertable = false, updatable = false)
+    private Invoice invoice;
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
