@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "invoices")
+@Table(name = "invoice")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -50,8 +50,14 @@ public class Invoice {
     @Column(precision = 15, scale = 2)
     private BigDecimal tax;
 
-    @Column(precision = 15, scale = 2)
+    @Column(name = "amount", precision = 15, scale = 2, nullable = false)
     private BigDecimal total;
+
+    @Column(length = 50)
+    private String type;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
     @Column(name = "invoice_number", length = 50, unique = true, nullable = false)
     private String invoiceNumber;
@@ -63,7 +69,7 @@ public class Invoice {
     private int year;
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "generated_on", updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
