@@ -20,8 +20,11 @@ public class Payment {
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "invoice_id", insertable = false, updatable = false)
+    @JoinColumn(name = "invoice_id", nullable = false)
     private Invoice invoice;
+
+    @Column(name = "invoice_id")
+    private Integer invoiceId;
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
