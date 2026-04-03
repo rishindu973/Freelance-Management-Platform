@@ -29,6 +29,7 @@ import { DashboardService, DashboardResponse } from "@/api/dashboardService";
 import { format } from "date-fns";
 import { NearDeadlineProjects } from "@/components/dashboard/NearDeadlineProjects";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
+import { WorkSummaryWidget } from "@/components/dashboard/WorkSummaryWidget";
 
 import { FinanceCharts } from "@/components/dashboard/FinanceCharts";
 
@@ -154,7 +155,8 @@ const Dashboard = () => {
       </div>
 
       {/* Module rows */}
-      <div className="grid gap-4 lg:grid-cols-1">
+      <div className="grid gap-4 lg:grid-cols-2 lg:h-[450px]">
+        <WorkSummaryWidget />
         <ActivityFeed />
       </div>
 
