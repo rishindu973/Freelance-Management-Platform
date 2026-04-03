@@ -10,6 +10,7 @@ export interface TeamMemberDTO {
 export interface ProjectResponse {
     id: number;
     clientId: number;
+    clientName?: string;
     managerId: number;
     name: string;
     description: string;

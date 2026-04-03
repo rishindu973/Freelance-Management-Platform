@@ -156,8 +156,14 @@ export default function FreelancerProjectDetail() {
                             <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div>
                                     <p className="text-gray-500">Project Type</p>
-                                    <p className="font-medium">{project.type || "N/A"}</p>
+                                    <p className="font-medium capitalize">{project.type || "N/A"}</p>
                                 </div>
+                                {project.clientName && (
+                                    <div>
+                                        <p className="text-gray-500">Client</p>
+                                        <p className="font-medium">{project.clientName}</p>
+                                    </div>
+                                )}
                                 <div>
                                     <p className="text-gray-500">Start Date</p>
                                     <p className="font-medium">

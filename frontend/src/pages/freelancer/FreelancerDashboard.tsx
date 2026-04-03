@@ -5,16 +5,20 @@ import { ProjectResponse } from "@/api/projectService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     AlertCircle, Clock, CheckCircle2, Circle, CheckSquare,
-    User, Mail, Phone, ExternalLink
+    User, Phone, Briefcase, UploadCloud
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function FreelancerDashboard() {
     const [projects, setProjects] = useState<ProjectResponse[]>([]);
     const [profile, setProfile] = useState<FreelancerProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isTogglingAvailability, setIsTogglingAvailability] = useState(false);
+    const { toast } = useToast();
 
     useEffect(() => {
         Promise.all([
@@ -56,6 +60,28 @@ export default function FreelancerDashboard() {
         return { color: "text-gray-600", text: `${daysLeft} days left` };
     };
 
+    const handleAvailabilityToggle = async () => {
+        if (!profile) return;
+        const newStatus = profile.status === "available" ? "unavailable" : "available";
+        setIsTogglingAvailability(true);
+        try {
+            await FreelancerPortalService.updateAvailability(newStatus);
+            setProfile({ ...profile, status: newStatus });
+            toast({
+                title: "Availability updated",
+                description: `You are now ${newStatus}.`,
+            });
+        } catch {
+            toast({
+                title: "Error",
+                description: "Failed to update availability.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsTogglingAvailability(false);
+        }
+    };
+
     if (isLoading) {
         return <div className="p-8 text-center text-gray-500">Loading dashboard...</div>;
     }
@@ -67,51 +93,60 @@ export default function FreelancerDashboard() {
                 <p className="text-gray-500">Track your assigned projects and deliverables.</p>
             </div>
 
-            {/* ---- Profile Card ---- */}
+            {/* Profile Card with Availability Toggle */}
             {profile && (
                 <div className="bg-white rounded-xl border shadow-sm p-6 flex flex-col sm:flex-row items-start sm:items-center gap-6">
-                    {/* Avatar */}
                     <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
                         {profile.fullName?.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
                     </div>
-                    {/* Info */}
                     <div className="flex-1 space-y-1">
                         <h2 className="text-xl font-semibold text-gray-900">{profile.fullName}</h2>
                         {profile.title && (
                             <Badge variant="outline" className="text-xs font-medium">{profile.title}</Badge>
                         )}
                         <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500 pt-1">
-                            {/* Email comes from user account, not directly in profile - show contact */}
                             {profile.contactNumber && (
                                 <span className="flex items-center gap-1">
                                     <Phone className="w-3.5 h-3.5" />
                                     {profile.contactNumber}
                                 </span>
                             )}
-                            {profile.status && (
-                                <span className="flex items-center gap-1">
-                                    <User className="w-3.5 h-3.5" />
-                                    Status: <span className="font-medium text-gray-700">{profile.status}</span>
-                                </span>
-                            )}
-                            {profile.driveLink && (
-                                <a
-                                    href={profile.driveLink.startsWith("http") ? profile.driveLink : `https://${profile.driveLink}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-1 text-primary hover:underline"
-                                >
-                                    <ExternalLink className="w-3.5 h-3.5" />
-                                    Portfolio / Drive
-                                </a>
-                            )}
+                        </div>
+                    </div>
+                    <div className="flex flex-col items-center gap-2 min-w-[120px]">
+                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Availability</span>
+                        <div className="flex items-center gap-3">
+                            <Switch
+                                id="availability-toggle"
+                                checked={profile.status === "available"}
+                                onCheckedChange={handleAvailabilityToggle}
+                                disabled={isTogglingAvailability}
+                            />
+                            <Badge
+                                variant="outline"
+                                className={profile.status === "available"
+                                    ? "bg-green-100 text-green-700 border-green-300"
+                                    : "bg-gray-100 text-gray-600 border-gray-300"}
+                            >
+                                {profile.status === "available" ? "Available" : "Unavailable"}
+                            </Badge>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* ---- KPI Cards ---- */}
-            <div className="grid gap-4 md:grid-cols-3">
+            {/* KPI Cards */}
+            <div className="grid gap-4 md:grid-cols-4">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium text-gray-500">My Tasks</CardTitle>
+                        <Briefcase className="h-4 w-4 text-primary" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{projects.length}</div>
+                        <p className="text-xs text-gray-400 mt-1">Total assigned projects</p>
+                    </CardContent>
+                </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium text-gray-500">Pending</CardTitle>
@@ -141,7 +176,7 @@ export default function FreelancerDashboard() {
                 </Card>
             </div>
 
-            {/* ---- Assignments List ---- */}
+            {/* Assignments List */}
             <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-100">
                     <h2 className="font-semibold text-gray-900">Current Assignments</h2>
@@ -168,6 +203,12 @@ export default function FreelancerDashboard() {
                                                 {getStatusIcon(project.status)}
                                                 {project.status.toUpperCase()}
                                             </span>
+                                            {project.clientName && (
+                                                <>
+                                                    <span>•</span>
+                                                    <span className="font-medium text-gray-700">Client: {project.clientName}</span>
+                                                </>
+                                            )}
                                             {project.startDate && (
                                                 <>
                                                     <span>•</span>
@@ -189,11 +230,19 @@ export default function FreelancerDashboard() {
                                                 {warning.text}
                                             </span>
                                         )}
-                                        <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
-                                            <Link to={`/freelancer/projects/${project.id}`}>
-                                                View Project
-                                            </Link>
-                                        </Button>
+                                        <div className="flex gap-2 w-full sm:w-auto">
+                                            <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-none">
+                                                <Link to={`/freelancer/projects/${project.id}`}>
+                                                    View Project
+                                                </Link>
+                                            </Button>
+                                            <Button asChild size="sm" className="flex-1 sm:flex-none gap-1.5">
+                                                <Link to={`/freelancer/projects/${project.id}?tab=deliverables`}>
+                                                    <UploadCloud className="w-3.5 h-3.5" />
+                                                    Upload Work
+                                                </Link>
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
                             );
