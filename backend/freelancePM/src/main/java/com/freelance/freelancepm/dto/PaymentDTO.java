@@ -15,3 +15,4 @@ public class PaymentDTO {
     private LocalDate paymentDate;
     private String status;
 }
+
