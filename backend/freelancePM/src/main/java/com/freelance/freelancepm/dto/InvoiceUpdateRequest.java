@@ -12,7 +12,7 @@ public class InvoiceUpdateRequest {
 
     @Positive(message = "Client ID must be positive")
     private Integer clientId;
-    
+
     @Positive(message = "Project ID must be positive")
     private Integer projectId;
 

@@ -7,6 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,12 +22,12 @@ import java.util.List;
 public class Invoice {
 
     public enum Status {
-        DRAFT, FINAL
+        DRAFT, FINAL, OVERDUE, PAID, PARTIALLY_PAID, OVERPAID
     }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     @Version
     private Long version;
@@ -67,6 +68,9 @@ public class Invoice {
 
     @Column(nullable = false)
     private int year;
+
+    @Column(name = "due_date")
+    private LocalDate dueDate;
 
     @CreationTimestamp
     @Column(name = "generated_on", updatable = false)

@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 @Data
 public class InvoiceLineItemRequest {
 
-    private Long id; // Optional, present when updating existing line item
+    private Integer id; // Optional, present when updating existing line item
 
     @NotBlank(message = "Description cannot be empty")
     @Size(max = 255, message = "Description too long")
