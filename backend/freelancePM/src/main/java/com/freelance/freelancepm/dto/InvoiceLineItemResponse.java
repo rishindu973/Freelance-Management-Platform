@@ -6,8 +6,8 @@ import java.math.BigDecimal;
 
 @Data
 public class InvoiceLineItemResponse {
-    
-    private Long id;
+
+    private Integer id;
     private String description;
     private Integer quantity;
     private BigDecimal unitPrice;
