@@ -82,4 +82,12 @@ public class PaymentService {
 
         return invoice.getTotal().subtract(totalPaid);
     }
+
+    public List<Payment> getPaymentsByClient(Integer clientId) {
+        return paymentRepository.findByInvoice_ClientId(clientId);
+    }
+
+    public List<Payment> getAllPayments() {
+        return paymentRepository.findAll();
+    }
 }

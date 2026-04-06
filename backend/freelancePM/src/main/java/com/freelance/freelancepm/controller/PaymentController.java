@@ -23,12 +23,38 @@ public class PaymentController {
 
         PaymentDTO response = PaymentDTO.builder()
                 .id(payment.getId())
-                .invoiceId(payment.getId())
+                .invoiceId(payment.getInvoice().getId())
                 .amount(payment.getAmount())
                 .paymentDate(payment.getPaymentDate())
                 .status(payment.getStatus())
                 .build();
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/client/{clientId}")
+    public ResponseEntity<java.util.List<PaymentDTO>> getPaymentsByClient(@PathVariable Integer clientId) {
+        java.util.List<Payment> payments = paymentService.getPaymentsByClient(clientId);
+        java.util.List<PaymentDTO> dtos = payments.stream().map(payment -> PaymentDTO.builder()
+                .id(payment.getId())
+                .invoiceId(payment.getInvoice().getId())
+                .amount(payment.getAmount())
+                .paymentDate(payment.getPaymentDate())
+                .status(payment.getStatus())
+                .build()).toList();
+        return ResponseEntity.ok(dtos);
+    }
+
+    @GetMapping
+    public ResponseEntity<java.util.List<PaymentDTO>> getAllPayments() {
+        java.util.List<Payment> payments = paymentService.getAllPayments();
+        java.util.List<PaymentDTO> dtos = payments.stream().map(payment -> PaymentDTO.builder()
+                .id(payment.getId())
+                .invoiceId(payment.getInvoice().getId())
+                .amount(payment.getAmount())
+                .paymentDate(payment.getPaymentDate())
+                .status(payment.getStatus())
+                .build()).toList();
+        return ResponseEntity.ok(dtos);
     }
 }
