@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/table";
 import { PaymentService, PaymentResponse, PaymentCreateRequest } from "@/api/paymentService";
 import { InvoiceService, InvoiceResponse } from "@/api/invoiceService";
+import { ClientService, Client } from "@/api/clientService";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
     completed: { label: "Completed", className: "bg-success/15 text-success border-success/30" },
@@ -40,9 +41,11 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 export default function Payments() {
     const [payments, setPayments] = useState<PaymentResponse[]>([]);
     const [invoices, setInvoices] = useState<InvoiceResponse[]>([]);
+    const [clients, setClients] = useState<Client[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     // Filters
+    const [clientFilter, setClientFilter] = useState("all");
     const [statusFilter, setStatusFilter] = useState("all");
 
     const { toast } = useToast();
@@ -70,12 +73,16 @@ export default function Payments() {
 
     useEffect(() => {
         InvoiceService.getAllInvoices().then(setInvoices).catch(console.error);
+        ClientService.getAllClients().then(setClients).catch(console.error);
     }, []);
 
     const fetchPayments = async () => {
         setIsLoading(true);
         try {
-            const data = await PaymentService.getAllPayments();
+            const data = clientFilter === "all"
+                ? await PaymentService.getAllPayments()
+                : await PaymentService.getPaymentsByClient(Number(clientFilter));
+
             let filtered = data;
             if (statusFilter !== "all") {
                 filtered = filtered.filter(p => p.status === statusFilter);
@@ -90,7 +97,7 @@ export default function Payments() {
 
     useEffect(() => {
         fetchPayments();
-    }, [statusFilter]);
+    }, [statusFilter, clientFilter]);
 
     return (
         <div className="space-y-6">
@@ -158,6 +165,18 @@ export default function Payments() {
             </div>
 
             <div className="flex flex-col gap-3 rounded-lg border bg-card p-4 sm:flex-row sm:items-end w-full">
+                <div className="w-full sm:w-44">
+                    <Label className="mb-1.5 block text-xs text-muted-foreground">Client</Label>
+                    <Select value={clientFilter} onValueChange={setClientFilter}>
+                        <SelectTrigger><SelectValue placeholder="All clients" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All clients</SelectItem>
+                            {clients.map((c) => (
+                                <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
                 <div className="w-full sm:w-40">
                     <Label className="mb-1.5 block text-xs text-muted-foreground">Status</Label>
                     <Select value={statusFilter} onValueChange={setStatusFilter}>

@@ -10,4 +10,6 @@ import com.freelance.freelancepm.entity.Payment;
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Integer> {
     List<Payment> findByInvoiceId(Integer invoiceId);
+
+    List<Payment> findByInvoice_ClientId(Integer clientId);
 }
