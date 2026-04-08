@@ -23,5 +23,7 @@ public class InvoiceResponse {
     private LocalDateTime updatedAt;
     private Long version;
 
+    private String invoiceNumber;
+    private String clientName;
     private List<InvoiceLineItemResponse> lineItems;
 }

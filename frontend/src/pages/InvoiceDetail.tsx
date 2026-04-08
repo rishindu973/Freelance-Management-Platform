@@ -1,32 +1,34 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Printer, 
-  Download, 
-  Mail, 
-  FileCheck, 
+import {
+  ArrowLeft,
+  Printer,
+  Download,
+  Mail,
+  FileCheck,
   AlertCircle,
   Building2,
   Calendar,
   CreditCard,
-  Hash
+  Hash,
+  Loader2
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { InvoiceService, Invoice } from '@/api/invoiceService';
 import { ClientService, Client } from '@/api/clientService';
 import { useToast } from '@/components/ui/use-toast';
-import { 
-  Breadcrumb, 
-  BreadcrumbItem, 
-  BreadcrumbLink, 
-  BreadcrumbList, 
-  BreadcrumbPage, 
-  BreadcrumbSeparator 
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
 
 export default function InvoiceDetail() {
@@ -36,6 +38,8 @@ export default function InvoiceDetail() {
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [client, setClient] = useState<Client | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
 
   useEffect(() => {
     const fetchInvoice = async () => {
@@ -55,6 +59,49 @@ export default function InvoiceDetail() {
     };
     fetchInvoice();
   }, [id, toast]);
+
+  const handleDownloadPdf = async () => {
+    if (!id || !invoice) return;
+
+    setIsDownloading(true);
+    setDownloadProgress(0);
+    try {
+      const { blob, filename: serverFilename } = await InvoiceService.downloadInvoicePdf(
+        Number(id),
+        (progress) => setDownloadProgress(progress)
+      );
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      const date = invoice.createdAt ? new Date(invoice.createdAt).toISOString().split('T')[0] : 'N-A';
+      const fallbackFilename = `Invoice_${invoice.invoiceNumber || invoice.id}_${client?.name || 'Client'}_${date}.pdf`;
+      const finalFilename = serverFilename || fallbackFilename;
+      
+      link.setAttribute('download', finalFilename);
+      document.body.appendChild(link);
+      link.click();
+      
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast({ 
+        title: "Download Started", 
+        description: `Your file "${finalFilename}" is being saved.`,
+      });
+    } catch (error: any) {
+      console.error(error);
+      const errorMessage = error.response?.data?.message || "Failed to generate PDF. Please try again later.";
+      toast({ 
+        title: "Download Error", 
+        description: errorMessage, 
+        variant: "destructive" 
+      });
+    } finally {
+      setIsDownloading(false);
+      setDownloadProgress(0);
+    }
+  };
 
   if (isLoading) return <div className="py-24 text-center">Loading invoice...</div>;
   if (!invoice) return <div className="py-24 text-center">Invoice not found.</div>;
@@ -80,8 +127,30 @@ export default function InvoiceDetail() {
           <Button variant="outline" size="sm" className="gap-2" onClick={() => window.print()}>
             <Printer className="h-4 w-4" /> Print
           </Button>
-          <Button variant="outline" size="sm" className="gap-2">
-            <Download className="h-4 w-4" /> PDF
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-2 relative overflow-hidden" 
+            onClick={handleDownloadPdf}
+            disabled={isDownloading}
+          >
+            {isDownloading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>{downloadProgress > 0 ? `${downloadProgress}%` : 'Preparing...'}</span>
+                {downloadProgress > 0 && (
+                   <Progress 
+                    value={downloadProgress} 
+                    className="absolute bottom-0 left-0 right-0 h-0.5 w-full rounded-none" 
+                  />
+                )}
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4" />
+                <span>PDF</span>
+              </>
+            )}
           </Button>
           <Button size="sm" className="gap-2">
             <Mail className="h-4 w-4" /> Send Invoice
@@ -98,9 +167,9 @@ export default function InvoiceDetail() {
               Invoice No: {invoice.invoiceNumber || 'DRAFT-TBD'}
             </div>
             <div className="flex items-center gap-4 text-slate-400 text-xs font-mono print:text-slate-500">
-               <div className="flex items-center gap-1.5 font-bold">
-                 <Calendar className="h-3 w-3" /> DATE: {invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString() : 'N/A'}
-               </div>
+              <div className="flex items-center gap-1.5 font-bold">
+                <Calendar className="h-3 w-3" /> DATE: {invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString() : 'N/A'}
+              </div>
             </div>
           </div>
           <div className="text-right">
@@ -201,16 +270,16 @@ export default function InvoiceDetail() {
 
           {/* Professional Branding Footer */}
           <div className="mt-20 pt-12 border-t border-slate-50 text-center space-y-3">
-             <p className="text-[10px] text-slate-300 font-black uppercase tracking-[0.5em] mb-4">Official Document</p>
-             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-50 border border-slate-100">
-                <FileCheck className="h-3 w-3 text-primary" />
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-1.5">
-                   Verified By Antigravity Secure Infrastructure 
-                   <div className="h-1 w-1 rounded-full bg-slate-300" /> 
-                   {invoice.invoiceNumber}
-                </span>
-             </div>
-             <p className="text-[8px] text-slate-200 uppercase tracking-widest pt-2">© 2026 Antigravity Freelance PM OS | Confidential Document</p>
+            <p className="text-[10px] text-slate-300 font-black uppercase tracking-[0.5em] mb-4">Official Document</p>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-50 border border-slate-100">
+              <FileCheck className="h-3 w-3 text-primary" />
+              <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-1.5">
+                Verified By Antigravity Secure Infrastructure
+                <div className="h-1 w-1 rounded-full bg-slate-300" />
+                {invoice.invoiceNumber}
+              </span>
+            </div>
+            <p className="text-[8px] text-slate-200 uppercase tracking-widest pt-2">© 2026 Antigravity Freelance PM OS | Confidential Document</p>
           </div>
         </CardContent>
       </Card>
