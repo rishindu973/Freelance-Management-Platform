@@ -114,4 +114,10 @@ public interface ProjectRepository extends JpaRepository<Project, Integer>, JpaS
   @Query("SELECT p FROM Project p JOIN p.team f WHERE f.id = :freelancerId")
   List<Project> findAllByFreelancerId(
       @org.springframework.data.repository.query.Param("freelancerId") Integer freelancerId);
+
+  // ----------------- Reporting Queries -----------------
+  long countByStartDateBetween(LocalDate start, LocalDate end);
+
+  @Query("SELECT COUNT(p) FROM Project p WHERE p.startDate BETWEEN :start AND :end AND LOWER(p.status) = 'completed'")
+  long countCompletedInDateRange(@Param("start") LocalDate start, @Param("end") LocalDate end);
 }
