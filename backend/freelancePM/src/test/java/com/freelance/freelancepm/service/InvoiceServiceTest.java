@@ -44,7 +44,7 @@ class InvoiceServiceTest {
 
     @Mock
     private ProjectRepository projectRepository;
-    
+
     @Mock
     private ClientInvoiceSequenceRepository sequenceRepository;
 
@@ -136,15 +136,17 @@ class InvoiceServiceTest {
             mockedLocalDate.when(LocalDate::now).thenReturn(LocalDate.of(2025, 12, 31));
             when(sequenceRepository.findByClientIdAndYear(eq(1), eq(2025)))
                     .thenReturn(Optional.of(new ClientInvoiceSequence(1L, mockClient, 2025, 10)));
-            
+
             assertEquals("ABC-2025-0011", invoiceService.create(req).getInvoiceNumber());
 
             // 2026: reset to 0001
             mockedLocalDate.when(LocalDate::now).thenReturn(LocalDate.of(2026, 1, 1));
-            // Important: we need to reset the stubbing or use different matcher if we change the mock middle-test
-            // But since years are different, findByClientIdAndYear(1, 2026) will return empty as mocked below
+            // Important: we need to reset the stubbing or use different matcher if we
+            // change the mock middle-test
+            // But since years are different, findByClientIdAndYear(1, 2026) will return
+            // empty as mocked below
             when(sequenceRepository.findByClientIdAndYear(eq(1), eq(2026))).thenReturn(Optional.empty());
-            
+
             assertEquals("ABC-2026-0001", invoiceService.create(req).getInvoiceNumber());
         }
     }
@@ -180,7 +182,7 @@ class InvoiceServiceTest {
     void create_NegativeValues_ShouldThrowIllegalArgumentException() {
         InvoiceCreateRequest req = new InvoiceCreateRequest();
         req.setClientId(1);
-        
+
         InvoiceLineItemRequest item = new InvoiceLineItemRequest();
         item.setDescription("Bad item");
         item.setQuantity(-1);
@@ -197,26 +199,26 @@ class InvoiceServiceTest {
     @Test
     void update_FinalInvoice_ShouldThrowIllegalStateException() {
         Invoice existingInvoice = new Invoice();
-        existingInvoice.setId(100L);
+        existingInvoice.setId(100);
         existingInvoice.setStatus(Invoice.Status.FINAL);
 
-        when(invoiceRepository.findById(100L)).thenReturn(Optional.of(existingInvoice));
+        when(invoiceRepository.findById(100)).thenReturn(Optional.of(existingInvoice));
 
         InvoiceUpdateRequest req = new InvoiceUpdateRequest();
         req.setStatus(Invoice.Status.DRAFT);
 
-        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> invoiceService.update(100L, req));
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> invoiceService.update(100, req));
         assertTrue(ex.getMessage().contains("Only DRAFT invoices can be updated"));
     }
 
     @Test
     void update_ValidDraft_ShouldRecalculateTotals() {
         Invoice existingInvoice = new Invoice();
-        existingInvoice.setId(100L);
+        existingInvoice.setId(100);
         existingInvoice.setStatus(Invoice.Status.DRAFT);
         existingInvoice.setClient(mockClient);
 
-        when(invoiceRepository.findById(100L)).thenReturn(Optional.of(existingInvoice));
+        when(invoiceRepository.findById(100)).thenReturn(Optional.of(existingInvoice));
         when(invoiceRepository.save(any(Invoice.class))).thenAnswer(i -> i.getArguments()[0]);
 
         InvoiceUpdateRequest req = new InvoiceUpdateRequest();
@@ -226,7 +228,7 @@ class InvoiceServiceTest {
         newItem.setUnitPrice(new BigDecimal("50.00"));
         req.setLineItems(Arrays.asList(newItem));
 
-        InvoiceResponse response = invoiceService.update(100L, req);
+        InvoiceResponse response = invoiceService.update(100, req);
 
         // subtotal 250, tax 25, total 275
         assertEquals(0, new BigDecimal("250.00").compareTo(response.getSubtotal()));
@@ -237,7 +239,7 @@ class InvoiceServiceTest {
     @Test
     void update_ClientChange_ShouldRegenerateNumbering() {
         Invoice existingInvoice = new Invoice();
-        existingInvoice.setId(100L);
+        existingInvoice.setId(100);
         existingInvoice.setStatus(Invoice.Status.DRAFT);
         existingInvoice.setClient(mockClient);
         existingInvoice.setInvoiceNumber("ABC-2026-0001");
@@ -246,7 +248,7 @@ class InvoiceServiceTest {
         newClient.setId(2);
         newClient.setCode("XYZ");
 
-        when(invoiceRepository.findById(100L)).thenReturn(Optional.of(existingInvoice));
+        when(invoiceRepository.findById(100)).thenReturn(Optional.of(existingInvoice));
         when(clientRepository.findById(2)).thenReturn(Optional.of(newClient));
         when(sequenceRepository.findByClientIdAndYear(eq(2), anyInt())).thenReturn(Optional.empty());
         when(invoiceRepository.save(any(Invoice.class))).thenAnswer(i -> i.getArguments()[0]);
@@ -254,7 +256,7 @@ class InvoiceServiceTest {
         InvoiceUpdateRequest req = new InvoiceUpdateRequest();
         req.setClientId(2);
 
-        InvoiceResponse response = invoiceService.update(100L, req);
+        InvoiceResponse response = invoiceService.update(100, req);
 
         assertEquals("XYZ-2026-0001", response.getInvoiceNumber());
         assertEquals(2, response.getClientId());
@@ -273,7 +275,7 @@ class InvoiceServiceTest {
         Project project = new Project();
         project.setId(2);
         Client otherClient = new Client();
-        otherClient.setId(99); 
+        otherClient.setId(99);
         project.setClient(otherClient);
 
         when(clientRepository.findById(1)).thenReturn(Optional.of(client));
@@ -292,15 +294,16 @@ class InvoiceServiceTest {
         req.setLineItems(List.of(createLineItemRequest()));
 
         Invoice existing = new Invoice();
-        existing.setId(1L);
+        existing.setId(1);
         existing.setStatus(Invoice.Status.DRAFT);
         existing.setClient(mockClient);
 
-        when(invoiceRepository.findById(1L)).thenReturn(Optional.of(existing));
-        when(invoiceRepository.save(any(Invoice.class))).thenThrow(new ObjectOptimisticLockingFailureException(Invoice.class, 1L));
+        when(invoiceRepository.findById(1)).thenReturn(Optional.of(existing));
+        when(invoiceRepository.save(any(Invoice.class)))
+                .thenThrow(new ObjectOptimisticLockingFailureException(Invoice.class, 1));
 
         // Act & Assert
-        assertThrows(com.freelance.freelancepm.exception.ConflictException.class, () -> invoiceService.update(1L, req));
+        assertThrows(com.freelance.freelancepm.exception.ConflictException.class, () -> invoiceService.update(1, req));
     }
 
     private InvoiceLineItemRequest createLineItemRequest() {

@@ -2,14 +2,13 @@ package com.freelance.freelancepm.service.pdf;
 
 import com.freelance.freelancepm.entity.Invoice;
 import com.freelance.freelancepm.entity.InvoiceLineItem;
-import com.freelance.freelancepm.model.Client;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.springframework.stereotype.Component;
 
+import java.awt.Color;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -17,188 +16,209 @@ import java.util.List;
 @Component
 public class StandardInvoicePdfLayout implements InvoicePdfLayout {
 
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MMM dd, yyyy");
+    private static final PDType1Font FONT_REGULAR = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
+    private static final PDType1Font FONT_BOLD = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
+
     @Override
-    public void drawHeader(PdfGenerationContext context) throws IOException {
-        PDPageContentStream contentStream = context.getContentStream();
+    public void drawHeader(PdfGenerationContext context, Invoice invoice, com.freelance.freelancepm.entity.Manager manager, byte[] logoBytes) throws IOException {
         PdfStyle style = context.getStyle();
-        float y = context.getYPosition();
+        float width = context.getPageWidth();
+        float margin = context.getMargin();
 
-        contentStream.beginText();
-        contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), style.getFontSizeTitle());
-        contentStream.newLineAtOffset(context.getMargin(), y);
-        contentStream.showText("FREELANCEFLOW");
-        contentStream.endText();
+        // Use Primary Branding Color for Header
+        float headerHeight = 120;
+        context.drawRect(0, context.getYPosition() - headerHeight + style.getMargin(), width, headerHeight, style.getPrimaryColor(), true);
 
-        contentStream.beginText();
-        contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 16);
-        contentStream.newLineAtOffset(PDRectangle.A4.getWidth() - context.getMargin() - 70, y);
-        contentStream.showText("INVOICE");
-        contentStream.endText();
+        float textY = context.getYPosition() - 25;
+        
+        // Brand Name / Logo
+        if (logoBytes != null) {
+            context.drawImage(logoBytes, margin, textY - 20, 60, 40);
+            context.drawText(manager != null ? manager.getCompanyName() : "ANTIGRAVITY", margin + 70, textY, FONT_BOLD, style.getFontSizeTitle(), PdfStyle.COLOR_WHITE);
+        } else {
+            context.drawText(manager != null && manager.getCompanyName() != null ? manager.getCompanyName() : "ANTIGRAVITY SOLUTIONS", margin, textY, FONT_BOLD, style.getFontSizeTitle(), PdfStyle.COLOR_WHITE);
+        }
+        
+        // "INVOICE" Label
+        context.drawRightAlignedText("INVOICE", width - margin, textY, FONT_BOLD, 28, PdfStyle.COLOR_WHITE);
 
-        y -= style.getLineSpacing() * 2;
-        contentStream.beginText();
-        contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), style.getFontSizeText());
-        contentStream.newLineAtOffset(context.getMargin(), y);
-        contentStream.showText("123 Tech Street, Digital City");
-        contentStream.newLineAtOffset(0, -style.getLineSpacing());
-        contentStream.showText("Email: support@freelanceflow.com");
-        contentStream.newLineAtOffset(0, -style.getLineSpacing());
-        contentStream.showText("Phone: +1 (555) 012-3456");
-        contentStream.endText();
+        textY -= 20;
+        // Company Contact Info
+        String billingFrom = manager != null && manager.getAddress() != null ? manager.getAddress() : "123 Workspace Dr, Innovation Park";
+        context.drawText(billingFrom, margin, textY, FONT_REGULAR, style.getFontSizeSmall(), PdfStyle.COLOR_MUTED);
+        context.drawRightAlignedText("Official Document", width - margin, textY, FONT_BOLD, style.getFontSizeSmall(), PdfStyle.COLOR_MUTED);
 
-        context.setYPosition(y - (style.getLineSpacing() * 3));
+        textY -= style.getLineSpacing();
+        String contact = manager != null && manager.getContactNumber() != null ? manager.getContactNumber() : "finance@antigravity.io";
+        context.drawText(contact, margin, textY, FONT_REGULAR, style.getFontSizeSmall(), PdfStyle.COLOR_MUTED);
+
+        context.setYPosition(context.getYPosition() - headerHeight);
     }
 
     @Override
     public void drawInvoiceInfo(PdfGenerationContext context, Invoice invoice) throws IOException {
-        PDPageContentStream contentStream = context.getContentStream();
         PdfStyle style = context.getStyle();
-        float y = context.getYPosition();
+        float margin = context.getMargin();
+        float y = context.getYPosition() - 40;
 
-        contentStream.beginText();
-        contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), style.getFontSizeHeader());
-        contentStream.newLineAtOffset(context.getMargin(), y);
-        contentStream.showText("Invoice Number: " + invoice.getInvoiceNumber());
+        context.drawText("INVOICE NO:", margin, y, FONT_BOLD, style.getFontSizeHeader(), style.getPrimaryColor());
+        context.drawText(invoice.getInvoiceNumber(), margin + 80, y, FONT_REGULAR, style.getFontSizeHeader(), style.getPrimaryColor());
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        contentStream.newLineAtOffset(0, -style.getLineSpacing());
-        contentStream.showText("Date: " + (invoice.getCreatedAt() != null ? invoice.getCreatedAt().format(formatter) : "N/A"));
-        contentStream.newLineAtOffset(0, -style.getLineSpacing());
-        contentStream.showText("Due Date: " + (invoice.getDueDate() != null ? invoice.getDueDate().format(formatter) : "N/A"));
-        contentStream.newLineAtOffset(0, -style.getLineSpacing());
-        contentStream.showText("Status: " + invoice.getStatus());
-        contentStream.endText();
+        float rightColX = context.getPageWidth() - margin - 150;
+        context.drawText("DATE:", rightColX, y, FONT_BOLD, style.getFontSizeSmall(), PdfStyle.COLOR_MUTED);
+        context.drawText(invoice.getCreatedAt().format(DATE_FORMATTER), rightColX + 40, y, FONT_REGULAR, style.getFontSizeSmall(), PdfStyle.COLOR_SECONDARY);
 
-        context.setYPosition(y - (style.getLineSpacing() * 5));
+        y -= style.getLineSpacing();
+        context.drawText("DUE DATE:", rightColX, y, FONT_BOLD, style.getFontSizeSmall(), PdfStyle.COLOR_MUTED);
+        context.drawText(invoice.getDueDate() != null ? invoice.getDueDate().format(DATE_FORMATTER) : "N/A", rightColX + 60, y, FONT_REGULAR, style.getFontSizeSmall(), PdfStyle.COLOR_SECONDARY);
+
+        context.setYPosition(y - 40);
     }
 
     @Override
-    public void drawClientSection(PdfGenerationContext context, Client client) throws IOException {
-        PDPageContentStream contentStream = context.getContentStream();
+    public void drawClientSection(PdfGenerationContext context, Invoice invoice, com.freelance.freelancepm.entity.Manager manager) throws IOException {
+        com.freelance.freelancepm.model.Client client = invoice.getClient();
         PdfStyle style = context.getStyle();
+        float margin = context.getMargin();
         float y = context.getYPosition();
 
-        contentStream.beginText();
-        contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), style.getFontSizeHeader());
-        contentStream.newLineAtOffset(context.getMargin(), y);
-        contentStream.showText("Bill To:");
-        contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), style.getFontSizeText());
-        contentStream.newLineAtOffset(0, -style.getLineSpacing());
-        contentStream.showText(client.getName());
-        contentStream.newLineAtOffset(0, -style.getLineSpacing());
-        contentStream.showText(client.getEmail());
-        if (client.getAddress() != null && !client.getAddress().isEmpty()) {
-            contentStream.newLineAtOffset(0, -style.getLineSpacing());
-            contentStream.showText(client.getAddress());
+        if (invoice.getStatus() == Invoice.Status.DRAFT) {
+            drawDraftWatermark(context);
         }
-        contentStream.endText();
 
-        context.setYPosition(y - (style.getLineSpacing() * 5));
+        // Billed To Column
+        context.drawText("BILLED TO", margin, y, FONT_BOLD, style.getFontSizeSmall(), PdfStyle.COLOR_MUTED);
+        y -= 15;
+        context.drawText(client.getName(), margin, y, FONT_BOLD, style.getFontSizeHeader(), style.getPrimaryColor());
+        y -= 12;
+        if (client.getAddress() != null) {
+            context.drawWrappedText(client.getAddress(), margin, y, 200, FONT_REGULAR, style.getFontSizeSmall(), PdfStyle.COLOR_TEXT);
+        }
+
+        // Status / Payment Info Column
+        float rightColX = context.getPageWidth() - margin - 150;
+        y = context.getYPosition();
+        context.drawText("STATUS", rightColX, y, FONT_BOLD, style.getFontSizeSmall(), PdfStyle.COLOR_MUTED);
+        y -= 15;
+        
+        // draw status box
+        String status = invoice.getStatus().toString();
+        Color statusColor = status.equals("PAID") ? new Color(34, 197, 94) : style.getPrimaryColor();
+        
+        context.drawRect(rightColX, y - 4, 80, 16, PdfStyle.COLOR_HIGHLIGHT, true);
+        context.drawRect(rightColX, y - 4, 80, 16, PdfStyle.COLOR_BORDER, false);
+        context.drawText(status, rightColX + 5, y, FONT_BOLD, style.getFontSizeSmall(), statusColor);
+
+        context.setYPosition(y - 60);
+    }
+
+    private void drawDraftWatermark(PdfGenerationContext context) throws IOException {
+        // Simple watermark in the middle of the page
+        // In a real production app, we'd use rotation, but for now we'll just put a big light gray text
+        context.drawText("DRAFT - FOR REVIEW ONLY", 150, 400, FONT_BOLD, 40, new Color(240, 240, 240));
+    }
+
+    @Override
+    public void drawTableHeader(PdfGenerationContext context) throws IOException {
+        PdfStyle style = context.getStyle();
+        float margin = context.getMargin();
+        float width = context.getPageWidth() - (margin * 2);
+        float y = context.getYPosition();
+
+        // Header Background
+        context.drawRect(margin, y - 5, width, 20, PdfStyle.COLOR_HIGHLIGHT, true);
+        context.drawLine(margin, y - 5, margin + width, y - 5, PdfStyle.COLOR_BORDER, 0.5f);
+        context.drawLine(margin, y + 15, margin + width, y + 15, PdfStyle.COLOR_BORDER, 0.5f);
+
+        float textY = y + 2;
+        context.drawText("DESCRIPTION", margin + 10, textY, FONT_BOLD, style.getFontSizeSmall(), PdfStyle.COLOR_MUTED);
+        context.drawRightAlignedText("QTY", margin + width - 160, textY, FONT_BOLD, style.getFontSizeSmall(), PdfStyle.COLOR_MUTED);
+        context.drawRightAlignedText("UNIT PRICE", margin + width - 80, textY, FONT_BOLD, style.getFontSizeSmall(), PdfStyle.COLOR_MUTED);
+        context.drawRightAlignedText("TOTAL", margin + width - 10, textY, FONT_BOLD, style.getFontSizeSmall(), PdfStyle.COLOR_MUTED);
+
+        context.setYPosition(y - 20);
     }
 
     @Override
     public void drawTable(PdfGenerationContext context, List<InvoiceLineItem> lineItems) throws IOException {
-        PDPageContentStream contentStream = context.getContentStream();
         PdfStyle style = context.getStyle();
-        float y = context.getYPosition();
+        float margin = context.getMargin();
+        float width = context.getPageWidth() - (margin * 2);
 
-        float col1 = context.getMargin();
-        float col2 = 300;
-        float col3 = 380;
-        float col4 = 500;
+        drawTableHeader(context);
 
-        contentStream.beginText();
-        contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), style.getFontSizeText());
-        contentStream.newLineAtOffset(col1, y);
-        contentStream.showText("Description");
-        contentStream.newLineAtOffset(col2 - col1, 0);
-        contentStream.showText("Qty");
-        contentStream.newLineAtOffset(col3 - col2, 0);
-        contentStream.showText("Unit Price");
-        contentStream.newLineAtOffset(col4 - col3, 0);
-        contentStream.showText("Total");
-        contentStream.endText();
-
-        y -= 5;
-        contentStream.moveTo(context.getMargin(), y);
-        contentStream.lineTo(PDRectangle.A4.getWidth() - context.getMargin(), y);
-        contentStream.stroke();
-        y -= style.getLineSpacing();
-
-        contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), style.getFontSizeText());
+        boolean alternate = false;
         for (InvoiceLineItem item : lineItems) {
-            contentStream.beginText();
-            contentStream.newLineAtOffset(col1, y);
-            contentStream.showText(truncate(item.getDescription(), 45));
-            contentStream.newLineAtOffset(col2 - col1, 0);
-            contentStream.showText(String.valueOf(item.getQuantity()));
-            contentStream.newLineAtOffset(col3 - col2, 0);
-            contentStream.showText("$" + item.getUnitPrice().setScale(2, RoundingMode.HALF_UP));
-            contentStream.newLineAtOffset(col4 - col3, 0);
-            contentStream.showText("$" + item.getAmount().setScale(2, RoundingMode.HALF_UP));
-            contentStream.endText();
-            y -= style.getLineSpacing();
+            List<String> descLines = context.parseLines(item.getDescription(), 250, FONT_REGULAR, style.getFontSizeText());
+            float rowHeight = Math.max(25, descLines.size() * 12 + 10);
+            
+            context.ensureSpace(rowHeight, this::drawTableHeader);
+            float y = context.getYPosition();
+
+            if (alternate) {
+                context.drawRect(margin, y - rowHeight + 15, width, rowHeight, PdfStyle.COLOR_HIGHLIGHT, true);
+            }
+
+            float textY = y + 2;
+            context.drawWrappedText(item.getDescription(), margin + 10, textY, 250, FONT_BOLD, style.getFontSizeText(), style.getPrimaryColor());
+            
+            context.drawRightAlignedText(String.valueOf(item.getQuantity()), margin + width - 160, textY, FONT_REGULAR, style.getFontSizeText(), PdfStyle.COLOR_TEXT);
+            context.drawRightAlignedText("$" + formatMoney(item.getUnitPrice()), margin + width - 80, textY, FONT_REGULAR, style.getFontSizeText(), PdfStyle.COLOR_TEXT);
+            context.drawRightAlignedText("$" + formatMoney(item.getAmount()), margin + width - 10, textY, FONT_BOLD, style.getFontSizeText(), style.getPrimaryColor());
+
+            context.moveY(rowHeight);
+            alternate = !alternate;
         }
 
-        y -= 5;
-        contentStream.moveTo(context.getMargin(), y);
-        contentStream.lineTo(PDRectangle.A4.getWidth() - context.getMargin(), y);
-        contentStream.stroke();
-
-        context.setYPosition(y - (style.getLineSpacing() * 2));
+        context.setYPosition(context.getYPosition() - 20);
     }
 
     @Override
     public void drawTotalSection(PdfGenerationContext context, Invoice invoice) throws IOException {
-        PDPageContentStream contentStream = context.getContentStream();
         PdfStyle style = context.getStyle();
+        float margin = context.getMargin();
+        float width = context.getPageWidth() - (margin * 2);
         float y = context.getYPosition();
+        
+        float labelX = margin + width - 150;
+        float valueX = margin + width - 10;
 
-        float xOffset = 380;
-        float valueOffset = 500;
+        context.drawLine(labelX, y + 10, valueX, y + 10, PdfStyle.COLOR_BORDER, 0.5f);
 
-        contentStream.beginText();
-        contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), style.getFontSizeText());
-        contentStream.newLineAtOffset(xOffset, y);
-        contentStream.showText("Subtotal:");
-        contentStream.newLineAtOffset(valueOffset - xOffset, 0);
-        contentStream.showText("$" + invoice.getSubtotal().setScale(2, RoundingMode.HALF_UP));
+        context.drawText("SUBTOTAL", labelX, y, FONT_BOLD, style.getFontSizeSmall(), PdfStyle.COLOR_MUTED);
+        context.drawRightAlignedText("$" + formatMoney(invoice.getSubtotal()), valueX, y, FONT_BOLD, style.getFontSizeText(), PdfStyle.COLOR_SECONDARY);
 
         y -= style.getLineSpacing();
-        contentStream.newLineAtOffset(-(valueOffset - xOffset), -style.getLineSpacing());
-        contentStream.showText("Tax (10%):");
-        contentStream.newLineAtOffset(valueOffset - xOffset, 0);
-        contentStream.showText("$" + invoice.getTax().setScale(2, RoundingMode.HALF_UP));
+        context.drawText("TAX (10%)", labelX, y, FONT_BOLD, style.getFontSizeSmall(), PdfStyle.COLOR_MUTED);
+        context.drawRightAlignedText("$" + formatMoney(invoice.getTax()), valueX, y, FONT_BOLD, style.getFontSizeText(), PdfStyle.COLOR_SECONDARY);
 
-        y -= style.getLineSpacing();
-        contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), style.getFontSizeHeader());
-        contentStream.newLineAtOffset(-(valueOffset - xOffset), -style.getLineSpacing());
-        contentStream.showText("Grand Total:");
-        contentStream.newLineAtOffset(valueOffset - xOffset, 0);
-        contentStream.showText("$" + invoice.getTotal().setScale(2, RoundingMode.HALF_UP));
-        contentStream.endText();
+        y -= 30;
+        // Total Box
+        context.drawRect(labelX - 10, y - 10, 170, 40, style.getPrimaryColor(), true);
+        context.drawText("GROSS TOTAL", labelX, y + 5, FONT_BOLD, style.getFontSizeSmall(), PdfStyle.COLOR_MUTED);
+        context.drawRightAlignedText("$" + formatMoney(invoice.getTotal()), valueX, y, FONT_BOLD, 18, PdfStyle.COLOR_WHITE);
 
-        context.setYPosition(y - (style.getLineSpacing() * 4));
+        context.setYPosition(y - 100);
     }
 
     @Override
-    public void drawFooter(PdfGenerationContext context) throws IOException {
-        PDPageContentStream contentStream = context.getContentStream();
-        float y = context.getMargin() + 20;
+    public void drawFooter(PdfGenerationContext context, com.freelance.freelancepm.entity.Manager manager) throws IOException {
+        float margin = context.getMargin();
+        float width = context.getPageWidth() - (margin * 2);
+        float y = 60;
 
-        contentStream.beginText();
-        contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8);
-        contentStream.newLineAtOffset(context.getMargin(), y);
-        contentStream.showText("Payment Terms: Net 30. Please make checks payable to FreelanceFlow.");
-        contentStream.newLineAtOffset(0, -10);
-        contentStream.showText("Thank you for your business!");
-        contentStream.endText();
+        context.drawLine(margin, y + 20, margin + width, y + 20, PdfStyle.COLOR_BORDER, 0.5f);
+        
+        String contact = manager != null && manager.getContactNumber() != null ? manager.getContactNumber() : "finance@antigravity.io";
+        context.drawText("Contact: " + contact + " | Verified by Antigravity OS", margin, y, FONT_BOLD, 7, PdfStyle.COLOR_MUTED);
+        context.drawRightAlignedText("Thank you for your business!", margin + width, y, FONT_REGULAR, 8, PdfStyle.COLOR_SECONDARY);
+        
+        context.drawText("Terms: Payment due within 30 days. Late fees may apply.", margin, y - 12, FONT_REGULAR, 6, PdfStyle.COLOR_MUTED);
     }
 
-    private String truncate(String text, int maxLength) {
-        if (text == null || text.length() <= maxLength) {
-            return text;
-        }
-        return text.substring(0, maxLength - 3) + "...";
+    private String formatMoney(BigDecimal amount) {
+        if (amount == null) return "0.00";
+        return amount.setScale(2, RoundingMode.HALF_UP).toString();
     }
 }

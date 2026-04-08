@@ -27,7 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { InvoiceService, InvoiceResponse, InvoiceCreateRequest } from "@/api/invoiceService";
+import { InvoiceService, Invoice, InvoiceCreateRequest } from "@/api/invoiceService";
 import { ClientService, Client } from "@/api/clientService";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -40,7 +40,7 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 };
 
 export default function Invoices() {
-  const [invoices, setInvoices] = useState<InvoiceResponse[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
