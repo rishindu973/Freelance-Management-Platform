@@ -23,11 +23,7 @@ public class PaymentController {
 
         PaymentDTO response = PaymentDTO.builder()
                 .id(payment.getId())
-
                 .invoiceId(payment.getInvoice().getId())
-
-                .invoiceId(payment.getId())
-                 (Add Updated PaymentController)
                 .amount(payment.getAmount())
                 .paymentDate(payment.getPaymentDate())
                 .status(payment.getStatus())
