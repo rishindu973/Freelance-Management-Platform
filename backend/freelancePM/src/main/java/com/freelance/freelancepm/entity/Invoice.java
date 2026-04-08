@@ -22,7 +22,7 @@ import java.util.List;
 public class Invoice {
 
     public enum Status {
-        DRAFT, FINAL, OVERDUE, PAID, PARTIALLY_PAID, OVERPAID
+        DRAFT, FINAL, SENT, FAILED, OVERDUE, PAID, PARTIALLY_PAID, OVERPAID
     }
 
     @Id
@@ -71,6 +71,9 @@ public class Invoice {
 
     @Column(name = "due_date")
     private LocalDate dueDate;
+
+    @Column(columnDefinition = "TEXT")
+    private String failureReason;
 
     @CreationTimestamp
     @Column(name = "generated_on", updatable = false)

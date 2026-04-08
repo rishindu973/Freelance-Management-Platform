@@ -1,36 +1,37 @@
 package com.freelance.freelancepm.service;
 
-import com.freelance.freelancepm.dto.InvoiceCreateRequest;
-import com.freelance.freelancepm.dto.InvoiceLineItemRequest;
-import com.freelance.freelancepm.dto.InvoiceResponse;
-import com.freelance.freelancepm.dto.InvoiceUpdateRequest;
-import com.freelance.freelancepm.entity.Invoice;
-import com.freelance.freelancepm.entity.InvoiceLineItem;
-import com.freelance.freelancepm.entity.Project;
+import com.freelance.freelancepm.dto.*;
+import com.freelance.freelancepm.entity.*;
 import com.freelance.freelancepm.exception.ConflictException;
 import com.freelance.freelancepm.exception.NotFoundException;
 import com.freelance.freelancepm.mapper.InvoiceMapper;
 import com.freelance.freelancepm.model.Client;
-import com.freelance.freelancepm.repository.ClientRepository;
-import com.freelance.freelancepm.repository.InvoiceRepository;
-import com.freelance.freelancepm.repository.ProjectRepository;
+import com.freelance.freelancepm.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class InvoiceService implements IInvoiceService {
 
     private final InvoiceRepository invoiceRepository;
     private final ClientRepository clientRepository;
     private final ProjectRepository projectRepository;
+    private final ManagerRepository managerRepository;
+    private final ClientInvoiceSequenceRepository sequenceRepository;
     private final InvoiceMapper invoiceMapper;
+    private final EmailDispatcherService emailDispatcherService;
+    private final InvoicePdfService pdfService;
 
     @Override
     @Transactional
@@ -43,8 +44,10 @@ public class InvoiceService implements IInvoiceService {
                 .project(project)
                 .status(req.getStatus() != null ? req.getStatus() : Invoice.Status.DRAFT)
                 .lineItems(new ArrayList<>())
+                .year(LocalDate.now().getYear())
                 .build();
 
+        assignInvoiceNumber(invoice);
         updateLineItems(invoice, req.getLineItems());
         return saveAndHandleConflict(invoice);
     }
@@ -55,8 +58,9 @@ public class InvoiceService implements IInvoiceService {
         Invoice invoice = findInvoice(invoiceId);
         ensureDraftStatus(invoice);
 
-        if (req.getClientId() != null) {
+        if (req.getClientId() != null && !req.getClientId().equals(invoice.getClient().getId())) {
             invoice.setClient(findClient(req.getClientId()));
+            assignInvoiceNumber(invoice);
         }
         if (req.getProjectId() != null) {
             invoice.setProject(findProject(req.getProjectId()));
@@ -81,6 +85,64 @@ public class InvoiceService implements IInvoiceService {
         return invoiceRepository.findAll().stream()
                 .map(invoiceMapper::toResponse)
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public void sendInvoice(Integer invoiceId, SendInvoiceRequest request) {
+        Invoice invoice = findInvoice(invoiceId);
+        
+        // Idempotency check: Don't re-send if already SENT (optional: or FAILED if you want to allow retrying failed ones)
+        if (Invoice.Status.SENT.equals(invoice.getStatus())) {
+            log.warn("Invoice {} is already marked as SENT. Skipping dispatch.", invoiceId);
+            return;
+        }
+
+        log.info("Handing off invoice {} dispatch to async dispatcher", invoiceId);
+
+        // 1. Prepare data for async processing
+        byte[] pdfBytes = pdfService.generateInvoicePdf(invoiceId);
+        String filename = String.format("Invoice_%s.pdf", invoice.getInvoiceNumber());
+
+        Manager manager = null;
+        if (invoice.getProject() != null && invoice.getProject().getManagerId() != null) {
+            manager = managerRepository.findById(invoice.getProject().getManagerId()).orElse(null);
+        }
+
+        if (manager == null) {
+            throw new IllegalStateException("Manager details not found for branding invoice email");
+        }
+
+        String dueDate = invoice.getDueDate() != null ? invoice.getDueDate().format(DateTimeFormatter.ISO_DATE) : "N/A";
+
+        // 2. Dispatch asynchronously
+        emailDispatcherService.dispatchInvoices(
+                invoice,
+                manager,
+                request.getRecipients(),
+                dueDate,
+                pdfBytes,
+                filename
+        );
+    }
+
+    private void assignInvoiceNumber(Invoice invoice) {
+        int year = LocalDate.now().getYear();
+        ClientInvoiceSequence sequence = sequenceRepository.findByClientIdAndYear(invoice.getClient().getId(), year)
+                .orElseGet(() -> ClientInvoiceSequence.builder()
+                        .client(invoice.getClient())
+                        .year(year)
+                        .currentSequence(0)
+                        .build());
+
+        int nextSequence = sequence.getCurrentSequence() + 1;
+        sequence.setCurrentSequence(nextSequence);
+        sequenceRepository.save(sequence);
+
+        invoice.setYear(year);
+        invoice.setSequenceNumber(nextSequence);
+        invoice.setInvoiceNumber(String.format("%s-%d-%04d", 
+                invoice.getClient().getCode(), year, nextSequence));
     }
 
     private void updateLineItems(Invoice invoice, List<InvoiceLineItemRequest> itemRequests) {

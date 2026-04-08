@@ -3,6 +3,7 @@ package com.freelance.freelancepm.controller;
 import com.freelance.freelancepm.dto.InvoiceCreateRequest;
 import com.freelance.freelancepm.dto.InvoiceResponse;
 import com.freelance.freelancepm.dto.InvoiceUpdateRequest;
+import com.freelance.freelancepm.dto.SendInvoiceRequest;
 import com.freelance.freelancepm.service.InvoicePdfService;
 import com.freelance.freelancepm.service.InvoiceService;
 import jakarta.validation.Valid;
@@ -65,5 +66,13 @@ public class InvoiceController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(pdfBytes);
+    }
+
+    @PostMapping("/{id}/send")
+    public ResponseEntity<Void> sendInvoice(
+            @PathVariable("id") Integer id,
+            @Valid @RequestBody SendInvoiceRequest req) {
+        invoiceService.sendInvoice(id, req);
+        return ResponseEntity.ok().build();
     }
 }
