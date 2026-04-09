@@ -8,6 +8,7 @@ export interface DashboardResponse {
     completedProjects: number;
     overdueProjects: number;
     dueSoonProjects: number;
+    totalIncome?: number;
     statusBreakdown: Record<string, number>;
     upcomingDeadlines: ProjectResponse[];
     recentCompleted: ProjectResponse[];

@@ -116,6 +116,8 @@
             <version>0.12.3</version>
             <scope>runtime</scope>
         </dependency>
+        
+        <!-- Apache PDFBox for invoice generation -->
         <dependency>
             <groupId>org.apache.pdfbox</groupId>
             <artifactId>pdfbox</artifactId>

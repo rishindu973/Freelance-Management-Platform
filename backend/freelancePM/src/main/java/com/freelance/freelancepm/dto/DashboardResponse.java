@@ -15,6 +15,7 @@ public class DashboardResponse {
 
     private long overdueProjects;
     private long dueSoonProjects;
+    private java.math.BigDecimal totalIncome;
 
     // for charts (pie/bar)
     private Map<String, Long> statusBreakdown;

@@ -2,9 +2,11 @@ package com.freelance.freelancepm.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "payment")
@@ -23,17 +25,26 @@ public class Payment {
     @JoinColumn(name = "invoice_id", nullable = false)
     private Invoice invoice;
 
-    @Column(name = "invoice_id", insertable = false, updatable = false)
-    private Integer invoiceId;
-
-    @Column(nullable = false, precision = 12, scale = 2)
+    @Column(precision = 15, scale = 2, nullable = false)
     private BigDecimal amount;
 
-    @Builder.Default
-    @Column(name = "payment_date")
-    private LocalDate paymentDate = LocalDate.now();
+    @Column(name = "payment_method", length = 50)
+    private String paymentMethod;
 
-    @Builder.Default
-    @Column(length = 20)
-    private String status = "completed";
+    @Column(name = "reference_number", length = 100)
+    private String referenceNumber;
+
+    @Column(name = "payment_date", nullable = false)
+    private LocalDateTime paymentDate;
+
+    @Column(name = "recorded_by")
+    private String recordedBy;
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }
