@@ -37,6 +37,9 @@ public class Payment {
     @Column(name = "payment_date", nullable = false)
     private LocalDateTime paymentDate;
 
+    @Column(length = 20)
+    private String status;
+
     @Column(name = "recorded_by")
     private String recordedBy;
 

@@ -28,7 +28,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { PaymentService, PaymentResponse, PaymentCreateRequest } from "@/api/paymentService";
-import { InvoiceService, InvoiceResponse } from "@/api/invoiceService";
+import { InvoiceService, InvoiceListDTO } from "@/api/invoiceService";
 import { ClientService, Client } from "@/api/clientService";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -40,7 +40,7 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 
 export default function Payments() {
     const [payments, setPayments] = useState<PaymentResponse[]>([]);
-    const [invoices, setInvoices] = useState<InvoiceResponse[]>([]);
+    const [invoices, setInvoices] = useState<InvoiceListDTO[]>([]);
     const [clients, setClients] = useState<Client[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -72,7 +72,7 @@ export default function Payments() {
     };
 
     useEffect(() => {
-        InvoiceService.getAllInvoices().then(setInvoices).catch(console.error);
+        InvoiceService.getAllInvoices({ size: 1000 }).then(res => setInvoices(res.content || [])).catch(console.error);
         ClientService.getAllClients().then(setClients).catch(console.error);
     }, []);
 
