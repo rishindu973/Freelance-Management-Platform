@@ -23,10 +23,6 @@ export const PaymentService = {
         const response = await apiClient.get(`/api/payments/${id}`);
         return response.data;
     },
-    getPaymentsByClient: async (clientId: number): Promise<PaymentResponse[]> => {
-        const response = await apiClient.get(`/api/payments/client/${clientId}`);
-        return response.data;
-    },
     createPayment: async (data: PaymentCreateRequest): Promise<PaymentResponse> => {
         const response = await apiClient.post('/api/payments', data);
         return response.data;
