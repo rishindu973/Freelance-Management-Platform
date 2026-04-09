@@ -11,6 +11,7 @@ import Clients from "./pages/Clients";
 import Freelancers from "./pages/Freelancers";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
+import Invoices from "./pages/Invoices";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import VerifyEmail from "./pages/VerifyEmail";
@@ -22,6 +23,7 @@ import FreelancerLayout from "./components/layout/FreelancerLayout";
 import FreelancerDashboard from "./pages/freelancer/FreelancerDashboard";
 import FreelancerProjects from "./pages/freelancer/FreelancerProjects";
 import FreelancerProjectDetail from "./pages/freelancer/FreelancerProjectDetail";
+import EditInvoice from "./pages/EditInvoice";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +50,8 @@ const App = () => (
                 <Route path="/freelancers" element={<Freelancers />} />
                 <Route path="/projects" element={<Projects />} />
                 <Route path="/projects/:id" element={<ProjectDetail />} />
+                <Route path="/invoices" element={<Invoices />} />
+                <Route path="/invoices/:id/edit" element={<EditInvoice />} />
               </Route>
             </Route>
 
