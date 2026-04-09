@@ -25,5 +25,7 @@ public class InvoiceResponse {
 
     private String invoiceNumber;
     private String clientName;
+    private String failureReason;
+    private LocalDateTime lastSentAt;
     private List<InvoiceLineItemResponse> lineItems;
 }
