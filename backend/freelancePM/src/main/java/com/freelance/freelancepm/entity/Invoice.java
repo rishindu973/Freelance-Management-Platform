@@ -118,6 +118,11 @@ public class Invoice {
         lineItem.setInvoice(null);
     }
 
+    /**
+     * @deprecated Use {@link com.freelance.freelancepm.service.InvoiceCalculationService#recalculateInvoice(Invoice)} instead.
+     * This method is kept for backward compatibility but business logic should reside in the service layer.
+     */
+    @Deprecated
     public void recalculateTotals() {
         this.subtotal = lineItems.stream()
                 .map(InvoiceLineItem::getAmount)

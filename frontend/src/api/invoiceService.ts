@@ -126,4 +126,8 @@ export const InvoiceService = {
   sendInvoice: async (id: number, recipients: string[]): Promise<void> => {
     await apiClient.post(`/api/invoices/${id}/send`, { recipients });
   },
+  updateInvoice: async (id: number, data: any): Promise<Invoice> => {
+    const response = await apiClient.put(`/api/invoices/${id}`, data);
+    return response.data;
+  },
 };

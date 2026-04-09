@@ -57,6 +57,12 @@ class InvoiceServiceTest {
     @Mock
     private InvoicePdfService pdfService;
 
+    @Mock
+    private InvoiceEditValidator editValidator;
+
+    @Mock
+    private InvoiceCalculationService calculationService;
+
     @Spy
     private InvoiceMapper invoiceMapper = new InvoiceMapper();
 
@@ -157,17 +163,44 @@ class InvoiceServiceTest {
     }
 
     @Test
-    void update_FinalInvoice_ShouldThrowIllegalStateException() {
+    void update_SentInvoice_ShouldThrowException() {
         Invoice existingInvoice = new Invoice();
         existingInvoice.setId(100);
-        existingInvoice.setStatus(InvoiceStatus.FINAL);
+        existingInvoice.setStatus(InvoiceStatus.SENT);
 
         when(invoiceRepository.findById(100)).thenReturn(Optional.of(existingInvoice));
+        doThrow(new com.freelance.freelancepm.exception.InvoiceEditNotAllowedException("Editing not allowed"))
+                .when(editValidator).validateEditable(existingInvoice);
 
         InvoiceUpdateRequest req = new InvoiceUpdateRequest();
         req.setStatus(InvoiceStatus.DRAFT);
 
-        assertThrows(IllegalStateException.class, () -> invoiceService.update(100, req));
+        assertThrows(com.freelance.freelancepm.exception.InvoiceEditNotAllowedException.class,
+                () -> invoiceService.update(100, req));
+    }
+
+    @Test
+    void update_DraftInvoice_ShouldUpdateAndRegeneratePdf() {
+        Invoice existingInvoice = new Invoice();
+        existingInvoice.setId(100);
+        existingInvoice.setStatus(InvoiceStatus.DRAFT);
+        existingInvoice.setClient(mockClient);
+
+        when(invoiceRepository.findById(100)).thenReturn(Optional.of(existingInvoice));
+        when(invoiceRepository.save(any(Invoice.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        InvoiceUpdateRequest req = new InvoiceUpdateRequest();
+        req.setStatus(InvoiceStatus.DRAFT);
+        req.setLineItems(List.of(createLineItemRequest()));
+
+        // Act
+        InvoiceResponse response = invoiceService.update(100, req);
+
+        // Assert
+        verify(editValidator).validateEditable(existingInvoice);
+        verify(calculationService).recalculateInvoice(existingInvoice);
+        verify(pdfService, times(1)).generateInvoicePdf(100);
+        assertNotNull(response);
     }
 
     private InvoiceLineItemRequest createLineItemRequest() {
