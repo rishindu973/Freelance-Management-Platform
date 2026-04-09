@@ -37,6 +37,8 @@ public class InvoiceService implements IInvoiceService {
     private final InvoicePdfService pdfService;
     private final InvoiceEditValidator editValidator;
     private final InvoiceCalculationService calculationService;
+    private final InvoiceStatusTransitionService transitionService;
+    private final PaymentValidationService paymentValidationService;
 
     private boolean regeneratePdfOnUpdate = true; // Configuration flag
 
@@ -165,6 +167,46 @@ public class InvoiceService implements IInvoiceService {
                 pdfBytes,
                 filename
         );
+    }
+    
+    @Override
+    @Transactional
+    public InvoiceResponse updateStatus(Integer invoiceId, com.freelance.freelancepm.dto.InvoiceStatusUpdateRequest req) {
+        Invoice invoice = findInvoice(invoiceId);
+        
+        // Use a generic "API" user or pull from Spring Security context if available
+        String recordedBy = "system_user"; 
+        
+        if (req.getTargetStatus() == InvoiceStatus.PAID && req.getAmount() != null) {
+            // Hand off to payment validation to record the payment and handle the transition if fully paid
+            com.freelance.freelancepm.entity.Payment manualPayment = com.freelance.freelancepm.entity.Payment.builder()
+                    .amount(req.getAmount())
+                    .paymentDate(java.time.LocalDateTime.now())
+                    .paymentMethod("MANUAL_UPDATE")
+                    .build();
+            paymentValidationService.processPayment(invoice, manualPayment, recordedBy);
+        } else {
+            // Just transition the status directly
+            transitionService.validateAndTransition(invoice, req.getTargetStatus(), recordedBy);
+            invoiceRepository.save(invoice);
+        }
+        
+        return invoiceMapper.toResponse(invoice);
+    }
+
+    @Override
+    @Transactional
+    public void addPayment(Integer invoiceId, com.freelance.freelancepm.dto.PaymentCreateRequest req) {
+        Invoice invoice = findInvoice(invoiceId);
+        
+        com.freelance.freelancepm.entity.Payment payment = com.freelance.freelancepm.entity.Payment.builder()
+                .amount(req.getAmount())
+                .paymentDate(req.getPaymentDate() != null ? req.getPaymentDate() : java.time.LocalDateTime.now())
+                .paymentMethod(req.getPaymentMethod())
+                .referenceNumber(req.getReferenceNumber())
+                .build();
+                
+        paymentValidationService.processPayment(invoice, payment, "system_user");
     }
 
     private void assignInvoiceNumber(Invoice invoice) {

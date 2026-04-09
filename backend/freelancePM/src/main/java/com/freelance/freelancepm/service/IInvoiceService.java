@@ -33,4 +33,8 @@ public interface IInvoiceService {
     Page<InvoiceListDTO> listAll(Integer clientId, LocalDate startDate, LocalDate endDate, Pageable pageable);
 
     void sendInvoice(Integer invoiceId, SendInvoiceRequest request);
+
+    InvoiceResponse updateStatus(Integer invoiceId, com.freelance.freelancepm.dto.InvoiceStatusUpdateRequest req);
+
+    void addPayment(Integer invoiceId, com.freelance.freelancepm.dto.PaymentCreateRequest req);
 }

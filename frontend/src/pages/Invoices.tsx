@@ -317,7 +317,10 @@ export default function Invoices() {
             ) : (
               invoices.map((invoice) => {
                 return (
-                  <TableRow key={invoice.id} className="cursor-pointer hover:bg-muted/50 transition-colors group">
+                  <TableRow 
+                    key={invoice.id} 
+                    className={`cursor-pointer transition-colors group ${invoice.status === 'OVERDUE' ? 'bg-destructive/5 hover:bg-destructive/10' : 'hover:bg-muted/50'}`}
+                  >
                     <TableCell className="font-medium text-foreground py-3">{invoice.invoiceNumber || `INV-${invoice.id}`}</TableCell>
                     <TableCell className="text-muted-foreground">{invoice.clientName}</TableCell>
                     <TableCell className="text-muted-foreground">
