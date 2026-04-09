@@ -2,6 +2,7 @@ package com.freelance.freelancepm.service;
 
 import com.freelance.freelancepm.entity.EmailLog;
 import com.freelance.freelancepm.entity.Invoice;
+import com.freelance.freelancepm.entity.InvoiceStatus;
 import com.freelance.freelancepm.entity.Manager;
 import com.freelance.freelancepm.repository.EmailLogRepository;
 import com.freelance.freelancepm.repository.InvoiceRepository;
@@ -55,10 +56,10 @@ public class EmailDispatcherService {
         }
 
         if (allSucceeded) {
-            invoice.setStatus(Invoice.Status.SENT);
+            invoice.setStatus(InvoiceStatus.SENT);
             invoice.setFailureReason(null);
         } else {
-            invoice.setStatus(Invoice.Status.FAILED);
+            invoice.setStatus(InvoiceStatus.FAILED);
             invoice.setFailureReason(finalFailureReason.toString().trim());
         }
 

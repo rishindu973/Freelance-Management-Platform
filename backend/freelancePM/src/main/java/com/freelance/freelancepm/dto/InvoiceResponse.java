@@ -1,6 +1,6 @@
 package com.freelance.freelancepm.dto;
 
-import com.freelance.freelancepm.entity.Invoice;
+import com.freelance.freelancepm.entity.InvoiceStatus;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -14,7 +14,8 @@ public class InvoiceResponse {
     private Integer id;
     private Integer clientId;
     private Integer projectId;
-    private Invoice.Status status;
+    private InvoiceStatus status;
+    private String displayStatus;
     private BigDecimal subtotal;
     private BigDecimal tax;
     private BigDecimal total;

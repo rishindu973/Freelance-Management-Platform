@@ -1,6 +1,7 @@
 package com.freelance.freelancepm.service.pdf;
 
 import com.freelance.freelancepm.entity.Invoice;
+import com.freelance.freelancepm.entity.InvoiceStatus;
 import com.freelance.freelancepm.entity.InvoiceLineItem;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
@@ -83,7 +84,7 @@ public class StandardInvoicePdfLayout implements InvoicePdfLayout {
         float margin = context.getMargin();
         float y = context.getYPosition();
 
-        if (invoice.getStatus() == Invoice.Status.DRAFT) {
+        if (invoice.getStatus() == InvoiceStatus.DRAFT) {
             drawDraftWatermark(context);
         }
 
@@ -103,8 +104,9 @@ public class StandardInvoicePdfLayout implements InvoicePdfLayout {
         y -= 15;
         
         // draw status box
-        String status = invoice.getStatus().toString();
-        Color statusColor = status.equals("PAID") ? new Color(34, 197, 94) : style.getPrimaryColor();
+        String status = invoice.getStatus().getDisplayStatus();
+        Color statusColor = invoice.getStatus() == InvoiceStatus.PAID
+                ? new Color(34, 197, 94) : style.getPrimaryColor();
         
         context.drawRect(rightColX, y - 4, 80, 16, PdfStyle.COLOR_HIGHLIGHT, true);
         context.drawRect(rightColX, y - 4, 80, 16, PdfStyle.COLOR_BORDER, false);

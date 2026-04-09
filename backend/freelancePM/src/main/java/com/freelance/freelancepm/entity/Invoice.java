@@ -21,8 +21,23 @@ import java.util.List;
 @Builder
 public class Invoice {
 
-    public enum Status {
-        DRAFT, FINAL, SENT, FAILED, OVERDUE, PAID, PARTIALLY_PAID, OVERPAID
+    /**
+     * @deprecated Use the top-level {@link InvoiceStatus} enum directly.
+     *             This type alias is kept only for source-level backward compatibility
+     *             during the migration period.
+     */
+    @Deprecated
+    public static final class Status {
+        public static final InvoiceStatus DRAFT = InvoiceStatus.DRAFT;
+        public static final InvoiceStatus FINAL = InvoiceStatus.FINAL;
+        public static final InvoiceStatus SENT = InvoiceStatus.SENT;
+        public static final InvoiceStatus FAILED = InvoiceStatus.FAILED;
+        public static final InvoiceStatus OVERDUE = InvoiceStatus.OVERDUE;
+        public static final InvoiceStatus PAID = InvoiceStatus.PAID;
+        public static final InvoiceStatus PARTIALLY_PAID = InvoiceStatus.PARTIALLY_PAID;
+        public static final InvoiceStatus OVERPAID = InvoiceStatus.OVERPAID;
+
+        private Status() { /* utility */ }
     }
 
     @Id
@@ -43,7 +58,7 @@ public class Invoice {
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
     @Builder.Default
-    private Status status = Status.DRAFT;
+    private InvoiceStatus status = InvoiceStatus.DRAFT;
 
     @Column(precision = 15, scale = 2)
     private BigDecimal subtotal;

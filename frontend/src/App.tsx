@@ -12,7 +12,6 @@ import Freelancers from "./pages/Freelancers";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
 import Invoices from "./pages/Invoices";
-import Payments from "./pages/Payments";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import VerifyEmail from "./pages/VerifyEmail";
@@ -51,7 +50,6 @@ const App = () => (
                 <Route path="/projects" element={<Projects />} />
                 <Route path="/projects/:id" element={<ProjectDetail />} />
                 <Route path="/invoices" element={<Invoices />} />
-                <Route path="/payments" element={<Payments />} />
               </Route>
             </Route>
 

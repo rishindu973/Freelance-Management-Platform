@@ -2,11 +2,17 @@ package com.freelance.freelancepm.service;
 
 import com.freelance.freelancepm.dto.*;
 import com.freelance.freelancepm.entity.*;
+import com.freelance.freelancepm.entity.InvoiceStatus;
 import com.freelance.freelancepm.exception.ConflictException;
 import com.freelance.freelancepm.exception.NotFoundException;
 import com.freelance.freelancepm.mapper.InvoiceMapper;
 import com.freelance.freelancepm.model.Client;
 import com.freelance.freelancepm.repository.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,7 +52,7 @@ class InvoiceServiceTest {
     private ClientInvoiceSequenceRepository sequenceRepository;
 
     @Mock
-    private EmailService emailService;
+    private EmailDispatcherService emailDispatcherService;
 
     @Mock
     private InvoicePdfService pdfService;
@@ -99,14 +105,14 @@ class InvoiceServiceTest {
         // Arrange
         Integer invoiceId = 1;
         SendInvoiceRequest request = new SendInvoiceRequest(List.of("client@example.com"));
-        
+
         Invoice invoice = new Invoice();
         invoice.setId(invoiceId);
         invoice.setInvoiceNumber("INV-001");
         invoice.setClient(mockClient);
         invoice.setTotal(new BigDecimal("100.00"));
         invoice.setDueDate(LocalDate.now().plusDays(30));
-        
+
         Project project = new Project();
         project.setManagerId(5);
         invoice.setProject(project);
@@ -127,32 +133,21 @@ class InvoiceServiceTest {
         // Act
         invoiceService.sendInvoice(invoiceId, request);
 
-        // Assert
-        verify(emailService, times(1)).sendInvoiceEmail(
-                eq("client@example.com"),
-                eq("John Doe"),
-                eq("INV-001"),
-                eq("100.00"),
-                eq("$"),
+        // Assert: dispatch delegated to EmailDispatcherService
+        verify(emailDispatcherService, times(1)).dispatchInvoices(
+                eq(invoice),
+                eq(manager),
+                eq(List.of("client@example.com")),
                 anyString(),
-                eq("Manager Co"),
-                eq("manager@example.com"),
-                eq("123456789"),
-                eq("http://logo.com"),
-                eq("123 Street"),
-                anyString(),
-                any(),
-                anyString()
-        );
-        assertEquals(Invoice.Status.SENT, invoice.getStatus());
-        verify(invoiceRepository).save(invoice);
+                any(byte[].class),
+                anyString());
     }
 
     @Test
     void create_FinalWithoutItems_ShouldThrowIllegalStateException() {
         InvoiceCreateRequest req = new InvoiceCreateRequest();
         req.setClientId(1);
-        req.setStatus(Invoice.Status.FINAL);
+        req.setStatus(InvoiceStatus.FINAL);
         req.setLineItems(null);
 
         when(clientRepository.findById(1)).thenReturn(Optional.of(mockClient));
@@ -165,12 +160,12 @@ class InvoiceServiceTest {
     void update_FinalInvoice_ShouldThrowIllegalStateException() {
         Invoice existingInvoice = new Invoice();
         existingInvoice.setId(100);
-        existingInvoice.setStatus(Invoice.Status.FINAL);
+        existingInvoice.setStatus(InvoiceStatus.FINAL);
 
         when(invoiceRepository.findById(100)).thenReturn(Optional.of(existingInvoice));
 
         InvoiceUpdateRequest req = new InvoiceUpdateRequest();
-        req.setStatus(Invoice.Status.DRAFT);
+        req.setStatus(InvoiceStatus.DRAFT);
 
         assertThrows(IllegalStateException.class, () -> invoiceService.update(100, req));
     }
@@ -182,5 +177,80 @@ class InvoiceServiceTest {
         item.setUnitPrice(new BigDecimal("100.00"));
         item.setAmount(new BigDecimal("200.00"));
         return item;
+    }
+
+    @Test
+    void listAll_NoFilters_ShouldReturnPageOfInvoices() {
+        // Arrange
+        Invoice invoice1 = new Invoice();
+        invoice1.setId(1);
+        invoice1.setClient(mockClient);
+        invoice1.setTotal(new BigDecimal("100.00"));
+        invoice1.setStatus(InvoiceStatus.DRAFT);
+
+        Invoice invoice2 = new Invoice();
+        invoice2.setId(2);
+        invoice2.setClient(mockClient);
+        invoice2.setTotal(new BigDecimal("200.00"));
+        invoice2.setStatus(InvoiceStatus.FINAL);
+
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Invoice> page = new PageImpl<>(List.of(invoice1, invoice2));
+
+        when(invoiceRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
+
+        // Act
+        Page<InvoiceListDTO> result = invoiceService.listAll(null, null, null, pageable);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(2, result.getTotalElements());
+        assertEquals(1, result.getContent().get(0).getId());
+        assertEquals("John Doe", result.getContent().get(0).getClientName());
+        verify(invoiceRepository).findAll(any(Specification.class), eq(pageable));
+    }
+
+    @Test
+    void listAll_WithFilters_ShouldUseSpecification() {
+        // Arrange
+        Pageable pageable = PageRequest.of(1, 5);
+        Page<Invoice> emptyPage = new PageImpl<>(List.of());
+
+        when(invoiceRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(emptyPage);
+
+        LocalDate startDate = LocalDate.of(2026, 1, 1);
+        LocalDate endDate = LocalDate.of(2026, 1, 31);
+
+        // Act
+        Page<InvoiceListDTO> result = invoiceService.listAll(1, startDate, endDate, pageable);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(0, result.getTotalElements());
+        verify(invoiceRepository).findAll(any(Specification.class), eq(pageable));
+    }
+
+    @Test
+    void listAll_StartDateAfterEndDate_ShouldThrowException() {
+        // Arrange
+        LocalDate startDate = LocalDate.of(2026, 2, 1);
+        LocalDate endDate = LocalDate.of(2026, 1, 31);
+        Pageable pageable = PageRequest.of(0, 10);
+
+        // Act & Assert
+        IllegalArgumentException act = assertThrows(IllegalArgumentException.class,
+                () -> invoiceService.listAll(1, startDate, endDate, pageable));
+        assertEquals("startDate must not be after endDate", act.getMessage());
+    }
+
+    @Test
+    void listAll_EmptyResult_ShouldReturnEmptyPage() {
+        Pageable pageable = PageRequest.of(0, 10);
+        when(invoiceRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(Page.empty());
+
+        Page<InvoiceListDTO> result = invoiceService.listAll(null, null, null, pageable);
+
+        assertTrue(result.isEmpty());
+        assertEquals(0, result.getTotalElements());
     }
 }
