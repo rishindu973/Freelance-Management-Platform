@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useMutation } from '@tanstack/react-query';
-import { Plus, Trash2, Loader2, FileText } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Plus, Trash2, Loader2, FileText, AlertTriangle, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 import { 
@@ -22,6 +22,8 @@ import { useToast } from '@/components/ui/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { InvoiceService } from '@/api/invoiceService';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
 // --- Validation Schemas ---
 const lineItemSchema = z.object({
   description: z.string().min(1, 'Description is required').max(255, 'Description too long'),
@@ -32,10 +34,10 @@ const lineItemSchema = z.object({
 const invoiceSchema = z.object({
   clientId: z.coerce.number().min(1, 'Client ID must be positive'),
   projectId: z.coerce.number().optional(),
-  status: z.enum(['DRAFT', 'FINAL']).default('DRAFT'),
+  status: z.enum(['DRAFT', 'FINAL', 'SENT', 'PAID', 'OVERDUE']).default('DRAFT'),
   lineItems: z.array(lineItemSchema).min(1, 'At least one line item is required'),
 }).refine((data) => {
-  if (data.status === 'FINAL') {
+  if (data.status === 'FINAL' || data.status === 'SENT') {
     return data.lineItems.every(item => (Number(item.quantity) * Number(item.unitPrice)) > 0);
   }
   return true;
@@ -48,24 +50,58 @@ type InvoiceFormValues = z.infer<typeof invoiceSchema>;
 
 const TAX_RATE = 0.10; // 10% tax baseline matching backend
 
-export default function InvoiceForm() {
+interface InvoiceFormProps {
+  initialData?: any;
+}
+
+export default function InvoiceForm({ initialData }: InvoiceFormProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [validatedData, setValidatedData] = useState<InvoiceFormValues | null>(null);
+
+  const isEditMode = !!initialData;
+  const isReadOnly = useMemo(() => {
+    if (!initialData) return false;
+    const restricted = ['SENT', 'PAID', 'OVERDUE', 'PARTIALLY_PAID', 'OVERPAID'];
+    return restricted.includes(initialData.status);
+  }, [initialData]);
+
+  const showFinalizedWarning = initialData?.status === 'FINAL';
 
   const form = useForm<InvoiceFormValues>({
     resolver: zodResolver(invoiceSchema),
     mode: 'onChange',
     defaultValues: {
-      clientId: 0,
-      projectId: undefined,
-      status: 'DRAFT',
-      lineItems: [{ description: '', quantity: 1, unitPrice: 0 }],
+      clientId: initialData?.clientId || 0,
+      projectId: initialData?.projectId || undefined,
+      status: (initialData?.status as any) || 'DRAFT',
+      lineItems: initialData?.lineItems?.map((item: any) => ({
+        description: item.description,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+      })) || [{ description: '', quantity: 1, unitPrice: 0 }],
     },
   });
 
-  const { control, handleSubmit, watch, formState: { isSubmitting, isValid } } = form;
+  const { control, handleSubmit, watch, formState: { isSubmitting, isValid }, reset } = form;
+
+  // Reactively reset form if initialData changes (for example when fetched)
+  useEffect(() => {
+    if (initialData) {
+      reset({
+        clientId: initialData.clientId,
+        projectId: initialData.projectId,
+        status: initialData.status,
+        lineItems: initialData.lineItems.map((item: any) => ({
+          description: item.description,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+        })),
+      });
+    }
+  }, [initialData, reset]);
 
   // Manage Dynamic Array Fields
   const { fields, append, remove } = useFieldArray({
@@ -95,32 +131,46 @@ export default function InvoiceForm() {
     };
   }, [watchLineItems]);
 
-  const createInvoiceMutation = useMutation({
+  const mutation = useMutation({
     mutationFn: async (data: InvoiceFormValues) => {
-      return await InvoiceService.createInvoice(data as any);
+      if (isEditMode) {
+        return await InvoiceService.updateInvoice(initialData.id, {
+          ...data,
+          version: initialData.version // Send current version for optimistic locking
+        } as any);
+      } else {
+        return await InvoiceService.createInvoice(data as any);
+      }
     },
     onSuccess: (data: any) => {
       const invNum = data.invoiceNumber || 'N/A';
       toast({ 
-        title: 'Invoice Created', 
-        description: `Successfully generated invoice: ${invNum}`,
+        title: isEditMode ? 'Invoice Updated' : 'Invoice Created', 
+        description: `Successfully ${isEditMode ? 'updated' : 'generated'} invoice: ${invNum}`,
         action: (
           <Button onClick={() => navigate(`/invoices/${data.id}`)} variant="outline" size="sm">
             View Details
           </Button>
         )
       });
-      form.reset();
+      if (!isEditMode) form.reset();
+      queryClient.invalidateQueries({ queryKey: ['invoice', data.id] });
       setIsPreviewOpen(false);
     },
     onError: (error: any) => {
       const status = error?.response?.status;
-      const message = error?.response?.data?.message || 'Failed to create invoice';
+      const message = error?.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'create'} invoice`;
       
       if (status === 409) {
         toast({
           title: 'Concurrent Update Error',
           description: 'This invoice was modified by another user. Please refresh to see the latest changes.',
+          variant: 'destructive',
+        });
+      } else if (status === 403) {
+        toast({
+          title: 'Permission Denied',
+          description: message,
           variant: 'destructive',
         });
       } else {
@@ -134,13 +184,14 @@ export default function InvoiceForm() {
   });
 
   const onSubmit = (data: InvoiceFormValues) => {
+    if (isReadOnly) return;
     setValidatedData(data);
     setIsPreviewOpen(true);
   };
 
   const onConfirmSave = () => {
     if (validatedData) {
-      createInvoiceMutation.mutate(validatedData);
+      mutation.mutate(validatedData);
     }
   };
 
@@ -149,12 +200,34 @@ export default function InvoiceForm() {
       <CardHeader>
         <CardTitle className="text-2xl flex items-center gap-2">
           <FileText className="h-6 w-6 text-primary" />
-          Create Invoice
+          {isEditMode ? `Edit Invoice #${initialData.invoiceNumber || initialData.id}` : 'Create Invoice'}
         </CardTitle>
-        <CardDescription>Generate and issue a real-time invoice calculation.</CardDescription>
+        <CardDescription>
+          {isEditMode ? 'Modify existing invoice details and line items.' : 'Generate and issue a real-time invoice calculation.'}
+        </CardDescription>
       </CardHeader>
 
       <CardContent>
+        {isReadOnly && (
+          <Alert variant="destructive" className="mb-6 bg-red-50 border-red-200">
+            <AlertCircle className="h-4 w-4 text-red-600" />
+            <AlertTitle className="text-red-800 font-bold">Editing Restricted</AlertTitle>
+            <AlertDescription className="text-red-700">
+              Cannot edit sent invoice. Please create a credit note.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {showFinalizedWarning && !isReadOnly && (
+          <Alert className="mb-6 bg-amber-50 border-amber-200 text-amber-800">
+            <AlertTriangle className="h-4 w-4 text-amber-600" />
+            <AlertTitle className="font-bold">Finalized Invoice</AlertTitle>
+            <AlertDescription>
+              Warning: You are editing a finalized invoice.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             
@@ -167,7 +240,7 @@ export default function InvoiceForm() {
                   <FormItem>
                     <FormLabel>Client ID</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="Client ID" {...field} />
+                      <Input type="number" placeholder="Client ID" {...field} disabled={isReadOnly} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -186,6 +259,7 @@ export default function InvoiceForm() {
                         placeholder="Project ID..." 
                         {...field} 
                         value={field.value || ''} 
+                        disabled={isReadOnly}
                       />
                     </FormControl>
                     <FormMessage />
@@ -198,16 +272,23 @@ export default function InvoiceForm() {
                 name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Initial Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormLabel>Status</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={isReadOnly}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select current status format" />
+                          <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="DRAFT">DRAFT</SelectItem>
                         <SelectItem value="FINAL">FINAL</SelectItem>
+                        {isReadOnly && (
+                          <>
+                            <SelectItem value="SENT">SENT</SelectItem>
+                            <SelectItem value="PAID">PAID</SelectItem>
+                            <SelectItem value="OVERDUE">OVERDUE</SelectItem>
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -217,18 +298,20 @@ export default function InvoiceForm() {
             </div>
 
             {/* Dynamic Items Array Setup */}
-            <div className="mt-8 border rounded-lg p-5 bg-slate-50/50">
+            <div className={`mt-8 border rounded-lg p-5 ${isReadOnly ? 'bg-slate-100/50' : 'bg-slate-50/50'}`}>
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-semibold text-lg text-slate-800">Line Items</h3>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => append({ description: '', quantity: 1, unitPrice: 0 })}
-                  className="gap-2"
-                >
-                  <Plus className="h-4 w-4" /> Add Item
-                </Button>
+                {!isReadOnly && (
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => append({ description: '', quantity: 1, unitPrice: 0 })}
+                    className="gap-2"
+                  >
+                    <Plus className="h-4 w-4" /> Add Item
+                  </Button>
+                )}
               </div>
 
               {fields.length === 0 && (
@@ -256,7 +339,7 @@ export default function InvoiceForm() {
                             <FormItem className="space-y-1">
                               <FormLabel className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Service Reference</FormLabel>
                               <FormControl>
-                                <Input placeholder="Brief task description" className="h-9 text-sm" {...field} />
+                                <Input placeholder="Brief task description" className="h-9 text-sm" {...field} disabled={isReadOnly} />
                               </FormControl>
                               <FormMessage className="text-[10px]" />
                             </FormItem>
@@ -272,7 +355,7 @@ export default function InvoiceForm() {
                             <FormItem className="space-y-1">
                               <FormLabel className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Qty</FormLabel>
                               <FormControl>
-                                <Input type="number" min="1" className="h-9 text-sm" {...field} />
+                                <Input type="number" min="1" className="h-9 text-sm" {...field} disabled={isReadOnly} />
                               </FormControl>
                               <FormMessage className="text-[10px]" />
                             </FormItem>
@@ -288,7 +371,7 @@ export default function InvoiceForm() {
                             <FormItem className="space-y-1">
                               <FormLabel className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Unit Price</FormLabel>
                               <FormControl>
-                                <Input type="number" step="0.01" min="0" className="h-9 text-sm" {...field} />
+                                <Input type="number" step="0.01" min="0" className="h-9 text-sm" {...field} disabled={isReadOnly} />
                               </FormControl>
                               <FormMessage className="text-[10px]" />
                             </FormItem>
@@ -302,17 +385,19 @@ export default function InvoiceForm() {
                         </span>
                       </div>
  
-                      <div className="pt-1 md:pt-[22px] w-full md:w-auto flex justify-end">
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => remove(index)}
-                          className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      {!isReadOnly && (
+                        <div className="pt-1 md:pt-[22px] w-full md:w-auto flex justify-end">
+                          <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => remove(index)}
+                            className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -344,16 +429,18 @@ export default function InvoiceForm() {
             </div>
 
             {/* Final Trigger Execution Check */}
-            <div className="flex justify-end">
-                <Button 
-                type="submit" 
-                className="w-full md:w-auto mt-6 font-semibold"
-                disabled={isSubmitting || !isValid}
-                >
-                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
-                Preview & Validate
-                </Button>
-            </div>
+            {!isReadOnly && (
+              <div className="flex justify-end">
+                  <Button 
+                  type="submit" 
+                  className="w-full md:w-auto mt-6 font-semibold"
+                  disabled={isSubmitting || !isValid}
+                  >
+                  {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+                  {isEditMode ? 'Update & Preview' : 'Preview & Validate'}
+                  </Button>
+              </div>
+            )}
           </form>
         </Form>
 
@@ -364,9 +451,9 @@ export default function InvoiceForm() {
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight uppercase tracking-[0.2em] mb-1">Invoice</h2>
                     <div className="text-lg font-bold mb-2">
-                        Invoice No: [DRAFT]
+                        Invoice No: {initialData?.invoiceNumber || '[DRAFT]'}
                     </div>
-                    <p className="text-slate-400 text-xs font-mono">DATE: {new Date().toLocaleDateString()}</p>
+                    <p className="text-slate-400 text-xs font-mono">DATE: {new Date(initialData?.createdAt || Date.now()).toLocaleDateString()}</p>
                 </div>
                 <div className="text-right">
                     <p className="font-bold text-lg">ANTIGRAVITY SOLUTIONS</p>
@@ -381,7 +468,7 @@ export default function InvoiceForm() {
                    <div>
                         <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Billed To</h4>
                         <div className="space-y-1">
-                            <p className="font-bold text-slate-800">Client Reference: #{validatedData?.clientId}</p>
+                            <p className="font-bold text-slate-800">Client: {initialData?.clientName || `ID #${validatedData?.clientId}`}</p>
                             <p className="text-sm text-slate-500">Detailed Client Information Registered System-wide</p>
                         </div>
                    </div>
@@ -389,8 +476,8 @@ export default function InvoiceForm() {
                         <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Invoice Info</h4>
                         <div className="space-y-1 text-sm font-mono">
                             <p><span className="text-slate-400 pr-2">STATUS:</span> <span className="font-bold text-slate-800 underline decoration-primary decoration-2 underline-offset-4">{validatedData?.status}</span></p>
-                            {validatedData?.projectId && (
-                                <p><span className="text-slate-400 pr-2">PROJECT:</span> #{validatedData.projectId}</p>
+                            {(validatedData?.projectId || initialData?.projectId) && (
+                                <p><span className="text-slate-400 pr-2">PROJECT:</span> #{validatedData?.projectId || initialData?.projectId}</p>
                             )}
                         </div>
                    </div>
@@ -456,13 +543,13 @@ export default function InvoiceForm() {
               <Button 
                 type="button" 
                 onClick={onConfirmSave}
-                disabled={createInvoiceMutation.isPending}
+                disabled={mutation.isPending}
                 className="min-w-[160px]"
               >
-                {createInvoiceMutation.isPending ? (
+                {mutation.isPending ? (
                     <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</>
                 ) : (
-                    "Finalize & Commit"
+                    isEditMode ? "Commit Changes" : "Finalize & Commit"
                 )}
               </Button>
             </DialogFooter>

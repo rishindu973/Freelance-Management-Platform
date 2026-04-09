@@ -35,6 +35,10 @@ public class InvoiceService implements IInvoiceService {
     private final InvoiceMapper invoiceMapper;
     private final EmailDispatcherService emailDispatcherService;
     private final InvoicePdfService pdfService;
+    private final InvoiceEditValidator editValidator;
+    private final InvoiceCalculationService calculationService;
+
+    private boolean regeneratePdfOnUpdate = true; // Configuration flag
 
     @Override
     @Transactional
@@ -59,7 +63,7 @@ public class InvoiceService implements IInvoiceService {
     @Transactional
     public InvoiceResponse update(Integer invoiceId, InvoiceUpdateRequest req) {
         Invoice invoice = findInvoice(invoiceId);
-        ensureDraftStatus(invoice);
+        editValidator.validateEditable(invoice);
 
         if (req.getClientId() != null && !req.getClientId().equals(invoice.getClient().getId())) {
             invoice.setClient(findClient(req.getClientId()));
@@ -75,7 +79,18 @@ public class InvoiceService implements IInvoiceService {
             updateLineItems(invoice, req.getLineItems());
         }
 
-        return saveAndHandleConflict(invoice);
+        InvoiceResponse response = saveAndHandleConflict(invoice);
+
+        if (regeneratePdfOnUpdate) {
+            try {
+                pdfService.generateInvoicePdf(invoice.getId());
+                log.info("PDF regenerated for invoice ID: {}", invoice.getId());
+            } catch (Exception e) {
+                log.error("Failed to automatically regenerate PDF for invoice ID: {}", invoice.getId(), e);
+            }
+        }
+
+        return response;
     }
 
     @Override
@@ -180,7 +195,7 @@ public class InvoiceService implements IInvoiceService {
             validateLineItemRequest(itemReq);
             invoice.addLineItem(invoiceMapper.toLineItemEntity(itemReq));
         }
-        invoice.recalculateTotals();
+        calculationService.recalculateInvoice(invoice);
     }
 
     private InvoiceResponse saveAndHandleConflict(Invoice invoice) {
@@ -225,6 +240,7 @@ public class InvoiceService implements IInvoiceService {
         }
     }
 
+    @Deprecated
     private void ensureDraftStatus(Invoice invoice) {
         if (!InvoiceStatus.DRAFT.equals(invoice.getStatus())) {
             throw new IllegalStateException("Only DRAFT invoices can be updated");
