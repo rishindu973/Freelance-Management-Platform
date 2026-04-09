@@ -11,7 +11,11 @@ import {
   Calendar,
   CreditCard,
   Hash,
-  Loader2
+  Loader2,
+  RefreshCw,
+  CheckCircle2,
+  XCircle,
+  Clock
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -30,6 +34,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
+import { SendInvoiceModal } from '@/components/invoices/SendInvoiceModal';
 
 export default function InvoiceDetail() {
   const { id } = useParams();
@@ -40,25 +45,28 @@ export default function InvoiceDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
+  const [isSendModalOpen, setIsSendModalOpen] = useState(false);
+
+  const fetchInvoice = async () => {
+    try {
+      if (id) {
+        setIsLoading(true);
+        const data = await InvoiceService.getInvoiceById(Number(id));
+        setInvoice(data);
+        const clientData = await ClientService.getClientById(data.clientId);
+        setClient(clientData);
+      }
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Error", description: "Failed to load invoice details.", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchInvoice = async () => {
-      try {
-        if (id) {
-          const data = await InvoiceService.getInvoiceById(Number(id));
-          setInvoice(data);
-          const clientData = await ClientService.getClientById(data.clientId);
-          setClient(clientData);
-        }
-      } catch (error) {
-        console.error(error);
-        toast({ title: "Error", description: "Failed to load invoice details.", variant: "destructive" });
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchInvoice();
-  }, [id, toast]);
+  }, [id]);
 
   const handleDownloadPdf = async () => {
     if (!id || !invoice) return;
@@ -73,29 +81,29 @@ export default function InvoiceDetail() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      
+
       const date = invoice.createdAt ? new Date(invoice.createdAt).toISOString().split('T')[0] : 'N-A';
       const fallbackFilename = `Invoice_${invoice.invoiceNumber || invoice.id}_${client?.name || 'Client'}_${date}.pdf`;
       const finalFilename = serverFilename || fallbackFilename;
-      
+
       link.setAttribute('download', finalFilename);
       document.body.appendChild(link);
       link.click();
-      
+
       link.parentNode?.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
-      toast({ 
-        title: "Download Started", 
+
+      toast({
+        title: "Download Started",
         description: `Your file "${finalFilename}" is being saved.`,
       });
     } catch (error: any) {
       console.error(error);
       const errorMessage = error.response?.data?.message || "Failed to generate PDF. Please try again later.";
-      toast({ 
-        title: "Download Error", 
-        description: errorMessage, 
-        variant: "destructive" 
+      toast({
+        title: "Download Error",
+        description: errorMessage,
+        variant: "destructive"
       });
     } finally {
       setIsDownloading(false);
@@ -127,10 +135,10 @@ export default function InvoiceDetail() {
           <Button variant="outline" size="sm" className="gap-2" onClick={() => window.print()}>
             <Printer className="h-4 w-4" /> Print
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="gap-2 relative overflow-hidden" 
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 relative overflow-hidden"
             onClick={handleDownloadPdf}
             disabled={isDownloading}
           >
@@ -139,9 +147,9 @@ export default function InvoiceDetail() {
                 <Loader2 className="h-4 w-4 animate-spin" />
                 <span>{downloadProgress > 0 ? `${downloadProgress}%` : 'Preparing...'}</span>
                 {downloadProgress > 0 && (
-                   <Progress 
-                    value={downloadProgress} 
-                    className="absolute bottom-0 left-0 right-0 h-0.5 w-full rounded-none" 
+                  <Progress
+                    value={downloadProgress}
+                    className="absolute bottom-0 left-0 right-0 h-0.5 w-full rounded-none"
                   />
                 )}
               </>
@@ -152,11 +160,36 @@ export default function InvoiceDetail() {
               </>
             )}
           </Button>
-          <Button size="sm" className="gap-2">
-            <Mail className="h-4 w-4" /> Send Invoice
-          </Button>
+          {invoice.status === 'FAILED' ? (
+            <Button
+              size="sm"
+              className="gap-2 bg-red-600 hover:bg-red-700 text-white"
+              onClick={() => setIsSendModalOpen(true)}
+            >
+              <RefreshCw className="h-4 w-4" /> Retry Sending
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              className="gap-2"
+              onClick={() => setIsSendModalOpen(true)}
+              disabled={invoice.status === 'SENT'}
+            >
+              <Mail className="h-4 w-4" />
+              {invoice.status === 'SENT' ? 'Already Sent' : 'Send Invoice'}
+            </Button>
+          )}
         </div>
       </div>
+
+      <SendInvoiceModal
+        isOpen={isSendModalOpen}
+        onClose={() => setIsSendModalOpen(false)}
+        invoiceId={Number(id)}
+        invoiceNumber={invoice.invoiceNumber || `Invoice #${invoice.id}`}
+        client={client}
+        onSuccess={fetchInvoice}
+      />
 
       <Card className="max-w-4xl mx-auto shadow-2xl border-slate-200 overflow-hidden bg-white print:shadow-none print:border-none">
         {/* Professional Header */}
@@ -198,12 +231,36 @@ export default function InvoiceDetail() {
                 <CreditCard className="h-3 w-3" /> Payment Info
               </h4>
               <div className="space-y-1 text-sm font-mono flex flex-col items-end">
-                <div className="flex gap-4">
+                <div className="flex gap-4 items-center">
                   <span className="text-slate-400 font-bold uppercase tracking-widest text-[9px]">STATUS:</span>
-                  <Badge variant="outline" className={invoice.status === 'FINAL' ? "bg-slate-900 text-white border-slate-900" : "bg-orange-50 text-orange-600 border-orange-200"}>
-                    {invoice.status}
+                  <Badge variant="outline" className={
+                    invoice.status === 'SENT' ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                      invoice.status === 'FAILED' ? "bg-red-50 text-red-700 border-red-200" :
+                        invoice.status === 'FINAL' ? "bg-slate-900 text-white border-slate-900" :
+                          "bg-orange-50 text-orange-600 border-orange-200"
+                  }>
+                    <span className="flex items-center gap-1">
+                      {invoice.status === 'SENT' && <CheckCircle2 className="h-3 w-3" />}
+                      {invoice.status === 'FAILED' && <XCircle className="h-3 w-3" />}
+                      {invoice.status}
+                    </span>
                   </Badge>
                 </div>
+                {invoice.lastSentAt && (
+                  <div className="flex gap-4 items-center">
+                    <span className="text-slate-400 font-bold uppercase tracking-widest text-[9px]">LAST SENT:</span>
+                    <span className="font-bold text-slate-600 text-xs flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {new Date(invoice.lastSentAt).toLocaleString()}
+                    </span>
+                  </div>
+                )}
+                {invoice.status === 'FAILED' && invoice.failureReason && (
+                  <div className="flex gap-4 items-start mt-1">
+                    <span className="text-red-400 font-bold uppercase tracking-widest text-[9px]">ERROR:</span>
+                    <span className="text-xs text-red-600 font-medium leading-snug">{invoice.failureReason}</span>
+                  </div>
+                )}
                 {invoice.projectId && (
                   <div className="flex gap-4">
                     <span className="text-slate-400 font-bold uppercase tracking-widest text-[9px]">REFERENCE:</span>

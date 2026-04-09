@@ -33,6 +33,7 @@ public class EmailDispatcherService {
             String filename
     ) {
         log.info("Background dispatch started for invoice: {}", invoice.getInvoiceNumber());
+        invoice.setLastSentAt(java.time.LocalDateTime.now());
 
         boolean allSucceeded = true;
         StringBuilder finalFailureReason = new StringBuilder();

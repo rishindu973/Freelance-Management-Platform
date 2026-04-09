@@ -75,6 +75,9 @@ public class Invoice {
     @Column(columnDefinition = "TEXT")
     private String failureReason;
 
+    @Column(name = "last_sent_at")
+    private LocalDateTime lastSentAt;
+
     @CreationTimestamp
     @Column(name = "generated_on", updatable = false)
     private LocalDateTime createdAt;

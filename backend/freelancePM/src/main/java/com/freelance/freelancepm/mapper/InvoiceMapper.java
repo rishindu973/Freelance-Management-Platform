@@ -27,6 +27,8 @@ public class InvoiceMapper {
         response.setVersion(invoice.getVersion());
         response.setInvoiceNumber(invoice.getInvoiceNumber());
         response.setClientName(invoice.getClient().getName());
+        response.setFailureReason(invoice.getFailureReason());
+        response.setLastSentAt(invoice.getLastSentAt());
 
         if (invoice.getLineItems() != null) {
             response.setLineItems(invoice.getLineItems().stream()

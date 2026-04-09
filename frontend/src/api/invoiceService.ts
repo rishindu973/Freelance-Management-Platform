@@ -36,6 +36,8 @@ export interface Invoice {
   invoiceNumber: string;
   sequenceNumber: number;
   year: number;
+  failureReason?: string;
+  lastSentAt?: string;
   lineItems: any[];
 }
 
@@ -80,5 +82,8 @@ export const InvoiceService = {
     }
 
     return { blob: response.data, filename };
+  },
+  sendInvoice: async (id: number, recipients: string[]): Promise<void> => {
+    await apiClient.post(`/api/invoices/${id}/send`, { recipients });
   },
 };
