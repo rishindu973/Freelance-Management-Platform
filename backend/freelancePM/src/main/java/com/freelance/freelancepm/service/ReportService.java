@@ -29,7 +29,9 @@ public class ReportService {
                 startDate.atStartOfDay(),
                 endDate.atTime(23, 59, 59));
 
-        List<Payment> payments = paymentRepository.findByPaymentDateBetween(startDate, endDate);
+        List<Payment> payments = paymentRepository.findByPaymentDateBetween(
+                startDate.atStartOfDay(),
+                endDate.atTime(23, 59, 59));
 
         BigDecimal totalRevenue = payments.stream()
                 .map(Payment::getAmount)
@@ -37,7 +39,7 @@ public class ReportService {
 
         Map<LocalDate, BigDecimal> dailyMap = payments.stream()
                 .collect(Collectors.groupingBy(
-                        Payment::getPaymentDate,
+                        p -> p.getPaymentDate().toLocalDate(),
                         Collectors.reducing(BigDecimal.ZERO, Payment::getAmount, BigDecimal::add)));
 
         List<DailyRevenue> timeline = startDate.datesUntil(endDate.plusDays(1))

@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -30,7 +30,7 @@ public class PaymentService {
         Payment payment = Payment.builder()
                 .invoice(invoice)
                 .amount(amount)
-                .paymentDate(LocalDate.now())
+                .paymentDate(LocalDateTime.now())
                 .status("completed")
                 .build();
 
