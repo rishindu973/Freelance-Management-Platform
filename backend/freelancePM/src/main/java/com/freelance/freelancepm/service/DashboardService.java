@@ -19,6 +19,7 @@ import java.util.Map;
 public class DashboardService implements IDashboardService {
 
     private final ProjectRepository projectRepository;
+    private final ProfitService profitService;
 
     @Override
     public DashboardResponse getDashboard(Integer managerId, int dueSoonDays, int listLimit) {
@@ -53,6 +54,7 @@ public class DashboardService implements IDashboardService {
                 .completedProjects(completed)
                 .overdueProjects(overdue)
                 .dueSoonProjects(dueSoon)
+                .totalIncome(profitService.calculateTotalIncome())
                 .statusBreakdown(breakdown)
                 .upcomingDeadlines(upcoming)
                 .recentCompleted(recentCompleted)
