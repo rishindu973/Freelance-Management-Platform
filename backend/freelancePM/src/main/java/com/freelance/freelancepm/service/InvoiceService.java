@@ -1,40 +1,46 @@
 package com.freelance.freelancepm.service;
 
-import com.freelance.freelancepm.dto.InvoiceCreateRequest;
-import com.freelance.freelancepm.dto.InvoiceLineItemRequest;
-import com.freelance.freelancepm.dto.InvoiceResponse;
-import com.freelance.freelancepm.dto.InvoiceUpdateRequest;
-import com.freelance.freelancepm.entity.Invoice;
-import com.freelance.freelancepm.entity.InvoiceLineItem;
-import com.freelance.freelancepm.entity.Project;
+import com.freelance.freelancepm.dto.*;
+import com.freelance.freelancepm.entity.*;
 import com.freelance.freelancepm.exception.ConflictException;
 import com.freelance.freelancepm.exception.NotFoundException;
 import com.freelance.freelancepm.mapper.InvoiceMapper;
 import com.freelance.freelancepm.model.Client;
-import com.freelance.freelancepm.repository.ClientRepository;
-import com.freelance.freelancepm.repository.InvoiceRepository;
-import com.freelance.freelancepm.repository.ProjectRepository;
-import org.springframework.context.annotation.Lazy;
+import com.freelance.freelancepm.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class InvoiceService implements IInvoiceService {
 
     private final InvoiceRepository invoiceRepository;
     private final ClientRepository clientRepository;
     private final ProjectRepository projectRepository;
+    private final ManagerRepository managerRepository;
+    private final ClientInvoiceSequenceRepository sequenceRepository;
     private final InvoiceMapper invoiceMapper;
+    private final EmailDispatcherService emailDispatcherService;
+    private final InvoicePdfService pdfService;
+    private final InvoiceEditValidator editValidator;
+    private final InvoiceCalculationService calculationService;
+    private final InvoiceStatusTransitionService transitionService;
+    private final PaymentValidationService paymentValidationService;
 
-    @Lazy
-    private final PaymentService paymentService;
+    private boolean regeneratePdfOnUpdate = true; // Configuration flag
 
     @Override
     @Transactional
@@ -45,10 +51,12 @@ public class InvoiceService implements IInvoiceService {
         Invoice invoice = Invoice.builder()
                 .client(client)
                 .project(project)
-                .status(req.getStatus() != null ? req.getStatus() : Invoice.Status.DRAFT)
+                .status(req.getStatus() != null ? req.getStatus() : InvoiceStatus.DRAFT)
                 .lineItems(new ArrayList<>())
+                .year(LocalDate.now().getYear())
                 .build();
 
+        assignInvoiceNumber(invoice);
         updateLineItems(invoice, req.getLineItems());
         return saveAndHandleConflict(invoice);
     }
@@ -57,10 +65,11 @@ public class InvoiceService implements IInvoiceService {
     @Transactional
     public InvoiceResponse update(Integer invoiceId, InvoiceUpdateRequest req) {
         Invoice invoice = findInvoice(invoiceId);
-        ensureDraftStatus(invoice);
+        editValidator.validateEditable(invoice);
 
-        if (req.getClientId() != null) {
+        if (req.getClientId() != null && !req.getClientId().equals(invoice.getClient().getId())) {
             invoice.setClient(findClient(req.getClientId()));
+            assignInvoiceNumber(invoice);
         }
         if (req.getProjectId() != null) {
             invoice.setProject(findProject(req.getProjectId()));
@@ -72,46 +81,170 @@ public class InvoiceService implements IInvoiceService {
             updateLineItems(invoice, req.getLineItems());
         }
 
-        return saveAndHandleConflict(invoice);
+        InvoiceResponse response = saveAndHandleConflict(invoice);
+
+        if (regeneratePdfOnUpdate) {
+            try {
+                pdfService.generateInvoicePdf(invoice.getId());
+                log.info("PDF regenerated for invoice ID: {}", invoice.getId());
+            } catch (Exception e) {
+                log.error("Failed to automatically regenerate PDF for invoice ID: {}", invoice.getId(), e);
+            }
+        }
+
+        return response;
     }
 
     @Override
     public InvoiceResponse getById(Integer invoiceId) {
-        InvoiceResponse response = invoiceMapper.toResponse(findInvoice(invoiceId));
-        response.setRemainingBalance(paymentService.getRemainingBalance(invoiceId));
-        return response;
+        return invoiceMapper.toResponse(findInvoice(invoiceId));
     }
 
     @Override
     public List<InvoiceResponse> list() {
         return invoiceRepository.findAll().stream()
-                .map(invoice -> {
-                    InvoiceResponse response = invoiceMapper.toResponse(invoice);
-                    response.setRemainingBalance(paymentService.getRemainingBalance(invoice.getId()));
-                    return response;
-                })
+                .map(invoiceMapper::toResponse)
                 .toList();
     }
 
-    private void updateLineItems(Invoice invoice, List<InvoiceLineItemRequest> itemRequests) {
-        invoice.getLineItems().clear();
-
-        if (itemRequests != null) {
-            for (InvoiceLineItemRequest itemReq : itemRequests) {
-                validateLineItemRequest(itemReq);
-                invoice.addLineItem(invoiceMapper.toLineItemEntity(itemReq));
-            }
+    @Override
+    @Transactional(readOnly = true)
+    public Page<InvoiceListDTO> listAll(Integer clientId, LocalDate startDate, LocalDate endDate, Pageable pageable) {
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("startDate must not be after endDate");
         }
-        invoice.recalculateTotals();
+
+        Specification<Invoice> spec = Specification.where((root, query, criteriaBuilder) -> criteriaBuilder.conjunction());
+
+        if (clientId != null) {
+            spec = spec.and(InvoiceSpecifications.clientIdEquals(clientId));
+        }
+        if (startDate != null) {
+            spec = spec.and(InvoiceSpecifications.createdOnOrAfter(startDate.atStartOfDay()));
+        }
+        if (endDate != null) {
+            spec = spec.and(InvoiceSpecifications.createdOnOrBefore(endDate.plusDays(1).atStartOfDay()));
+        }
+
+        return invoiceRepository.findAll(spec, pageable)
+                .map(invoiceMapper::toListDTO);
+    }
+
+    @Override
+    @Transactional
+    public void sendInvoice(Integer invoiceId, SendInvoiceRequest request) {
+        Invoice invoice = findInvoice(invoiceId);
+        
+        // Idempotency check: Don't re-send if already SENT (optional: or FAILED if you want to allow retrying failed ones)
+        if (InvoiceStatus.SENT.equals(invoice.getStatus())) {
+            log.warn("Invoice {} is already marked as SENT. Skipping dispatch.", invoiceId);
+            return;
+        }
+
+        log.info("Handing off invoice {} dispatch to async dispatcher", invoiceId);
+
+        // 1. Prepare data for async processing
+        byte[] pdfBytes = pdfService.generateInvoicePdf(invoiceId);
+        String filename = String.format("Invoice_%s.pdf", invoice.getInvoiceNumber());
+
+        Manager manager = null;
+        if (invoice.getProject() != null && invoice.getProject().getManagerId() != null) {
+            manager = managerRepository.findById(invoice.getProject().getManagerId()).orElse(null);
+        }
+
+        if (manager == null) {
+            throw new IllegalStateException("Manager details not found for branding invoice email");
+        }
+
+        String dueDate = invoice.getDueDate() != null ? invoice.getDueDate().format(DateTimeFormatter.ISO_DATE) : "N/A";
+
+        // 2. Dispatch asynchronously
+        emailDispatcherService.dispatchInvoices(
+                invoice,
+                manager,
+                request.getRecipients(),
+                dueDate,
+                pdfBytes,
+                filename
+        );
+    }
+    
+    @Override
+    @Transactional
+    public InvoiceResponse updateStatus(Integer invoiceId, com.freelance.freelancepm.dto.InvoiceStatusUpdateRequest req) {
+        Invoice invoice = findInvoice(invoiceId);
+        
+        // Use a generic "API" user or pull from Spring Security context if available
+        String recordedBy = "system_user"; 
+        
+        if (req.getTargetStatus() == InvoiceStatus.PAID && req.getAmount() != null) {
+            // Hand off to payment validation to record the payment and handle the transition if fully paid
+            com.freelance.freelancepm.entity.Payment manualPayment = com.freelance.freelancepm.entity.Payment.builder()
+                    .amount(req.getAmount())
+                    .paymentDate(java.time.LocalDateTime.now())
+                    .paymentMethod("MANUAL_UPDATE")
+                    .build();
+            paymentValidationService.processPayment(invoice, manualPayment, recordedBy);
+        } else {
+            // Just transition the status directly
+            transitionService.validateAndTransition(invoice, req.getTargetStatus(), recordedBy);
+            invoiceRepository.save(invoice);
+        }
+        
+        return invoiceMapper.toResponse(invoice);
+    }
+
+    @Override
+    @Transactional
+    public void addPayment(Integer invoiceId, com.freelance.freelancepm.dto.PaymentCreateRequest req) {
+        Invoice invoice = findInvoice(invoiceId);
+        
+        com.freelance.freelancepm.entity.Payment payment = com.freelance.freelancepm.entity.Payment.builder()
+                .amount(req.getAmount())
+                .paymentDate(req.getPaymentDate() != null ? req.getPaymentDate() : java.time.LocalDateTime.now())
+                .paymentMethod(req.getPaymentMethod())
+                .referenceNumber(req.getReferenceNumber())
+                .build();
+                
+        paymentValidationService.processPayment(invoice, payment, "system_user");
+    }
+
+    private void assignInvoiceNumber(Invoice invoice) {
+        int year = LocalDate.now().getYear();
+        ClientInvoiceSequence sequence = sequenceRepository.findByClientIdAndYear(invoice.getClient().getId(), year)
+                .orElseGet(() -> ClientInvoiceSequence.builder()
+                        .client(invoice.getClient())
+                        .year(year)
+                        .currentSequence(0)
+                        .build());
+
+        int nextSequence = sequence.getCurrentSequence() + 1;
+        sequence.setCurrentSequence(nextSequence);
+        sequenceRepository.save(sequence);
+
+        invoice.setYear(year);
+        invoice.setSequenceNumber(nextSequence);
+        invoice.setInvoiceNumber(String.format("%s-%d-%04d", 
+                invoice.getClient().getCode(), year, nextSequence));
+    }
+
+    private void updateLineItems(Invoice invoice, List<InvoiceLineItemRequest> itemRequests) {
+        if (itemRequests == null)
+            return;
+
+        invoice.getLineItems().clear();
+        for (InvoiceLineItemRequest itemReq : itemRequests) {
+            validateLineItemRequest(itemReq);
+            invoice.addLineItem(invoiceMapper.toLineItemEntity(itemReq));
+        }
+        calculationService.recalculateInvoice(invoice);
     }
 
     private InvoiceResponse saveAndHandleConflict(Invoice invoice) {
         validateInvoiceBusinessRules(invoice);
         try {
             Invoice saved = invoiceRepository.save(invoice);
-            InvoiceResponse response = invoiceMapper.toResponse(saved);
-            response.setRemainingBalance(paymentService.getRemainingBalance(saved.getId()));
-            return response;
+            return invoiceMapper.toResponse(saved);
         } catch (ObjectOptimisticLockingFailureException ex) {
             throw new ConflictException("The invoice was updated by another user. Please refresh and try again.");
         }
@@ -127,7 +260,7 @@ public class InvoiceService implements IInvoiceService {
             throw new IllegalArgumentException("Project does not belong to the selected client");
         }
 
-        if (Invoice.Status.FINAL.equals(invoice.getStatus())) {
+        if (InvoiceStatus.FINAL.equals(invoice.getStatus())) {
             validateFinalizedInvoice(invoice);
         }
     }
@@ -149,8 +282,9 @@ public class InvoiceService implements IInvoiceService {
         }
     }
 
+    @Deprecated
     private void ensureDraftStatus(Invoice invoice) {
-        if (!Invoice.Status.DRAFT.equals(invoice.getStatus())) {
+        if (!InvoiceStatus.DRAFT.equals(invoice.getStatus())) {
             throw new IllegalStateException("Only DRAFT invoices can be updated");
         }
     }
