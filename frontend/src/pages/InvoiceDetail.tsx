@@ -35,6 +35,7 @@ import {
   BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
 import { SendInvoiceModal } from '@/components/invoices/SendInvoiceModal';
+import { PaymentModal } from '@/components/invoices/PaymentModal';
 
 export default function InvoiceDetail() {
   const { id } = useParams();
@@ -46,6 +47,7 @@ export default function InvoiceDetail() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [isSendModalOpen, setIsSendModalOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   const fetchInvoice = async () => {
     try {
@@ -179,6 +181,26 @@ export default function InvoiceDetail() {
               {invoice.status === 'SENT' ? 'Already Sent' : 'Send Invoice'}
             </Button>
           )}
+
+          {invoice.status !== 'PAID' && invoice.status !== 'DRAFT' && (
+            <Button
+              size="sm"
+              className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+              onClick={() => setIsPaymentModalOpen(true)}
+            >
+              <CreditCard className="h-4 w-4" /> Record Payment
+            </Button>
+          )}
+
+          {invoice.status === 'DRAFT' && (
+            <Button
+              size="sm"
+              className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+              onClick={() => setIsPaymentModalOpen(true)}
+            >
+              <CheckCircle2 className="h-4 w-4" /> Mark as Paid
+            </Button>
+          )}
         </div>
       </div>
 
@@ -188,6 +210,14 @@ export default function InvoiceDetail() {
         invoiceId={Number(id)}
         invoiceNumber={invoice.invoiceNumber || `Invoice #${invoice.id}`}
         client={client}
+        onSuccess={fetchInvoice}
+      />
+
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        invoiceId={Number(id)}
+        totalAmount={invoice.total}
         onSuccess={fetchInvoice}
       />
 

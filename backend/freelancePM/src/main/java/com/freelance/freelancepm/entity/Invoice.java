@@ -93,6 +93,12 @@ public class Invoice {
     @Column(name = "last_sent_at")
     private LocalDateTime lastSentAt;
 
+    @Column(name = "sent_timestamp")
+    private LocalDateTime sentTimestamp;
+
+    @Column(name = "paid_timestamp")
+    private LocalDateTime paidTimestamp;
+
     @CreationTimestamp
     @Column(name = "generated_on", updatable = false)
     private LocalDateTime createdAt;

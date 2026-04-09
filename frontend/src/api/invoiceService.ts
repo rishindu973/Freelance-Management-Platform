@@ -94,9 +94,12 @@ export const InvoiceService = {
     const response = await apiClient.post('/api/invoices', data);
     return response.data;
   },
-  updateInvoiceStatus: async (id: number, status: string): Promise<Invoice> => {
-    const response = await apiClient.patch(`/api/invoices/${id}/status`, { status });
+  updateInvoiceStatus: async (id: number, targetStatus: string, amount?: number): Promise<Invoice> => {
+    const response = await apiClient.patch(`/api/invoices/${id}/status`, { targetStatus, amount });
     return response.data;
+  },
+  addPayment: async (id: number, data: { amount: number; paymentMethod?: string; paymentDate?: string; referenceNumber?: string }): Promise<void> => {
+    await apiClient.post(`/api/invoices/${id}/payments`, data);
   },
   downloadInvoicePdf: async (
     id: number,

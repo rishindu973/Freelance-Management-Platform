@@ -21,6 +21,7 @@ public class EmailDispatcherService {
     private final EmailService emailService;
     private final EmailLogRepository emailLogRepository;
     private final InvoiceRepository invoiceRepository;
+    private final InvoiceStatusTransitionService transitionService;
 
     private static final int MAX_RETRIES = 3;
 
@@ -56,10 +57,11 @@ public class EmailDispatcherService {
         }
 
         if (allSucceeded) {
-            invoice.setStatus(InvoiceStatus.SENT);
+            transitionService.validateAndTransition(invoice, InvoiceStatus.SENT, "system_email_dispatcher");
+            invoice.setSentTimestamp(java.time.LocalDateTime.now());
             invoice.setFailureReason(null);
         } else {
-            invoice.setStatus(InvoiceStatus.FAILED);
+            transitionService.validateAndTransition(invoice, InvoiceStatus.FAILED, "system_email_dispatcher");
             invoice.setFailureReason(finalFailureReason.toString().trim());
         }
 

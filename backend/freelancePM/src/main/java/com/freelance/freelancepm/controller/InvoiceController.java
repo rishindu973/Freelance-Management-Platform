@@ -100,4 +100,19 @@ public class InvoiceController {
         invoiceService.sendInvoice(id, req);
         return ResponseEntity.ok().build();
     }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<InvoiceResponse> updateStatus(
+            @PathVariable("id") Integer id,
+            @Valid @RequestBody com.freelance.freelancepm.dto.InvoiceStatusUpdateRequest req) {
+        return ResponseEntity.ok(invoiceService.updateStatus(id, req));
+    }
+
+    @PostMapping("/{id}/payments")
+    public ResponseEntity<Void> addPayment(
+            @PathVariable("id") Integer id,
+            @Valid @RequestBody com.freelance.freelancepm.dto.PaymentCreateRequest req) {
+        invoiceService.addPayment(id, req);
+        return ResponseEntity.ok().build();
+    }
 }
