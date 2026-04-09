@@ -1,6 +1,7 @@
 package com.freelance.freelancepm.service;
 
 import com.freelance.freelancepm.entity.Invoice;
+import com.freelance.freelancepm.entity.InvoiceStatus;
 import com.freelance.freelancepm.entity.InvoiceLineItem;
 import com.freelance.freelancepm.model.Client;
 import com.freelance.freelancepm.repository.InvoiceLineItemRepository;
@@ -61,7 +62,7 @@ class InvoicePdfServiceTest {
                 .id(invoiceId)
                 .invoiceNumber(invoiceNumber)
                 .client(client)
-                .status(Invoice.Status.FINAL)
+                .status(InvoiceStatus.FINAL)
                 .subtotal(new BigDecimal("100.00"))
                 .tax(new BigDecimal("10.00"))
                 .total(new BigDecimal("110.00"))
@@ -105,7 +106,7 @@ class InvoicePdfServiceTest {
                 .id(invoiceId)
                 .invoiceNumber("INV-MULTI-001")
                 .client(client)
-                .status(Invoice.Status.FINAL)
+                .status(InvoiceStatus.FINAL)
                 .createdAt(LocalDateTime.now())
                 .total(new BigDecimal("1000.00"))
                 .build();
@@ -170,7 +171,7 @@ class InvoicePdfServiceTest {
                 .invoiceNumber("INV-CUSTOM-001")
                 .client(client)
                 .project(project)
-                .status(Invoice.Status.FINAL)
+                .status(InvoiceStatus.FINAL)
                 .createdAt(LocalDateTime.now())
                 .total(new BigDecimal("500.00"))
                 .build();

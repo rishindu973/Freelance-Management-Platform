@@ -9,6 +9,9 @@ import com.freelance.freelancepm.model.Client;
 import com.freelance.freelancepm.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,7 +45,7 @@ public class InvoiceService implements IInvoiceService {
         Invoice invoice = Invoice.builder()
                 .client(client)
                 .project(project)
-                .status(req.getStatus() != null ? req.getStatus() : Invoice.Status.DRAFT)
+                .status(req.getStatus() != null ? req.getStatus() : InvoiceStatus.DRAFT)
                 .lineItems(new ArrayList<>())
                 .year(LocalDate.now().getYear())
                 .build();
@@ -88,12 +91,35 @@ public class InvoiceService implements IInvoiceService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<InvoiceListDTO> listAll(Integer clientId, LocalDate startDate, LocalDate endDate, Pageable pageable) {
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("startDate must not be after endDate");
+        }
+
+        Specification<Invoice> spec = Specification.where((root, query, criteriaBuilder) -> criteriaBuilder.conjunction());
+
+        if (clientId != null) {
+            spec = spec.and(InvoiceSpecifications.clientIdEquals(clientId));
+        }
+        if (startDate != null) {
+            spec = spec.and(InvoiceSpecifications.createdOnOrAfter(startDate.atStartOfDay()));
+        }
+        if (endDate != null) {
+            spec = spec.and(InvoiceSpecifications.createdOnOrBefore(endDate.plusDays(1).atStartOfDay()));
+        }
+
+        return invoiceRepository.findAll(spec, pageable)
+                .map(invoiceMapper::toListDTO);
+    }
+
+    @Override
     @Transactional
     public void sendInvoice(Integer invoiceId, SendInvoiceRequest request) {
         Invoice invoice = findInvoice(invoiceId);
         
         // Idempotency check: Don't re-send if already SENT (optional: or FAILED if you want to allow retrying failed ones)
-        if (Invoice.Status.SENT.equals(invoice.getStatus())) {
+        if (InvoiceStatus.SENT.equals(invoice.getStatus())) {
             log.warn("Invoice {} is already marked as SENT. Skipping dispatch.", invoiceId);
             return;
         }
@@ -177,7 +203,7 @@ public class InvoiceService implements IInvoiceService {
             throw new IllegalArgumentException("Project does not belong to the selected client");
         }
 
-        if (Invoice.Status.FINAL.equals(invoice.getStatus())) {
+        if (InvoiceStatus.FINAL.equals(invoice.getStatus())) {
             validateFinalizedInvoice(invoice);
         }
     }
@@ -200,7 +226,7 @@ public class InvoiceService implements IInvoiceService {
     }
 
     private void ensureDraftStatus(Invoice invoice) {
-        if (!Invoice.Status.DRAFT.equals(invoice.getStatus())) {
+        if (!InvoiceStatus.DRAFT.equals(invoice.getStatus())) {
             throw new IllegalStateException("Only DRAFT invoices can be updated");
         }
     }

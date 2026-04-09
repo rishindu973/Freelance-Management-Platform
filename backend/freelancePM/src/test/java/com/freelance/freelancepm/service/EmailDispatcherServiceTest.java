@@ -2,6 +2,7 @@ package com.freelance.freelancepm.service;
 
 import com.freelance.freelancepm.entity.EmailLog;
 import com.freelance.freelancepm.entity.Invoice;
+import com.freelance.freelancepm.entity.InvoiceStatus;
 import com.freelance.freelancepm.entity.Manager;
 import com.freelance.freelancepm.entity.User;
 import com.freelance.freelancepm.model.Client;
@@ -51,7 +52,7 @@ class EmailDispatcherServiceTest {
         mockInvoice.setInvoiceNumber("INV-2026-0001");
         mockInvoice.setClient(client);
         mockInvoice.setTotal(new BigDecimal("500.00"));
-        mockInvoice.setStatus(Invoice.Status.FINAL);
+        mockInvoice.setStatus(InvoiceStatus.FINAL);
 
         mockManager = new Manager();
         mockManager.setCompanyName("Manager Co");
@@ -93,7 +94,7 @@ class EmailDispatcherServiceTest {
         assertEquals(1, logCaptor.getValue().getAttemptNumber());
 
         // Assert: invoice marked SENT
-        assertEquals(Invoice.Status.SENT, mockInvoice.getStatus());
+        assertEquals(InvoiceStatus.SENT, mockInvoice.getStatus());
         assertNull(mockInvoice.getFailureReason());
         assertNotNull(mockInvoice.getLastSentAt());
     }
@@ -122,7 +123,7 @@ class EmailDispatcherServiceTest {
                 log.getStatus() == EmailLog.LogStatus.SUCCESS
         ));
 
-        assertEquals(Invoice.Status.SENT, mockInvoice.getStatus());
+        assertEquals(InvoiceStatus.SENT, mockInvoice.getStatus());
     }
 
     // ── Single Recipient: Failure After 3 Retries ─────────────────────
@@ -164,7 +165,7 @@ class EmailDispatcherServiceTest {
         }
 
         // Assert: invoice marked FAILED with reason
-        assertEquals(Invoice.Status.FAILED, mockInvoice.getStatus());
+        assertEquals(InvoiceStatus.FAILED, mockInvoice.getStatus());
         assertTrue(mockInvoice.getFailureReason().contains("bad@test.com"));
     }
 
@@ -207,7 +208,7 @@ class EmailDispatcherServiceTest {
         assertEquals(EmailLog.LogStatus.SUCCESS, logs.get(2).getStatus());
 
         // Assert: invoice marked SENT (partial retry succeeded)
-        assertEquals(Invoice.Status.SENT, mockInvoice.getStatus());
+        assertEquals(InvoiceStatus.SENT, mockInvoice.getStatus());
     }
 
     // ── Mixed: One Recipient Succeeds, One Fails ──────────────────────
@@ -242,7 +243,7 @@ class EmailDispatcherServiceTest {
         );
 
         // Assert: FAILED status since not all succeeded
-        assertEquals(Invoice.Status.FAILED, mockInvoice.getStatus());
+        assertEquals(InvoiceStatus.FAILED, mockInvoice.getStatus());
         assertTrue(mockInvoice.getFailureReason().contains("bad@test.com"));
     }
 

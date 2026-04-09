@@ -2,6 +2,7 @@ package com.freelance.freelancepm.mapper;
 
 import com.freelance.freelancepm.dto.InvoiceLineItemRequest;
 import com.freelance.freelancepm.dto.InvoiceLineItemResponse;
+import com.freelance.freelancepm.dto.InvoiceListDTO;
 import com.freelance.freelancepm.dto.InvoiceResponse;
 import com.freelance.freelancepm.entity.Invoice;
 import com.freelance.freelancepm.entity.InvoiceLineItem;
@@ -13,12 +14,29 @@ import java.util.stream.Collectors;
 @Component
 public class InvoiceMapper {
 
+    public InvoiceListDTO toListDTO(Invoice invoice) {
+        return InvoiceListDTO.builder()
+                .id(invoice.getId())
+                .invoiceNumber(invoice.getInvoiceNumber())
+                .clientName(invoice.getClient().getName())
+                .issueDate(invoice.getCreatedAt())
+                .totalAmount(invoice.getTotal())
+                .status(invoice.getStatus())
+                .displayStatus(invoice.getStatus() != null
+                        ? invoice.getStatus().getDisplayStatus()
+                        : null)
+                .build();
+    }
+
     public InvoiceResponse toResponse(Invoice invoice) {
         InvoiceResponse response = new InvoiceResponse();
         response.setId(invoice.getId());
         response.setClientId(invoice.getClient().getId());
         response.setProjectId(invoice.getProject() != null ? invoice.getProject().getId() : null);
         response.setStatus(invoice.getStatus());
+        response.setDisplayStatus(invoice.getStatus() != null
+                ? invoice.getStatus().getDisplayStatus()
+                : null);
         response.setSubtotal(invoice.getSubtotal());
         response.setTax(invoice.getTax());
         response.setTotal(invoice.getTotal());

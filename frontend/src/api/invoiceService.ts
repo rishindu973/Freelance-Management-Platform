@@ -1,5 +1,37 @@
 import apiClient from './axiosClient';
 
+export interface PageResponse<T> {
+  content: T[];
+  pageable: {
+    sort: { empty: boolean; sorted: boolean; unsorted: boolean };
+    offset: number;
+    pageNumber: number;
+    pageSize: number;
+    unpaged: boolean;
+    paged: boolean;
+  };
+  last: boolean;
+  totalPages: number;
+  totalElements: number;
+  size: number;
+  number: number;
+  sort: { empty: boolean; sorted: boolean; unsorted: boolean };
+  numberOfElements: number;
+  first: boolean;
+  empty: boolean;
+}
+
+export interface InvoiceListDTO {
+  id: number;
+  invoiceNumber: string;
+  clientId: number;
+  clientName: string;
+  total: number;
+  createdAt: string;
+  status: string;
+  displayStatus: string;
+}
+
 export interface InvoiceCreateRequest {
   clientId: number;
   projectId?: number;
@@ -42,8 +74,16 @@ export interface Invoice {
 }
 
 export const InvoiceService = {
-  getAllInvoices: async (): Promise<Invoice[]> => {
-    const response = await apiClient.get('/api/invoices');
+  getAllInvoices: async (params?: {
+    clientId?: number;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    size?: number;
+    sortBy?: string;
+    direction?: string;
+  }): Promise<PageResponse<InvoiceListDTO>> => {
+    const response = await apiClient.get('/api/invoices', { params });
     return response.data;
   },
   getInvoiceById: async (id: number): Promise<Invoice> => {

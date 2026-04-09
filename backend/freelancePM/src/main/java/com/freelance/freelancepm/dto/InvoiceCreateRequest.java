@@ -1,6 +1,6 @@
 package com.freelance.freelancepm.dto;
 
-import com.freelance.freelancepm.entity.Invoice;
+import com.freelance.freelancepm.entity.InvoiceStatus;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -20,7 +20,7 @@ public class InvoiceCreateRequest {
     @Positive(message = "Project ID must be positive")
     private Integer projectId;
 
-    private Invoice.Status status;
+    private InvoiceStatus status;
 
     private BigDecimal subtotal;
     private BigDecimal tax;
