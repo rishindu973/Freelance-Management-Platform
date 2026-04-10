@@ -84,7 +84,8 @@ export default function Invoices() {
         lineItems: [{
           description: newInvoice.description || "Service",
           quantity: 1,
-          unitPrice: newInvoice.total || 0
+          unitPrice: newInvoice.total || 0,
+          amount: newInvoice.total || 0
         }]
       } as InvoiceCreateRequest;
       await InvoiceService.createInvoice(payload);

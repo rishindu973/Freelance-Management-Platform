@@ -22,6 +22,8 @@ public class InvoiceCreateRequest {
 
     private InvoiceStatus status;
 
+    private java.time.LocalDate dueDate;
+
     private BigDecimal subtotal;
     private BigDecimal tax;
     private BigDecimal total;

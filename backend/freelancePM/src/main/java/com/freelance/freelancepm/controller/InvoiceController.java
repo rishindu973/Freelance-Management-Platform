@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -59,14 +58,14 @@ public class InvoiceController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "date") String sortBy,
             @RequestParam(defaultValue = "desc") String direction) {
-        
+
         Sort.Direction sortDirection = direction.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
         String sortProperty = switch (sortBy.toLowerCase()) {
             case "amount" -> "total";
             case "client" -> "client.name";
             default -> "createdAt"; // default to date
         };
-        
+
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortProperty));
 
         return ResponseEntity.ok(invoiceService.listAll(clientId, startDate, endDate, pageable));

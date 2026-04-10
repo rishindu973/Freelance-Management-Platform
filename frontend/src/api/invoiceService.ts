@@ -50,6 +50,7 @@ export interface InvoiceLineItemRequest {
   description: string;
   quantity: number;
   unitPrice: number;
+  amount: number;
 }
 
 export interface Invoice {

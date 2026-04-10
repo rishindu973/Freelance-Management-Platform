@@ -155,4 +155,5 @@
         </plugins>
     </build>
 
+    <!-- IDE Language Server Reload Trigger -->
 </project>

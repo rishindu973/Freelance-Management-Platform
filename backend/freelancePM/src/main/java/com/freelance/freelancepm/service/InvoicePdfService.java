@@ -46,7 +46,7 @@ public class InvoicePdfService {
 
         try (PDDocument document = new PDDocument()) {
             PdfStyle style = (manager != null) ? PdfStyle.fromManager(manager) : PdfStyle.defaultStyle();
-            
+
             try (PdfGenerationContext context = new PdfGenerationContext(document, style)) {
                 invoicePdfLayout.drawHeader(context, invoice, manager, logoBytes);
                 invoicePdfLayout.drawInvoiceInfo(context, invoice);
@@ -73,7 +73,8 @@ public class InvoicePdfService {
         int totalPages = document.getNumberOfPages();
         for (int i = 0; i < totalPages; i++) {
             PDPage page = document.getPage(i);
-            try (PDPageContentStream contentStream = new PDPageContentStream(document, page, PDPageContentStream.AppendMode.APPEND, true, true)) {
+            try (PDPageContentStream contentStream = new PDPageContentStream(document, page,
+                    PDPageContentStream.AppendMode.APPEND, true, true)) {
                 contentStream.beginText();
                 contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8);
                 // Position at bottom right
@@ -87,7 +88,8 @@ public class InvoicePdfService {
     }
 
     private byte[] fetchLogoBytes(String logoUrl) {
-        if (logoUrl == null || logoUrl.isEmpty()) return null;
+        if (logoUrl == null || logoUrl.isEmpty())
+            return null;
         try {
             java.net.URL url = new java.net.URL(logoUrl);
             try (java.io.InputStream in = url.openStream()) {
