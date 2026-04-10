@@ -21,4 +21,9 @@ export const FreelancerPortalService = {
         const response = await apiClient.get("/api/freelancer/profile");
         return response.data;
     },
+
+    updateAvailability: async (status: string): Promise<{ message: string; status: string }> => {
+        const response = await apiClient.patch('/api/freelancer/availability', { status });
+        return response.data;
+    },
 };

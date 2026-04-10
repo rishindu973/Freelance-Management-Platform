@@ -1,6 +1,7 @@
 package com.freelance.freelancepm.controller;
 
 import com.freelance.freelancepm.dto.DashboardResponse;
+import com.freelance.freelancepm.dto.WorkSummaryResponse;
 import com.freelance.freelancepm.service.IDashboardService;
 import com.freelance.freelancepm.service.IManagerService;
 import lombok.RequiredArgsConstructor;
@@ -31,5 +32,11 @@ public class DashboardController {
             @RequestParam(value = "limit", defaultValue = "5") int limit) {
         Integer managerId = requireManagerId(principal);
         return ResponseEntity.ok(dashboardService.getDashboard(managerId, dueSoonDays, limit));
+    }
+
+    @GetMapping("/work-summary")
+    public ResponseEntity<WorkSummaryResponse> getWorkSummary(java.security.Principal principal) {
+        Integer managerId = requireManagerId(principal);
+        return ResponseEntity.ok(dashboardService.getWorkSummary(managerId));
     }
 }

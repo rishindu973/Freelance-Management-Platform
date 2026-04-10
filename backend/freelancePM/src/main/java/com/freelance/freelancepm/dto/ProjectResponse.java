@@ -11,6 +11,7 @@ import java.time.LocalDate;
 public class ProjectResponse {
     private Integer id;
     private Integer clientId;
+    private String clientName;
     private Integer managerId;
     private String name;
     private String description;

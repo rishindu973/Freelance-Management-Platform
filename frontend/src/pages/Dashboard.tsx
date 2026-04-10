@@ -29,16 +29,9 @@ import { DashboardService, DashboardResponse } from "@/api/dashboardService";
 import { format } from "date-fns";
 import { NearDeadlineProjects } from "@/components/dashboard/NearDeadlineProjects";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
+import { WorkSummaryWidget } from "@/components/dashboard/WorkSummaryWidget";
 
-// Mock revenue data since backend does not track invoices yet
-const revenueData = [
-  { month: "Jul", income: 12000, expenses: 5200 },
-  { month: "Aug", income: 14500, expenses: 5800 },
-  { month: "Sep", income: 13200, expenses: 5400 },
-  { month: "Oct", income: 15800, expenses: 6100 },
-  { month: "Nov", income: 16400, expenses: 5900 },
-  { month: "Dec", income: 18400, expenses: 6200 },
-];
+import { FinanceCharts } from "@/components/dashboard/FinanceCharts";
 
 const Dashboard = () => {
   const [data, setData] = useState<DashboardResponse | null>(null);
@@ -119,34 +112,14 @@ const Dashboard = () => {
         ))}
       </div>
 
-      {/* Charts row */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        {/* Revenue chart */}
-        <div className="col-span-2 rounded-xl border bg-card p-5 shadow-sm">
-          <h3 className="text-sm font-medium text-foreground">Income vs Expenses</h3>
-          <p className="mt-0.5 text-xs text-muted-foreground">Last 6 months</p>
-          <div className="mt-4 h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={revenueData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(36, 14%, 89%)" />
-                <XAxis dataKey="month" tick={{ fontSize: 12, fill: "hsl(0, 0%, 42%)" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 12, fill: "hsl(0, 0%, 42%)" }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v / 1000}k`} />
-                <Tooltip
-                  contentStyle={{
-                    background: "hsl(0, 0%, 100%)",
-                    border: "1px solid hsl(36, 14%, 89%)",
-                    borderRadius: "8px",
-                    fontSize: 12,
-                  }}
-                  formatter={(value: number) => [`$${value.toLocaleString()}`, undefined]}
-                />
-                <Line type="monotone" dataKey="income" stroke="hsl(140, 25%, 48%)" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="expenses" stroke="hsl(0, 45%, 55%)" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+      {/* Finance Charts */}
+      <FinanceCharts />
 
+      {/* Project row */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="col-span-2">
+            <NearDeadlineProjects />
+        </div>
         {/* Project status pie */}
         <div className="rounded-xl border bg-card p-5 shadow-sm">
           <h3 className="text-sm font-medium text-foreground">Project Status</h3>
@@ -183,7 +156,7 @@ const Dashboard = () => {
 
       {/* Module rows */}
       <div className="grid gap-4 lg:grid-cols-2 lg:h-[450px]">
-        <NearDeadlineProjects />
+        <WorkSummaryWidget />
         <ActivityFeed />
       </div>
 

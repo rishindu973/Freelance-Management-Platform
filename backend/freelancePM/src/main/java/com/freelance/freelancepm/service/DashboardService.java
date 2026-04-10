@@ -3,6 +3,7 @@ package com.freelance.freelancepm.service;
 import com.freelance.freelancepm.entity.Project;
 import com.freelance.freelancepm.dto.DashboardResponse;
 import com.freelance.freelancepm.dto.ProjectResponse;
+import com.freelance.freelancepm.dto.WorkSummaryResponse;
 import com.freelance.freelancepm.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -59,6 +60,52 @@ public class DashboardService implements IDashboardService {
                 .upcomingDeadlines(upcoming)
                 .recentCompleted(recentCompleted)
                 .pendingWork(pendingWork)
+                .build();
+    }
+
+    @Override
+    public WorkSummaryResponse getWorkSummary(Integer managerId) {
+        LocalDate today = LocalDate.now();
+        LocalDate startThisMonth = today.withDayOfMonth(1);
+        LocalDate endThisMonth = today.withDayOfMonth(today.lengthOfMonth());
+        
+        LocalDate startLastMonth = startThisMonth.minusMonths(1);
+        LocalDate endLastMonth = startThisMonth.minusDays(1);
+
+        long completedThisMonth = projectRepository.countCompletedInPeriod(managerId, startThisMonth, endThisMonth);
+        long completedLastMonth = projectRepository.countCompletedInPeriod(managerId, startLastMonth, endLastMonth);
+        long pendingThisMonth = projectRepository.countPendingInPeriod(managerId, startThisMonth, endThisMonth);
+        long pendingLastMonth = projectRepository.countPendingInPeriod(managerId, startLastMonth, endLastMonth);
+
+        double completedGrowth = 0.0;
+        if (completedLastMonth > 0) {
+            completedGrowth = ((double) (completedThisMonth - completedLastMonth) / completedLastMonth) * 100;
+        } else if (completedThisMonth > 0) {
+            completedGrowth = 100.0;
+        }
+
+        double pendingGrowth = 0.0;
+        if (pendingLastMonth > 0) {
+            pendingGrowth = ((double) (pendingThisMonth - pendingLastMonth) / pendingLastMonth) * 100;
+        } else if (pendingThisMonth > 0) {
+            pendingGrowth = 100.0;
+        }
+
+        List<ProjectResponse> completedProjects = projectRepository.findCompletedInPeriod(managerId, startThisMonth, endThisMonth)
+                .stream().map(this::toResponse).toList();
+                
+        List<ProjectResponse> pendingProjects = projectRepository.findPendingNearDeadlineInPeriod(managerId, startThisMonth, endThisMonth, PageRequest.of(0, 10))
+                .stream().map(this::toResponse).toList();
+
+        return WorkSummaryResponse.builder()
+                .completedThisMonth(completedThisMonth)
+                .completedLastMonth(completedLastMonth)
+                .completedGrowthPercentage(completedGrowth)
+                .completedProjectsThisMonth(completedProjects)
+                .pendingThisMonth(pendingThisMonth)
+                .pendingLastMonth(pendingLastMonth)
+                .pendingGrowthPercentage(pendingGrowth)
+                .pendingProjectsNearDeadline(pendingProjects)
                 .build();
     }
 

@@ -4,10 +4,9 @@ import { FreelancerPortalService } from "@/api/freelancerPortalService";
 import { ProjectResponse } from "@/api/projectService";
 import {
     Briefcase, Calendar, Clock, CheckCircle2, Circle,
-    ArrowRight, Search, Filter
+    ArrowRight, Search, Filter, User
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
@@ -34,7 +33,8 @@ export default function FreelancerProjects() {
         if (searchTerm) {
             result = result.filter(p =>
                 p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                p.description?.toLowerCase().includes(searchTerm.toLowerCase())
+                p.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                p.clientName?.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
 
@@ -63,6 +63,8 @@ export default function FreelancerProjects() {
         if (!deadlineDate) return null;
         const daysLeft = differenceInDays(new Date(deadlineDate), new Date());
         if (daysLeft < 0) return { color: "text-red-600", text: `Overdue by ${Math.abs(daysLeft)} days` };
+        if (daysLeft <= 3) return { color: "text-red-600", text: `${daysLeft} days remaining` };
+        if (daysLeft <= 7) return { color: "text-orange-600", text: `${daysLeft} days remaining` };
         return { color: "text-gray-600", text: `${daysLeft} days remaining` };
     };
 
@@ -135,6 +137,13 @@ export default function FreelancerProjects() {
                                 <h3 className="text-lg font-bold text-gray-900 group-hover:text-primary transition-colors mb-2">
                                     {project.name}
                                 </h3>
+
+                                {project.clientName && (
+                                    <div className="flex items-center gap-1.5 text-sm text-gray-500 mb-2">
+                                        <User className="w-3.5 h-3.5" />
+                                        <span>Client: <span className="font-medium text-gray-700">{project.clientName}</span></span>
+                                    </div>
+                                )}
 
                                 <p className="text-sm text-gray-500 line-clamp-2 mb-4 flex-1">
                                     {project.description || "No description provided."}
