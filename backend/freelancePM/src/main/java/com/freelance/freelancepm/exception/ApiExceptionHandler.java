@@ -67,4 +67,11 @@ public class ApiExceptionHandler {
                 "error", "BAD_REQUEST",
                 "message", ex.getMessage()));
     }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalState(IllegalStateException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "error", "BAD_REQUEST",
+                "message", ex.getMessage()));
+    }
 }

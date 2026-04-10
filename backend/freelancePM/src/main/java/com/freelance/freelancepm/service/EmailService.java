@@ -1,35 +1,34 @@
 package com.freelance.freelancepm.service;
 
-import com.sendgrid.*;
-import com.sendgrid.helpers.mail.Mail;
-import com.sendgrid.helpers.mail.objects.Content;
-import com.sendgrid.helpers.mail.objects.Email;
 import com.freelance.freelancepm.email.EmailTemplateService;
+import com.freelance.freelancepm.exception.EmailException;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import java.io.IOException;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class EmailService implements IEmailService {
+
+    private final JavaMailSender mailSender;
     private final EmailTemplateService templateService;
 
-    @Value("${sendgrid.api.key}")
-    private String apiKey;
-
-    @Value("${sendgrid.from.email}")
+    @Value("${mail.from:noreply@freelanceflow.com}")
     private String fromEmail;
 
     @Override
     public void sendWelcomeEmail(String to, String temporaryPassword) {
         String body = templateService.welcomeTemplate(to, temporaryPassword);
-
         try {
             sendEmail(to, "Your FreelanceFlow Credentials", body);
-        } catch (Exception e) {
-            // Log missing SMTP server configuration exception, but don't crash the server.
-            System.err.println("Could not send welcome email to " + to + ". Check your SMTP config.");
+        } catch (EmailException e) {
+            System.err.println("Could not send welcome email to " + to + ". " + e.getMessage());
             System.err.println("Raw password for testing: " + temporaryPassword);
         }
     }
@@ -51,8 +50,8 @@ public class EmailService implements IEmailService {
 
         try {
             sendEmail(to, "Password Reset Request", body);
-        } catch (Exception e) {
-            System.err.println("Could not send reset email to " + to + ". Check your SMTP config.");
+        } catch (EmailException e) {
+            System.err.println("Could not send reset email to " + to + ". " + e.getMessage());
             System.err.println("Reset token for testing: " + resetToken);
         }
     }
@@ -70,62 +69,89 @@ public class EmailService implements IEmailService {
 
         try {
             sendEmail(to, "Verify Your FreelanceFlow Account", body);
-        } catch (Exception e) {
-            System.err.println("Could not send verification email to " + to + ". Check your SMTP config.");
+        } catch (EmailException e) {
+            System.err.println("Could not send verification email to " + to + ". " + e.getMessage());
             System.err.println("Verification token for testing: " + token);
         }
+    }
+
+    @Override
+    public void sendInvoiceEmail(List<String> toEmails, String subject, String body, byte[] pdfBytes, String filename) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(toEmails.toArray(new String[0]));
+            helper.setSubject(subject);
+            helper.setText(body, true);
+
+            helper.addAttachment(filename, new ByteArrayResource(pdfBytes));
+
+            mailSender.send(message);
+            System.out.println("Invoice email sent successfully to: " + toEmails);
+        } catch (Exception e) {
+            throw new EmailException("Failed to send invoice email with attachment", e);
+        }
+    }
+
+    @Override
+    public void sendInvoiceEmail(
+            String toEmail,
+            String clientName,
+            String invoiceNumber,
+            String amount,
+            String currencySymbol,
+            String dueDate,
+            String managerCompanyName,
+            String managerEmail,
+            String managerPhone,
+            String managerLogoUrl,
+            String managerAddress,
+            String paymentInstructions,
+            byte[] pdfBytes,
+            String filename
+    ) {
+        String subject = "Invoice " + invoiceNumber + " from " + managerCompanyName;
+        String body = templateService.generateInvoiceEmailBody(
+                clientName,
+                invoiceNumber,
+                amount,
+                currencySymbol,
+                dueDate,
+                managerCompanyName,
+                managerEmail,
+                managerPhone,
+                managerLogoUrl,
+                managerAddress,
+                paymentInstructions
+        );
+        sendInvoiceEmail(List.of(toEmail), subject, body, pdfBytes, filename);
     }
 
     public void sendTaskAssignmentEmail(String to, String name, String task) {
         String body = templateService.taskTemplate(name, task);
         try {
             sendEmail(to, "New Task Assigned", body);
-        } catch (Exception e) {
-            System.err.println("Could not send task assignment email to " + to + ". Check your SMTP config.");
+        } catch (EmailException e) {
+            System.err.println("Could not send task assignment email to " + to + ". " + e.getMessage());
         }
     }
 
     public void sendEmail(String to, String subject, String htmlContent) {
-        Email from = new Email(fromEmail);
-        Email reciptent = new Email(to);
-        Content content = new Content("text/html", htmlContent);
-        Mail mail = new Mail(from, subject, reciptent, content);
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
 
-        SendGrid sg = new SendGrid(apiKey);
-        Request request = new Request();
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(htmlContent, true);
 
-        int maxRetries = 3;
-        for (int attempt = 1; attempt <= maxRetries; attempt++) {
-            try {
-                request.setMethod(Method.POST);
-                request.setEndpoint("mail/send");
-                request.setBody(mail.build());
-
-                Response response = sg.api(request);
-
-                if (response.getStatusCode() >= 200 && response.getStatusCode() < 300) {
-                    System.out.println("Email sent successfully to: " + to);
-                    return;
-                }
-                System.err.println("Attempt: " + attempt + " to send email to " + to + " Failed! " + "Status: "
-                        + response.getStatusCode());
-            } catch (IOException e) {
-                System.err.println("Attempt " + attempt + " error: " + e.getMessage());
-            }
-
-            // Exponential backoff
-            if (attempt < maxRetries) {
-                try {
-                    long sleepTime = (long) (Math.pow(2, attempt) * 1000);
-                    System.err.println("Retrying in " + sleepTime + "ms...");
-                    Thread.sleep(sleepTime);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    System.err.println("Email retry thread interrupted: " + ie.getMessage());
-                    break;
-                }
-            }
+            mailSender.send(message);
+            System.out.println("Email sent successfully to: " + to);
+        } catch (Exception e) {
+            throw new EmailException("Failed to send email to " + to, e);
         }
-        System.err.println("Failed to send email to " + to + " after " + maxRetries + " attempts.");
     }
 }

@@ -66,7 +66,7 @@ const Dashboard = () => {
     { label: "Total Projects", value: data.totalProjects, change: "All time", icon: FolderPlus, positive: true },
     { label: "Active", value: data.activeProjects, change: "In progress", icon: TrendingUp, positive: true },
     { label: "Completed", value: data.completedProjects, change: "Finished", icon: CheckCircle2, positive: true },
-    { label: "Pending", value: data.pendingProjects, change: "Awaiting start", icon: Clock, positive: false },
+    { label: "Total Income", value: data.totalIncome ? `$${data.totalIncome.toLocaleString()}` : "$0", change: "From paid invoices", icon: DollarSign, positive: true },
   ];
 
   const projectStatus = [

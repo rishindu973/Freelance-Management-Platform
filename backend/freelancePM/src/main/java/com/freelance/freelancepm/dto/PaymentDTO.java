@@ -1,0 +1,18 @@
+package com.freelance.freelancepm.dto;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+import lombok.Builder;
+import lombok.Data;
+
+@Data
+@Builder
+public class PaymentDTO {
+    private Integer id;
+    private Integer invoiceId;
+    private BigDecimal amount;
+    private LocalDateTime paymentDate;
+    private String status;
+}
+
