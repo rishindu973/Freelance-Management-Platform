@@ -184,6 +184,7 @@ public class ProjectService implements IProjectService {
         return ProjectResponse.builder()
                 .id(p.getId())
                 .clientId(clientId)
+                .clientName(p.getClient() != null ? p.getClient().getName() : null)
                 .managerId(p.getManagerId())
                 .name(p.getName())
                 .description(p.getDescription())
