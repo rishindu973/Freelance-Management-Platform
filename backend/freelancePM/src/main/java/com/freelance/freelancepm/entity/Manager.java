@@ -20,8 +20,15 @@ public class Manager {
     private String fullName;
     @Column(name = "company_name",length = 255)
     private String companyName;
-    @Column(name = "contact_number",length = 20)
+    @Column(name = "contact_number", length = 20)
     private String contactNumber;
 
+    @Column(name = "logo_url", length = 512)
+    private String logoUrl;
 
+    @Column(name = "branding_color", length = 20)
+    private String brandingColor;
+
+    @Column(columnDefinition = "TEXT")
+    private String address;
 }
