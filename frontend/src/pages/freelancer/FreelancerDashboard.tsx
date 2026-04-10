@@ -10,7 +10,6 @@ import {
 import { format, differenceInDays } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function FreelancerDashboard() {
@@ -62,7 +61,13 @@ export default function FreelancerDashboard() {
 
     const handleAvailabilityToggle = async () => {
         if (!profile) return;
-        const newStatus = profile.status === "available" ? "unavailable" : "available";
+        const currentStatus = profile.status || "unavailable";
+        const statusCycle: Record<string, string> = {
+            available: "busy",
+            busy: "unavailable",
+            unavailable: "available",
+        };
+        const newStatus = statusCycle[currentStatus] || "available";
         setIsTogglingAvailability(true);
         try {
             await FreelancerPortalService.updateAvailability(newStatus);
@@ -116,19 +121,31 @@ export default function FreelancerDashboard() {
                     <div className="flex flex-col items-center gap-2 min-w-[120px]">
                         <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Availability</span>
                         <div className="flex items-center gap-3">
-                            <Switch
+                            <Button
                                 id="availability-toggle"
-                                checked={profile.status === "available"}
-                                onCheckedChange={handleAvailabilityToggle}
+                                variant="outline"
+                                size="sm"
+                                onClick={handleAvailabilityToggle}
                                 disabled={isTogglingAvailability}
-                            />
+                                className="text-xs"
+                            >
+                                {isTogglingAvailability ? "Updating..." : "Change Status"}
+                            </Button>
                             <Badge
                                 variant="outline"
-                                className={profile.status === "available"
-                                    ? "bg-green-100 text-green-700 border-green-300"
-                                    : "bg-gray-100 text-gray-600 border-gray-300"}
+                                className={
+                                    (profile.status || "unavailable") === "available"
+                                        ? "bg-green-100 text-green-700 border-green-300"
+                                        : (profile.status || "unavailable") === "busy"
+                                            ? "bg-yellow-100 text-yellow-700 border-yellow-300"
+                                            : "bg-red-100 text-red-600 border-red-300"
+                                }
                             >
-                                {profile.status === "available" ? "Available" : "Unavailable"}
+                                {(profile.status || "unavailable") === "available"
+                                    ? "Available"
+                                    : (profile.status || "unavailable") === "busy"
+                                        ? "Busy"
+                                        : "Unavailable"}
                             </Badge>
                         </div>
                     </div>

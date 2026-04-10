@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Plus, ArrowUp, ArrowDown, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,7 @@ import { InvoiceService, InvoiceCreateRequest, InvoiceListDTO } from "@/api/invo
 import { ClientService, Client } from "@/api/clientService";
 
 export default function Invoices() {
+  const navigate = useNavigate();
   const [invoices, setInvoices] = useState<InvoiceListDTO[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -75,11 +77,21 @@ export default function Invoices() {
         toast({ title: "Error", description: "Please provide valid client and total amount", variant: "destructive" });
         return;
       }
-      await InvoiceService.createInvoice(newInvoice as InvoiceCreateRequest);
+      const payload = {
+        ...newInvoice,
+        subtotal: newInvoice.total,
+        tax: 0,
+        lineItems: [{
+          description: newInvoice.description || "Service",
+          quantity: 1,
+          unitPrice: newInvoice.total || 0
+        }]
+      } as InvoiceCreateRequest;
+      await InvoiceService.createInvoice(payload);
       toast({ title: "Success", description: "Invoice created successfully." });
       setIsDialogOpen(false);
       setNewInvoice({ subtotal: 0, tax: 0, total: 0, year: new Date().getFullYear(), status: "DRAFT" });
-      setPage(0); // Reset to first page
+      setPage(0);
       fetchInvoices(0);
     } catch (e) {
       toast({ title: "Error", description: "Failed to create invoice", variant: "destructive" });
@@ -317,9 +329,10 @@ export default function Invoices() {
             ) : (
               invoices.map((invoice) => {
                 return (
-                  <TableRow 
-                    key={invoice.id} 
+                  <TableRow
+                    key={invoice.id}
                     className={`cursor-pointer transition-colors group ${invoice.status === 'OVERDUE' ? 'bg-destructive/5 hover:bg-destructive/10' : 'hover:bg-muted/50'}`}
+                    onClick={() => navigate(`/invoices/${invoice.id}`)}
                   >
                     <TableCell className="font-medium text-foreground py-3">{invoice.invoiceNumber || `INV-${invoice.id}`}</TableCell>
                     <TableCell className="text-muted-foreground">{invoice.clientName}</TableCell>

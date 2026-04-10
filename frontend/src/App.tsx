@@ -26,6 +26,7 @@ import FreelancerProjectDetail from "./pages/freelancer/FreelancerProjectDetail"
 import EditInvoice from "./pages/EditInvoice";
 import Payments from "./pages/Payments";
 import InvoiceDetail from "./pages/InvoiceDetail";
+import NewInvoice from "./pages/NewInvoice";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +54,7 @@ const App = () => (
                 <Route path="/projects" element={<Projects />} />
                 <Route path="/projects/:id" element={<ProjectDetail />} />
                 <Route path="/invoices" element={<Invoices />} />
+                <Route path="/invoices/new" element={<NewInvoice />} />
                 <Route path="/invoices/:id" element={<InvoiceDetail />} />
                 <Route path="/invoices/:id/edit" element={<EditInvoice />} />
                 <Route path="/payments" element={<Payments />} />

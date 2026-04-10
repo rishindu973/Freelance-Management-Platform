@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { FinanceService, FinanceSummaryResponse } from "@/api/financeService";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 import {
     LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
     XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine
@@ -12,14 +14,20 @@ export function FinanceCharts() {
     const [data, setData] = useState<FinanceSummaryResponse | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [refreshKey, setRefreshKey] = useState(0);
+
+    const handleRefresh = useCallback(() => {
+        setRefreshKey(k => k + 1);
+    }, []);
 
     useEffect(() => {
         setIsLoading(true);
+        setError(null);
         FinanceService.getSummary(period)
             .then(setData)
             .catch((err) => setError(err.message || "Failed to load finance data"))
             .finally(() => setIsLoading(false));
-    }, [period]);
+    }, [period, refreshKey]);
 
     if (error) {
         return <div className="text-red-500 text-sm text-center py-4">{error}</div>;
@@ -50,6 +58,15 @@ export function FinanceCharts() {
                         <SelectItem value="year">Past 5 Years</SelectItem>
                     </SelectContent>
                 </Select>
+                <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleRefresh}
+                    disabled={isLoading}
+                    title="Refresh data"
+                >
+                    <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                </Button>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
