@@ -62,9 +62,9 @@ public class FreelancerPortalController {
         Freelancer freelancer = getAuthenticatedFreelancer(principal);
         String newStatus = body.get("status");
 
-        if (newStatus == null || (!newStatus.equalsIgnoreCase("available") && !newStatus.equalsIgnoreCase("unavailable"))) {
+        if (newStatus == null || (!newStatus.equalsIgnoreCase("available") && !newStatus.equalsIgnoreCase("busy") && !newStatus.equalsIgnoreCase("unavailable"))) {
             return ResponseEntity.badRequest()
-                    .body(java.util.Map.of("error", "Status must be 'available' or 'unavailable'."));
+                    .body(java.util.Map.of("error", "Status must be 'available', 'busy', or 'unavailable'."));
         }
 
         freelancer.setStatus(newStatus.toLowerCase());

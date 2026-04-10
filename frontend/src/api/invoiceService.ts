@@ -43,6 +43,7 @@ export interface InvoiceCreateRequest {
   description?: string;
   dueDate?: string;
   year: number;
+  lineItems?: InvoiceLineItemRequest[];
 }
 
 export interface InvoiceLineItemRequest {
