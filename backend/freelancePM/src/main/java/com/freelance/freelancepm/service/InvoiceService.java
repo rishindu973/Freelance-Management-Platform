@@ -52,6 +52,7 @@ public class InvoiceService implements IInvoiceService {
                 .client(client)
                 .project(project)
                 .status(req.getStatus() != null ? req.getStatus() : InvoiceStatus.DRAFT)
+                .dueDate(req.getDueDate())
                 .lineItems(new ArrayList<>())
                 .year(LocalDate.now().getYear())
                 .build();
@@ -114,7 +115,8 @@ public class InvoiceService implements IInvoiceService {
             throw new IllegalArgumentException("startDate must not be after endDate");
         }
 
-        Specification<Invoice> spec = Specification.where((root, query, criteriaBuilder) -> criteriaBuilder.conjunction());
+        Specification<Invoice> spec = Specification
+                .where((root, query, criteriaBuilder) -> criteriaBuilder.conjunction());
 
         if (clientId != null) {
             spec = spec.and(InvoiceSpecifications.clientIdEquals(clientId));
@@ -134,8 +136,9 @@ public class InvoiceService implements IInvoiceService {
     @Transactional
     public void sendInvoice(Integer invoiceId, SendInvoiceRequest request) {
         Invoice invoice = findInvoice(invoiceId);
-        
-        // Idempotency check: Don't re-send if already SENT (optional: or FAILED if you want to allow retrying failed ones)
+
+        // Idempotency check: Don't re-send if already SENT (optional: or FAILED if you
+        // want to allow retrying failed ones)
         if (InvoiceStatus.SENT.equals(invoice.getStatus())) {
             log.warn("Invoice {} is already marked as SENT. Skipping dispatch.", invoiceId);
             return;
@@ -165,20 +168,21 @@ public class InvoiceService implements IInvoiceService {
                 request.getRecipients(),
                 dueDate,
                 pdfBytes,
-                filename
-        );
+                filename);
     }
-    
+
     @Override
     @Transactional
-    public InvoiceResponse updateStatus(Integer invoiceId, com.freelance.freelancepm.dto.InvoiceStatusUpdateRequest req) {
+    public InvoiceResponse updateStatus(Integer invoiceId,
+            com.freelance.freelancepm.dto.InvoiceStatusUpdateRequest req) {
         Invoice invoice = findInvoice(invoiceId);
-        
+
         // Use a generic "API" user or pull from Spring Security context if available
-        String recordedBy = "system_user"; 
-        
+        String recordedBy = "system_user";
+
         if (req.getTargetStatus() == InvoiceStatus.PAID && req.getAmount() != null) {
-            // Hand off to payment validation to record the payment and handle the transition if fully paid
+            // Hand off to payment validation to record the payment and handle the
+            // transition if fully paid
             com.freelance.freelancepm.entity.Payment manualPayment = com.freelance.freelancepm.entity.Payment.builder()
                     .amount(req.getAmount())
                     .paymentDate(java.time.LocalDateTime.now())
@@ -190,7 +194,7 @@ public class InvoiceService implements IInvoiceService {
             transitionService.validateAndTransition(invoice, req.getTargetStatus(), recordedBy);
             invoiceRepository.save(invoice);
         }
-        
+
         return invoiceMapper.toResponse(invoice);
     }
 
@@ -198,14 +202,14 @@ public class InvoiceService implements IInvoiceService {
     @Transactional
     public void addPayment(Integer invoiceId, com.freelance.freelancepm.dto.PaymentCreateRequest req) {
         Invoice invoice = findInvoice(invoiceId);
-        
+
         com.freelance.freelancepm.entity.Payment payment = com.freelance.freelancepm.entity.Payment.builder()
                 .amount(req.getAmount())
                 .paymentDate(req.getPaymentDate() != null ? req.getPaymentDate() : java.time.LocalDateTime.now())
                 .paymentMethod(req.getPaymentMethod())
                 .referenceNumber(req.getReferenceNumber())
                 .build();
-                
+
         paymentValidationService.processPayment(invoice, payment, "system_user");
     }
 
@@ -224,7 +228,7 @@ public class InvoiceService implements IInvoiceService {
 
         invoice.setYear(year);
         invoice.setSequenceNumber(nextSequence);
-        invoice.setInvoiceNumber(String.format("%s-%d-%04d", 
+        invoice.setInvoiceNumber(String.format("%s-%d-%04d",
                 invoice.getClient().getCode(), year, nextSequence));
     }
 

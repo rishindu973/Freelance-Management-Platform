@@ -23,7 +23,8 @@ public class Invoice {
 
     /**
      * @deprecated Use the top-level {@link InvoiceStatus} enum directly.
-     *             This type alias is kept only for source-level backward compatibility
+     *             This type alias is kept only for source-level backward
+     *             compatibility
      *             during the migration period.
      */
     @Deprecated
@@ -37,7 +38,8 @@ public class Invoice {
         public static final InvoiceStatus PARTIALLY_PAID = InvoiceStatus.PARTIALLY_PAID;
         public static final InvoiceStatus OVERPAID = InvoiceStatus.OVERPAID;
 
-        private Status() { /* utility */ }
+        private Status() {
+            /* utility */ }
     }
 
     @Id
@@ -125,8 +127,11 @@ public class Invoice {
     }
 
     /**
-     * @deprecated Use {@link com.freelance.freelancepm.service.InvoiceCalculationService#recalculateInvoice(Invoice)} instead.
-     * This method is kept for backward compatibility but business logic should reside in the service layer.
+     * @deprecated Use
+     *             {@link com.freelance.freelancepm.service.InvoiceCalculationService#recalculateInvoice(Invoice)}
+     *             instead.
+     *             This method is kept for backward compatibility but business logic
+     *             should reside in the service layer.
      */
     @Deprecated
     public void recalculateTotals() {

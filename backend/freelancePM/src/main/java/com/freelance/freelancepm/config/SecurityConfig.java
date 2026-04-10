@@ -41,6 +41,7 @@ public class SecurityConfig {
                         // Permit public endpoints
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/manager/register").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/invoices").permitAll()
                         // Require auth for everything else
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll())

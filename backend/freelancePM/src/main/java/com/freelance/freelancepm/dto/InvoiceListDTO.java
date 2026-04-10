@@ -22,9 +22,10 @@ public class InvoiceListDTO {
 
     private Integer id;
     private String invoiceNumber;
+    private Integer clientId;
     private String clientName;
-    private LocalDateTime issueDate;
-    private BigDecimal totalAmount;
+    private LocalDateTime createdAt;
+    private BigDecimal total;
     private InvoiceStatus status;
     private String displayStatus;
 }
