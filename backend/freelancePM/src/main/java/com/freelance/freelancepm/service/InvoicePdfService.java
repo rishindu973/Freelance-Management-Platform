@@ -279,6 +279,8 @@ public class InvoicePdfService {
     }
 
     protected void drawTotalsSection(PdfGenerationContext context, Invoice invoice) throws IOException {
+        context.ensureSpace(120, null); // Maintain spacing to avoid overlapping the footer
+        
         org.apache.pdfbox.pdmodel.font.PDFont fontBold = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
         org.apache.pdfbox.pdmodel.font.PDFont fontRegular = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
         java.awt.Color color = java.awt.Color.BLACK;
@@ -326,8 +328,79 @@ public class InvoicePdfService {
     }
 
     protected void drawFooter(PdfGenerationContext context, Manager manager) throws IOException {
-        // TODO: Implement footer terms and conditions
-        log.debug("Drawing footer skeleton...");
+        org.apache.pdfbox.pdmodel.font.PDFont fontBold = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
+        org.apache.pdfbox.pdmodel.font.PDFont fontRegular = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
+        java.awt.Color color = java.awt.Color.BLACK;
+
+        float margin = context.getMargin();
+        float width = context.getPageWidth();
+        float centerX = width / 2;
+        float footerY = 60; // Fixed footer position at the bottom of the page
+
+        // Horizontal Line above footer
+        context.drawLine(margin, footerY + 20, width - margin, footerY + 20, color, 0.5f);
+
+        // Center: "Powered by FREELANCEFLOW" and Placeholder Logo
+        String text1 = "Powered by FREELANCEFLOW";
+        float text1Width = fontBold.getStringWidth(text1) / 1000 * 10;
+
+        float logoBoxSize = 12;
+        float gap = 5;
+        float totalTopWidth = logoBoxSize + gap + text1Width;
+        float startTopX = centerX - (totalTopWidth / 2);
+
+        // Placeholder Logo (a simple unfilled box + cross)
+        context.drawRect(startTopX, footerY - 2, logoBoxSize, logoBoxSize, color, false);
+        context.drawLine(startTopX, footerY - 2, startTopX + logoBoxSize, footerY - 2 + logoBoxSize, color, 0.5f);
+        context.drawLine(startTopX, footerY - 2 + logoBoxSize, startTopX + logoBoxSize, footerY - 2, color, 0.5f);
+
+        // "Powered by FREELANCEFLOW"
+        context.drawText(text1, startTopX + logoBoxSize + gap, footerY, fontBold, 10, color);
+
+        // Below text
+        String text2Part1 = "This invoice was generated using FREELANCEFLOW. Visit ";
+        String linkText = "https://freelanceflow.com";
+        String text2Part3 = " for more information.";
+
+        float text2Part1Width = fontRegular.getStringWidth(text2Part1) / 1000 * 8;
+        float linkTextWidth = fontRegular.getStringWidth(linkText) / 1000 * 8;
+        float text2Part3Width = fontRegular.getStringWidth(text2Part3) / 1000 * 8;
+
+        float totalWidth = text2Part1Width + linkTextWidth + text2Part3Width;
+        float startX = centerX - (totalWidth / 2);
+        float linkStartX = startX + text2Part1Width;
+        float linkY = footerY - 15;
+
+        context.drawText(text2Part1, startX, linkY, fontRegular, 8, color);
+
+        // Link text (underlined)
+        context.drawText(linkText, linkStartX, linkY, fontRegular, 8, color);
+        context.drawLine(linkStartX, linkY - 1, linkStartX + linkTextWidth, linkY - 1, color, 0.5f);
+
+        // Remaining text
+        context.drawText(text2Part3, linkStartX + linkTextWidth, linkY, fontRegular, 8, color);
+
+        // Add PDF Hyperlink Annotation (Ensure clickable PDF link)
+        org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationLink txtLink = new org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationLink();
+        org.apache.pdfbox.pdmodel.interactive.action.PDActionURI action = new org.apache.pdfbox.pdmodel.interactive.action.PDActionURI();
+        action.setURI(linkText);
+        txtLink.setAction(action);
+
+        org.apache.pdfbox.pdmodel.common.PDRectangle position = new org.apache.pdfbox.pdmodel.common.PDRectangle();
+        position.setLowerLeftX(linkStartX);
+        position.setLowerLeftY(linkY - 2);
+        position.setUpperRightX(linkStartX + linkTextWidth);
+        position.setUpperRightY(linkY + 10);
+        txtLink.setRectangle(position);
+
+        org.apache.pdfbox.pdmodel.interactive.annotation.PDBorderStyleDictionary borderULine = new org.apache.pdfbox.pdmodel.interactive.annotation.PDBorderStyleDictionary();
+        borderULine.setStyle(org.apache.pdfbox.pdmodel.interactive.annotation.PDBorderStyleDictionary.STYLE_UNDERLINE);
+        borderULine.setWidth(0); // hide native border since we drew an underline manually
+        txtLink.setBorderStyle(borderULine);
+
+        org.apache.pdfbox.pdmodel.PDDocument document = context.getDocument();
+        org.apache.pdfbox.pdmodel.PDPage page = document.getPage(context.getCurrentPageNumber() - 1);
+        page.getAnnotations().add(txtLink);
     }
 
     // ──────────────────────────────────────────────
