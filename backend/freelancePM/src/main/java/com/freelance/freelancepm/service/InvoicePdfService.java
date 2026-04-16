@@ -90,13 +90,116 @@ public class InvoicePdfService {
     // ──────────────────────────────────────────────
 
     protected void drawHeader(PdfGenerationContext context, Invoice invoice, Manager manager, byte[] logoBytes) throws IOException {
-        // TODO: Implement header layout (e.g., Logo, Company Details)
-        log.debug("Drawing header skeleton...");
+        org.apache.pdfbox.pdmodel.font.PDFont fontBold = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
+        org.apache.pdfbox.pdmodel.font.PDFont fontRegular = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
+        java.awt.Color color = java.awt.Color.BLACK;
+
+        float margin = context.getMargin();
+        float width = context.getPageWidth();
+        float y = context.getYPosition();
+
+        // LEFT: "INVOICE" (large text)
+        context.drawText("INVOICE", margin, y - 30, fontBold, 36, color);
+
+        // RIGHT: Company Details
+        float rightX = width - margin;
+        float rightY = y;
+
+        // Logo (top right)
+        if (logoBytes != null) {
+            context.drawImage(logoBytes, rightX - 60, rightY - 40, 60, 40);
+            rightY -= 50;
+        }
+
+        // Company Name
+        String companyName = (manager != null && manager.getCompanyName() != null && !manager.getCompanyName().isEmpty()) 
+                                ? manager.getCompanyName() : "Company Name";
+        context.drawRightAlignedText(companyName, rightX, rightY, fontBold, 12, color);
+        rightY -= 15;
+
+        // Owner Name
+        String ownerName = (manager != null && manager.getFullName() != null && !manager.getFullName().isEmpty()) 
+                                ? manager.getFullName() : "Owner Name";
+        context.drawRightAlignedText(ownerName, rightX, rightY, fontRegular, 10, color);
+        rightY -= 15;
+
+        // Address
+        String address = (manager != null && manager.getAddress() != null && !manager.getAddress().isEmpty()) 
+                                ? manager.getAddress() : "Company Address";
+        context.drawRightAlignedText(address, rightX, rightY, fontRegular, 10, color);
+        rightY -= 15;
+
+        // Phone
+        String phone = (manager != null && manager.getContactNumber() != null && !manager.getContactNumber().isEmpty()) 
+                                ? manager.getContactNumber() : "Company Phone";
+        context.drawRightAlignedText(phone, rightX, rightY, fontRegular, 10, color);
+        rightY -= 15;
+
+        // Email
+        String email = (manager != null && manager.getUser() != null && manager.getUser().getEmail() != null) 
+                                ? manager.getUser().getEmail() : "company@email.com";
+        context.drawRightAlignedText(email, rightX, rightY, fontRegular, 10, color);
+
+        // Set Y position below the lowest component in the header
+        context.setYPosition(Math.min(y - 50, rightY - 30));
     }
 
     protected void drawBillingSection(PdfGenerationContext context, Invoice invoice, Manager manager) throws IOException {
-        // TODO: Implement billing section layout (e.g., Bill To, Status, Dates)
-        log.debug("Drawing billing section skeleton...");
+        org.apache.pdfbox.pdmodel.font.PDFont fontBold = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
+        org.apache.pdfbox.pdmodel.font.PDFont fontRegular = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
+        java.awt.Color color = java.awt.Color.BLACK;
+
+        float margin = context.getMargin();
+        float width = context.getPageWidth();
+        float y = context.getYPosition();
+
+        // LEFT: BILL TO
+        float leftY = y;
+        context.drawText("BILL TO", margin, leftY, fontBold, 12, color);
+        leftY -= 15;
+
+        com.freelance.freelancepm.model.Client client = invoice.getClient();
+        if (client != null) {
+            String clientName = (client.getName() != null && !client.getName().isEmpty()) ? client.getName() : "Client Name";
+            context.drawText(clientName, margin, leftY, fontBold, 10, color);
+            leftY -= 15;
+
+            String address = (client.getAddress() != null && !client.getAddress().isEmpty()) ? client.getAddress() : "Client Address";
+            context.drawText(address, margin, leftY, fontRegular, 10, color);
+            leftY -= 15;
+
+            String phone = (client.getPhone() != null && !client.getPhone().isEmpty()) ? client.getPhone() : "Client Phone";
+            context.drawText(phone, margin, leftY, fontRegular, 10, color);
+            leftY -= 15;
+
+            String email = (client.getEmail() != null && !client.getEmail().isEmpty()) ? client.getEmail() : "client@email.com";
+            context.drawText(email, margin, leftY, fontRegular, 10, color);
+            leftY -= 15;
+        } else {
+            leftY -= 60; // Leave space anyway if client is null
+        }
+
+        // RIGHT: Invoice Info
+        float rightX = width - margin;
+        float rightY = y;
+
+        java.time.format.DateTimeFormatter dateFormatter = java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy");
+
+        // Invoice Number
+        context.drawRightAlignedText("Invoice Number: " + invoice.getInvoiceNumber(), rightX, rightY, fontRegular, 10, color);
+        rightY -= 15;
+
+        // Issue Date
+        String issueDateStr = invoice.getCreatedAt() != null ? invoice.getCreatedAt().format(dateFormatter) : "N/A";
+        context.drawRightAlignedText("Issue Date: " + issueDateStr, rightX, rightY, fontRegular, 10, color);
+        rightY -= 15;
+
+        // Due Date
+        String dueDateStr = invoice.getDueDate() != null ? invoice.getDueDate().format(dateFormatter) : "N/A";
+        context.drawRightAlignedText("Due Date: " + dueDateStr, rightX, rightY, fontRegular, 10, color);
+        rightY -= 15;
+
+        context.setYPosition(Math.min(leftY, rightY) - 30);
     }
 
     protected void drawTable(PdfGenerationContext context, List<InvoiceLineItem> lineItems) throws IOException {
