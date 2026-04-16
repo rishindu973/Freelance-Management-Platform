@@ -203,13 +203,126 @@ public class InvoicePdfService {
     }
 
     protected void drawTable(PdfGenerationContext context, List<InvoiceLineItem> lineItems) throws IOException {
-        // TODO: Implement invoice items table
-        log.debug("Drawing table skeleton...");
+        org.apache.pdfbox.pdmodel.font.PDFont fontBold = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
+        org.apache.pdfbox.pdmodel.font.PDFont fontRegular = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
+        java.awt.Color color = java.awt.Color.BLACK;
+
+        float margin = context.getMargin();
+        float width = context.getPageWidth();
+        float rightEdge = width - margin;
+        float y = context.getYPosition();
+
+        // Column X coordinates
+        float colItemX = margin;
+        float colDescX = margin + 40;
+        float colQtyX = rightEdge - 180;
+        float colPriceX = rightEdge - 90;
+        float colAmountX = rightEdge;
+
+        // Header Row
+        context.drawLine(margin, y + 10, rightEdge, y + 10, color, 1f);
+        context.drawText("Item", colItemX, y, fontBold, 10, color);
+        context.drawText("Description", colDescX, y, fontBold, 10, color);
+        context.drawRightAlignedText("Quantity", colQtyX, y, fontBold, 10, color);
+        context.drawRightAlignedText("Unit Price", colPriceX, y, fontBold, 10, color);
+        context.drawRightAlignedText("Amount", colAmountX, y, fontBold, 10, color);
+        y -= 15;
+        context.drawLine(margin, y + 10, rightEdge, y + 10, color, 1f);
+
+        // Data Rows
+        y -= 15;
+        if (lineItems != null) {
+            int itemIndex = 1;
+            for (InvoiceLineItem item : lineItems) {
+                context.setYPosition(y);
+                context.ensureSpace(30, (ctx) -> {
+                    float headerY = ctx.getYPosition();
+                    ctx.drawLine(margin, headerY + 10, rightEdge, headerY + 10, color, 1f);
+                    ctx.drawText("Item", colItemX, headerY, fontBold, 10, color);
+                    ctx.drawText("Description", colDescX, headerY, fontBold, 10, color);
+                    ctx.drawRightAlignedText("Quantity", colQtyX, headerY, fontBold, 10, color);
+                    ctx.drawRightAlignedText("Unit Price", colPriceX, headerY, fontBold, 10, color);
+                    ctx.drawRightAlignedText("Amount", colAmountX, headerY, fontBold, 10, color);
+                    ctx.setYPosition(headerY - 15);
+                    ctx.drawLine(margin, ctx.getYPosition() + 10, rightEdge, ctx.getYPosition() + 10, color, 1f);
+                    ctx.setYPosition(ctx.getYPosition() - 15);
+                });
+                
+                y = context.getYPosition();
+
+                java.text.DecimalFormat df = new java.text.DecimalFormat("#,##0.00");
+                String qtyStr = item.getQuantity() != null ? item.getQuantity().toString() : "0";
+                String priceStr = item.getUnitPrice() != null ? "$" + df.format(item.getUnitPrice()) : "$0.00";
+                String amountStr = item.getAmount() != null ? "$" + df.format(item.getAmount()) : "$0.00";
+                String desc = item.getDescription() != null ? item.getDescription() : "";
+
+                context.drawText(String.valueOf(itemIndex++), colItemX, y, fontRegular, 10, color);
+
+                List<String> lines = context.parseLines(desc, colQtyX - colDescX - 20, fontRegular, 10);
+                float descY = y;
+                for (String line : lines) {
+                    context.drawText(line, colDescX, descY, fontRegular, 10, color);
+                    descY -= 12;
+                }
+
+                context.drawRightAlignedText(qtyStr, colQtyX, y, fontRegular, 10, color);
+                context.drawRightAlignedText(priceStr, colPriceX, y, fontRegular, 10, color);
+                context.drawRightAlignedText(amountStr, colAmountX, y, fontRegular, 10, color);
+
+                float rowHeight = Math.max(20, lines.size() * 12 + 10);
+                y -= rowHeight;
+            }
+        }
+
+        context.drawLine(margin, y + 10, rightEdge, y + 10, color, 1f);
+        context.setYPosition(y - 20);
     }
 
     protected void drawTotalsSection(PdfGenerationContext context, Invoice invoice) throws IOException {
-        // TODO: Implement totals section (e.g., Subtotal, Tax, Final Amount)
-        log.debug("Drawing totals section skeleton...");
+        org.apache.pdfbox.pdmodel.font.PDFont fontBold = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
+        org.apache.pdfbox.pdmodel.font.PDFont fontRegular = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
+        java.awt.Color color = java.awt.Color.BLACK;
+
+        float margin = context.getMargin();
+        float width = context.getPageWidth();
+        float rightEdge = width - margin;
+        float y = context.getYPosition();
+
+        java.text.DecimalFormat df = new java.text.DecimalFormat("#,##0.00");
+        String subtotalStr = invoice.getSubtotal() != null ? "$" + df.format(invoice.getSubtotal()) : "$0.00";
+        String totalStr = invoice.getTotal() != null ? "$" + df.format(invoice.getTotal()) : "$0.00";
+
+        // LEFT: Notes
+        float leftY = y;
+        context.drawText("NOTES:", margin, leftY, fontBold, 10, color);
+        leftY -= 15;
+        String notes = invoice.getDescription();
+        if (notes != null && !notes.isEmpty()) {
+            List<String> lines = context.parseLines(notes, 250, fontRegular, 10);
+            for (String line : lines) {
+                context.drawText(line, margin, leftY, fontRegular, 10, color);
+                leftY -= 12;
+            }
+        } else {
+            context.drawText("Thank you for your business.", margin, leftY, fontRegular, 10, color);
+            leftY -= 12;
+        }
+
+        // RIGHT: Subtotal / Total
+        float rightY = y;
+        float labelX = rightEdge - 150;
+
+        // Subtotal
+        context.drawText("Subtotal", labelX, rightY, fontRegular, 10, color);
+        context.drawRightAlignedText(subtotalStr, rightEdge, rightY, fontRegular, 10, color);
+        rightY -= 20;
+
+        // Total
+        context.drawText("TOTAL", labelX, rightY, fontBold, 14, color);
+        context.drawRightAlignedText(totalStr, rightEdge, rightY, fontBold, 14, color);
+        rightY -= 20;
+
+        context.setYPosition(Math.min(leftY, rightY) - 30);
     }
 
     protected void drawFooter(PdfGenerationContext context, Manager manager) throws IOException {
