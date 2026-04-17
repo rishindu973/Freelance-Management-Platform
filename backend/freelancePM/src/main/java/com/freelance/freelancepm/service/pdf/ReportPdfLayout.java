@@ -10,7 +10,7 @@ import com.freelance.freelancepm.entity.ReportDetail;
 public interface ReportPdfLayout {
     void drawHeader(PdfGenerationContext context, Report report, Manager manager, byte[] logoBytes) throws IOException;
 
-    void drewSummaryCards(PdfGenerationContext context, Report report) throws IOException;
+    void drawSummaryCards(PdfGenerationContext context, Report report) throws IOException;
 
     void drawBreakdownTable(PdfGenerationContext context, List<ReportDetail> details) throws IOException;
 
