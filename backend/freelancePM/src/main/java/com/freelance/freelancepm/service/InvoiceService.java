@@ -214,10 +214,19 @@ public class InvoiceService implements IInvoiceService {
     }
 
     private void assignInvoiceNumber(Invoice invoice) {
+        Client client = invoice.getClient();
         int year = LocalDate.now().getYear();
-        ClientInvoiceSequence sequence = sequenceRepository.findByClientIdAndYear(invoice.getClient().getId(), year)
+
+        // 1. DEFENSIVE FALLBACK: Prevent "null" prefixes that cause collisions
+        // If code is null/empty, use "C" + ID (e.g., C12) which is always unique
+        String prefix = (client.getCode() != null && !client.getCode().trim().isEmpty())
+                ? client.getCode().toUpperCase()
+                : "C" + client.getId();
+
+        // 2. FETCH SEQUENCE: (Uses your existing pessimistic lock for safety)
+        ClientInvoiceSequence sequence = sequenceRepository.findByClientIdAndYear(client.getId(), year)
                 .orElseGet(() -> ClientInvoiceSequence.builder()
-                        .client(invoice.getClient())
+                        .client(client)
                         .year(year)
                         .currentSequence(0)
                         .build());
@@ -226,10 +235,10 @@ public class InvoiceService implements IInvoiceService {
         sequence.setCurrentSequence(nextSequence);
         sequenceRepository.save(sequence);
 
+        // 3. SET FINAL NUMBER
         invoice.setYear(year);
         invoice.setSequenceNumber(nextSequence);
-        invoice.setInvoiceNumber(String.format("%s-%d-%04d",
-                invoice.getClient().getCode(), year, nextSequence));
+        invoice.setInvoiceNumber(String.format("%s-%d-%04d", prefix, year, nextSequence));
     }
 
     private void updateLineItems(Invoice invoice, List<InvoiceLineItemRequest> itemRequests) {

@@ -236,10 +236,9 @@ export default function InvoiceDetail() {
             </div>
           </div>
           <div className="text-right">
-            <p className="font-black text-xl tracking-tighter uppercase">ANTIGRAVITY SOLUTIONS</p>
-            <p className="text-xs text-slate-400 print:text-slate-500">123 Workspace Dr, Innovation Park</p>
-            <p className="text-xs text-slate-400 print:text-slate-500">Innovation Ave | NY 10001</p>
-            <p className="text-xs text-slate-400 print:text-slate-500 underline underline-offset-4 decoration-primary">finance@antigravity.io</p>
+            <p className="text-xl tracking-tighter uppercase" style={{ fontFamily: 'gebuk, sans-serif', fontWeight: 'normal' }}>FREELANCEFLOW</p>
+            <p className="text-xs text-slate-400 print:text-slate-500">Official Sovereign Corporate Headquarters</p>
+            <p className="text-xs text-slate-400 print:text-slate-500 underline underline-offset-4 decoration-primary">finance@freelanceflow.io</p>
           </div>
         </div>
 
@@ -361,12 +360,12 @@ export default function InvoiceDetail() {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-50 border border-slate-100">
               <FileCheck className="h-3 w-3 text-primary" />
               <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-1.5">
-                Verified By Antigravity Secure Infrastructure
+                Verified By FreelanceFlow Secure Infrastructure
                 <div className="h-1 w-1 rounded-full bg-slate-300" />
                 {invoice.invoiceNumber}
               </span>
             </div>
-            <p className="text-[8px] text-slate-200 uppercase tracking-widest pt-2">© 2026 Antigravity Freelance PM OS | Confidential Document</p>
+            <p className="text-[8px] text-slate-200 uppercase tracking-widest pt-2">© 2026 FreelanceFlow PM OS | Confidential Document</p>
           </div>
         </CardContent>
       </Card>

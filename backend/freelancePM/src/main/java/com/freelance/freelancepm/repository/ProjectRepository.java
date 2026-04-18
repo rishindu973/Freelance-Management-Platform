@@ -102,7 +102,8 @@ public interface ProjectRepository extends JpaRepository<Project, Integer>, JpaS
         AND LOWER(p.status) = 'completed'
         AND p.deadline >= :start AND p.deadline <= :end
       """)
-  long countCompletedInPeriod(@Param("managerId") Integer managerId, @Param("start") LocalDate start, @Param("end") LocalDate end);
+  long countCompletedInPeriod(@Param("managerId") Integer managerId, @Param("start") LocalDate start,
+      @Param("end") LocalDate end);
 
   @Query("""
       SELECT COUNT(p) FROM Project p
@@ -110,7 +111,8 @@ public interface ProjectRepository extends JpaRepository<Project, Integer>, JpaS
         AND LOWER(p.status) = 'pending'
         AND p.deadline >= :start AND p.deadline <= :end
       """)
-  long countPendingInPeriod(@Param("managerId") Integer managerId, @Param("start") LocalDate start, @Param("end") LocalDate end);
+  long countPendingInPeriod(@Param("managerId") Integer managerId, @Param("start") LocalDate start,
+      @Param("end") LocalDate end);
 
   @Query("""
       SELECT p FROM Project p
@@ -119,7 +121,8 @@ public interface ProjectRepository extends JpaRepository<Project, Integer>, JpaS
         AND p.deadline >= :start AND p.deadline <= :end
       ORDER BY p.deadline DESC
       """)
-  List<Project> findCompletedInPeriod(@Param("managerId") Integer managerId, @Param("start") LocalDate start, @Param("end") LocalDate end);
+  List<Project> findCompletedInPeriod(@Param("managerId") Integer managerId, @Param("start") LocalDate start,
+      @Param("end") LocalDate end);
 
   @Query("""
       SELECT p FROM Project p
@@ -128,9 +131,8 @@ public interface ProjectRepository extends JpaRepository<Project, Integer>, JpaS
         AND p.deadline >= :start AND p.deadline <= :end
       ORDER BY p.deadline ASC
       """)
-  List<Project> findPendingNearDeadlineInPeriod(@Param("managerId") Integer managerId, @Param("start") LocalDate start, @Param("end") LocalDate end, Pageable pageable);
-
-
+  List<Project> findPendingNearDeadlineInPeriod(@Param("managerId") Integer managerId, @Param("start") LocalDate start,
+      @Param("end") LocalDate end, Pageable pageable);
 
   // ----------------- Client Queries -----------------
   List<Project> findByClientId(Integer clientId);
@@ -156,4 +158,7 @@ public interface ProjectRepository extends JpaRepository<Project, Integer>, JpaS
 
   @Query("SELECT COUNT(p) FROM Project p WHERE p.startDate BETWEEN :start AND :end AND LOWER(p.status) = 'completed'")
   long countCompletedInDateRange(@Param("start") LocalDate start, @Param("end") LocalDate end);
+
+  @Query("SELECT p FROM Project p WHERE p.startDate BETWEEN :start AND :end")
+  List<Project> findByStartDateBetween(@Param("start") LocalDate start, @Param("end") LocalDate end);
 }
