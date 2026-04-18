@@ -19,7 +19,7 @@ import java.util.List;
 public class Report {
 
     public enum ReportType {
-        WEEKLY, MONTHLY, ANNUALY
+        WEEKLY, MONTHLY, ANNUALLY
     }
 
     @Id
