@@ -41,7 +41,7 @@ public class StandardInvoicePdfLayout implements InvoicePdfLayout {
                 // 2. Custom "Gebuk" Brand Logo
                 PDFont logoFont = loadLogoFont(context);
                 String brandName = (manager != null && manager.getCompanyName() != null) ? manager.getCompanyName()
-                                : "KINGSMAN";
+                                : "FreelanceFlow";
 
                 if (logoBytes != null) {
                         context.drawImage(logoBytes, margin, textY - 20, 60, 40);
