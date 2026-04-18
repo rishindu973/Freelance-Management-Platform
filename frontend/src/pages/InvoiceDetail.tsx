@@ -15,7 +15,8 @@ import {
   RefreshCw,
   CheckCircle2,
   XCircle,
-  Clock
+  Clock,
+  Eye
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -36,6 +37,8 @@ import {
 } from "@/components/ui/breadcrumb";
 import { SendInvoiceModal } from '@/components/invoices/SendInvoiceModal';
 import { PaymentModal } from '@/components/invoices/PaymentModal';
+import InvoicePreviewModal from '@/components/invoices/InvoicePreviewModal';
+import { downloadInvoicePdf } from '@/lib/utils';
 
 export default function InvoiceDetail() {
   const { id } = useParams();
@@ -45,9 +48,9 @@ export default function InvoiceDetail() {
   const [client, setClient] = useState<Client | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [downloadProgress, setDownloadProgress] = useState(0);
   const [isSendModalOpen, setIsSendModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
   const fetchInvoice = async () => {
     try {
@@ -74,30 +77,13 @@ export default function InvoiceDetail() {
     if (!id || !invoice) return;
 
     setIsDownloading(true);
-    setDownloadProgress(0);
     try {
-      const { blob, filename: serverFilename } = await InvoiceService.downloadInvoicePdf(
-        Number(id),
-        (progress) => setDownloadProgress(progress)
-      );
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-
-      const date = invoice.createdAt ? new Date(invoice.createdAt).toISOString().split('T')[0] : 'N-A';
-      const fallbackFilename = `Invoice_${invoice.invoiceNumber || invoice.id}_${client?.name || 'Client'}_${date}.pdf`;
-      const finalFilename = serverFilename || fallbackFilename;
-
-      link.setAttribute('download', finalFilename);
-      document.body.appendChild(link);
-      link.click();
-
-      link.parentNode?.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      const blob = await InvoiceService.fetchInvoicePdf(Number(id));
+      downloadInvoicePdf(blob, Number(id));
 
       toast({
-        title: "Download Started",
-        description: `Your file "${finalFilename}" is being saved.`,
+        title: "Download Successful",
+        description: `Invoice PDF generated and downloaded successfully.`,
       });
     } catch (error: any) {
       console.error(error);
@@ -109,7 +95,6 @@ export default function InvoiceDetail() {
       });
     } finally {
       setIsDownloading(false);
-      setDownloadProgress(0);
     }
   };
 
@@ -134,6 +119,9 @@ export default function InvoiceDetail() {
         </Breadcrumb>
 
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => setIsPreviewModalOpen(true)}>
+            <Eye className="h-4 w-4" /> Preview
+          </Button>
           <Button variant="outline" size="sm" className="gap-2" onClick={() => window.print()}>
             <Printer className="h-4 w-4" /> Print
           </Button>
@@ -147,18 +135,12 @@ export default function InvoiceDetail() {
             {isDownloading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span>{downloadProgress > 0 ? `${downloadProgress}%` : 'Preparing...'}</span>
-                {downloadProgress > 0 && (
-                  <Progress
-                    value={downloadProgress}
-                    className="absolute bottom-0 left-0 right-0 h-0.5 w-full rounded-none"
-                  />
-                )}
+                <span>Downloading...</span>
               </>
             ) : (
               <>
                 <Download className="h-4 w-4" />
-                <span>PDF</span>
+                <span>Download PDF</span>
               </>
             )}
           </Button>
@@ -369,6 +351,12 @@ export default function InvoiceDetail() {
           </div>
         </CardContent>
       </Card>
+
+      <InvoicePreviewModal
+        invoiceId={Number(id)}
+        isOpen={isPreviewModalOpen}
+        onClose={() => setIsPreviewModalOpen(false)}
+      />
     </div>
   );
 }

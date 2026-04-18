@@ -131,6 +131,17 @@ export const InvoiceService = {
   sendInvoice: async (id: number, recipients: string[]): Promise<void> => {
     await apiClient.post(`/api/invoices/${id}/send`, { recipients });
   },
+  fetchInvoicePdf: async (invoiceId: number): Promise<Blob> => {
+    try {
+      const response = await apiClient.get(`/api/invoices/${invoiceId}/pdf`, {
+        responseType: 'blob',
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch invoice PDF from server:', error);
+      throw error;
+    }
+  },
   updateInvoice: async (id: number, data: any): Promise<Invoice> => {
     const response = await apiClient.put(`/api/invoices/${id}`, data);
     return response.data;
