@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/table";
 import { InvoiceService, InvoiceCreateRequest, InvoiceListDTO } from "@/api/invoiceService";
 import { ClientService, Client } from "@/api/clientService";
+import InvoicePreviewModal from "@/components/invoices/InvoicePreviewModal";
 
 export default function Invoices() {
   const navigate = useNavigate();
@@ -63,6 +64,7 @@ export default function Invoices() {
 
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [previewInvoiceId, setPreviewInvoiceId] = useState<number | null>(null);
   const [newInvoice, setNewInvoice] = useState<Partial<InvoiceCreateRequest>>({
     subtotal: 0,
     tax: 0,
@@ -340,14 +342,27 @@ export default function Invoices() {
                     <TableCell className="text-muted-foreground">
                       {invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "N/A"}
                     </TableCell>
-                    <TableCell className="font-semibold flex items-center gap-1.5">
+                    <TableCell className="font-semibold flex items-center gap-1.5 py-3">
                       <span className="text-muted-foreground/60 text-xs font-normal">AUD</span>
                       ${invoice.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell className="text-right pr-6">
-                      <StatusBadge status={invoice.status}>
-                        {invoice.displayStatus}
-                      </StatusBadge>
+                      <div className="flex items-center justify-end gap-3">
+                        <StatusBadge status={invoice.status}>
+                          {invoice.displayStatus}
+                        </StatusBadge>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="h-7 text-xs bg-muted/60 hover:bg-muted font-medium px-2.5"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPreviewInvoiceId(invoice.id);
+                          }}
+                        >
+                          Preview
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -423,6 +438,13 @@ export default function Invoices() {
           </Pagination>
         </div>
       )}
+
+      {/* Preview Modal */}
+      <InvoicePreviewModal
+        invoiceId={previewInvoiceId}
+        isOpen={previewInvoiceId !== null}
+        onClose={() => setPreviewInvoiceId(null)}
+      />
     </div>
   );
 }

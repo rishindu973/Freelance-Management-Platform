@@ -15,7 +15,8 @@ import {
   RefreshCw,
   CheckCircle2,
   XCircle,
-  Clock
+  Clock,
+  Eye
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -36,6 +37,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { SendInvoiceModal } from '@/components/invoices/SendInvoiceModal';
 import { PaymentModal } from '@/components/invoices/PaymentModal';
+import InvoicePreviewModal from '@/components/invoices/InvoicePreviewModal';
 import { downloadInvoicePdf } from '@/lib/utils';
 
 export default function InvoiceDetail() {
@@ -48,6 +50,7 @@ export default function InvoiceDetail() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSendModalOpen, setIsSendModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
   const fetchInvoice = async () => {
     try {
@@ -116,6 +119,9 @@ export default function InvoiceDetail() {
         </Breadcrumb>
 
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => setIsPreviewModalOpen(true)}>
+            <Eye className="h-4 w-4" /> Preview
+          </Button>
           <Button variant="outline" size="sm" className="gap-2" onClick={() => window.print()}>
             <Printer className="h-4 w-4" /> Print
           </Button>
@@ -346,6 +352,12 @@ export default function InvoiceDetail() {
           </div>
         </CardContent>
       </Card>
+
+      <InvoicePreviewModal
+        invoiceId={Number(id)}
+        isOpen={isPreviewModalOpen}
+        onClose={() => setIsPreviewModalOpen(false)}
+      />
     </div>
   );
 }
