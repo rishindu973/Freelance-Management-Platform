@@ -204,23 +204,26 @@ export default function InvoiceDetail() {
       />
 
       <Card className="max-w-4xl mx-auto shadow-2xl border-slate-200 overflow-hidden bg-white print:shadow-none print:border-none">
-        {/* Professional Header */}
-        <div className="bg-slate-900 p-12 text-white flex justify-between items-start print:bg-white print:text-slate-900 print:p-0 print:border-b print:pb-8">
+        {/* Header — warm yellow palette */}
+        <div style={{ backgroundColor: '#FAE588' }} className="p-12 flex justify-between items-start print:p-0 print:border-b print:pb-8">
           <div>
-            <h2 className="text-4xl font-black tracking-tight uppercase tracking-[0.25em] mb-2">Invoice</h2>
-            <div className="text-xl font-bold mb-4">
-              Invoice No: {invoice.invoiceNumber || 'DRAFT-TBD'}
+            <h2 className="text-4xl font-black tracking-tight uppercase tracking-[0.25em] mb-2 text-black">Invoice</h2>
+            <div className="text-base font-bold mb-2 text-black">
+              No: {invoice.invoiceNumber || 'DRAFT-TBD'}
             </div>
-            <div className="flex items-center gap-4 text-slate-400 text-xs font-mono print:text-slate-500">
-              <div className="flex items-center gap-1.5 font-bold">
-                <Calendar className="h-3 w-3" /> DATE: {invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString() : 'N/A'}
+            <div className="flex flex-col gap-1 text-xs font-mono text-black">
+              <div className="flex items-center gap-1.5">
+                <Calendar className="h-3 w-3" /> Issue Date: {invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Calendar className="h-3 w-3" /> Due Date: {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}
               </div>
             </div>
           </div>
           <div className="text-right">
-            <p className="text-xl tracking-tighter uppercase" style={{ fontFamily: 'gebuk, sans-serif', fontWeight: 'normal' }}>FREELANCEFLOW</p>
-            <p className="text-xs text-slate-400 print:text-slate-500">Official Sovereign Corporate Headquarters</p>
-            <p className="text-xs text-slate-400 print:text-slate-500 underline underline-offset-4 decoration-primary">finance@freelanceflow.io</p>
+            <p className="text-[9px] text-[#BDBDBD] tracking-widest uppercase">Powered Via</p>
+            <p className="text-lg font-black tracking-wider uppercase text-black">{invoice.companyName ?? 'FREELANCEFLOW'}</p>
+            <p className="text-xs text-black mt-1">{invoice.companyEmail ?? 'contact@freelanceflow.io'}</p>
           </div>
         </div>
 
@@ -285,12 +288,12 @@ export default function InvoiceDetail() {
           {/* Line Items Table */}
           <div className="border border-slate-100 rounded-xl overflow-hidden shadow-sm">
             <Table>
-              <TableHeader className="bg-slate-50/80">
+              <TableHeader style={{ backgroundColor: '#FCEFB4' }}>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="text-xs font-black uppercase text-slate-400 tracking-widest py-4 px-6">Description / Service Rendered</TableHead>
-                  <TableHead className="text-right text-xs font-black uppercase text-slate-400 tracking-widest py-4 px-6">Qty</TableHead>
-                  <TableHead className="text-right text-xs font-black uppercase text-slate-400 tracking-widest py-4 px-6">Unit Price</TableHead>
-                  <TableHead className="text-right text-xs font-black uppercase text-slate-400 tracking-widest py-4 px-6">Total Amount</TableHead>
+                  <TableHead className="text-xs font-black uppercase text-black tracking-widest py-4 px-6">Description / Service Rendered</TableHead>
+                  <TableHead className="text-right text-xs font-black uppercase text-black tracking-widest py-4 px-6">Qty</TableHead>
+                  <TableHead className="text-right text-xs font-black uppercase text-black tracking-widest py-4 px-6">Unit Price</TableHead>
+                  <TableHead className="text-right text-xs font-black uppercase text-black tracking-widest py-4 px-6">Total Amount</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -313,8 +316,10 @@ export default function InvoiceDetail() {
             <div className="flex-1 max-w-sm p-6 rounded-xl bg-slate-50/50 border border-slate-100 flex items-start gap-4 h-fit">
               <AlertCircle className="h-5 w-5 text-slate-400 mt-0.5" />
               <div className="space-y-1">
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Notes</p>
-                <p className="text-xs text-slate-500 leading-relaxed">Please ensure payment is made within 30 days of the invoice date. Late payments may be subject to a 1.5% monthly interest fee.</p>
+                <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: '#F9DC5C' }}>Notes</p>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  {invoice.description || 'Thank you for your business.'}
+                </p>
               </div>
             </div>
 
@@ -329,25 +334,31 @@ export default function InvoiceDetail() {
                   <span className="font-black text-slate-700 font-mono tracking-tight text-base">${Number(invoice.tax).toFixed(2)}</span>
                 </div>
               </div>
-              <div className="flex justify-between items-center p-6 pt-2 bg-slate-900 text-white rounded-xl shadow-lg print:shadow-none print:text-slate-900 print:bg-slate-50">
-                <span className="font-black text-xs uppercase tracking-[0.25em] text-slate-400 print:text-slate-500">Gross Total</span>
-                <span className="text-4xl font-black font-mono tabular-nums tracking-tighter leading-none">${Number(invoice.total).toFixed(2)}</span>
+              <div className="flex justify-between items-center p-5 pt-3 rounded-xl shadow-sm" style={{ backgroundColor: '#FAE588' }}>
+                <span className="font-black text-xs uppercase tracking-[0.25em] text-black">Total Due</span>
+                <span className="text-4xl font-black font-mono tabular-nums tracking-tighter leading-none text-black">${Number(invoice.total).toFixed(2)}</span>
               </div>
             </div>
           </div>
 
-          {/* Professional Branding Footer */}
-          <div className="mt-20 pt-12 border-t border-slate-50 text-center space-y-3">
-            <p className="text-[10px] text-slate-300 font-black uppercase tracking-[0.5em] mb-4">Official Document</p>
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-50 border border-slate-100">
-              <FileCheck className="h-3 w-3 text-primary" />
-              <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-1.5">
+          {/* Footer — mirrors PDF footer exactly */}
+          <div className="mt-16 pt-8 border-t border-slate-50 text-center space-y-4">
+            {/* Verified bar — #FCEFB4 highlight */}
+            <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full" style={{ backgroundColor: '#FCEFB4' }}>
+              <FileCheck className="h-3 w-3 text-black" />
+              <span className="text-[9px] font-black text-black uppercase tracking-[0.2em] flex items-center gap-1.5">
                 Verified By FreelanceFlow Secure Infrastructure
-                <div className="h-1 w-1 rounded-full bg-slate-300" />
+                <div className="h-1 w-1 rounded-full bg-black opacity-40" />
                 {invoice.invoiceNumber}
               </span>
             </div>
-            <p className="text-[8px] text-slate-200 uppercase tracking-widest pt-2">© 2026 FreelanceFlow PM OS | Confidential Document</p>
+            {/* Branding */}
+            <div>
+              <p className="text-[7px] uppercase tracking-widest" style={{ color: '#BDBDBD' }}>Powered Via</p>
+              <p className="text-sm font-black uppercase tracking-wider text-black">{invoice.companyName ?? 'FREELANCEFLOW'}</p>
+              <p className="text-[9px] text-slate-500 mt-1">{invoice.companyEmail ?? 'contact@freelanceflow.io'}</p>
+            </div>
+            <p className="text-[8px] uppercase tracking-widest" style={{ color: '#BDBDBD' }}>© 2026 FreelanceFlow PM OS | Confidential Document</p>
           </div>
         </CardContent>
       </Card>
