@@ -1,5 +1,6 @@
 package com.freelance.freelancepm.service.pdf;
 
+import com.freelance.freelancepm.entity.Manager;
 import lombok.Builder;
 import lombok.Getter;
 import java.awt.Color;
@@ -27,24 +28,56 @@ public class PdfStyle {
 
     // Instance Colors (Configurable)
     @Builder.Default
-    private final Color primaryColor = COLOR_PRIMARY;
+    private final Color primaryColor = COLOR_HEADER_BG;
     @Builder.Default
-    private final Color secondaryColor = COLOR_SECONDARY;
+    private final Color secondaryColor = COLOR_SECTION_LABEL;
 
-    // Static Base Colors (Antigravity Theme Defaults)
-    public static final Color COLOR_PRIMARY = new Color(15, 23, 42);     // Slate 900
-    public static final Color COLOR_SECONDARY = new Color(51, 65, 85);   // Slate 700
-    public static final Color COLOR_TEXT = new Color(71, 85, 105);        // Slate 600
-    public static final Color COLOR_MUTED = new Color(148, 163, 184);     // Slate 400
-    public static final Color COLOR_BORDER = new Color(226, 232, 240);    // Slate 200
-    public static final Color COLOR_HIGHLIGHT = new Color(248, 250, 252); // Slate 50
-    public static final Color COLOR_WHITE = Color.WHITE;
+    // ─────────────────────────────────────────────────────────────
+    // Warm Yellow Invoice Palette
+    // ─────────────────────────────────────────────────────────────
+
+    /** Header bar and Total box background — soft pastel yellow */
+    public static final Color COLOR_HEADER_BG   = new Color(0xFA, 0xE5, 0x88); // #FAE588
+
+    /** Section labels ("BILL TO", "PAYMENT INFO") */
+    public static final Color COLOR_SECTION_LABEL = new Color(0xF9, 0xDC, 0x5C); // #F9DC5C
+
+    /** Table header row background */
+    public static final Color COLOR_TABLE_HEADER = new Color(0xFC, 0xEF, 0xB4); // #FCEFB4
+
+    /** Footer verified-line highlight background */
+    public static final Color COLOR_FOOTER_HL   = new Color(0xFC, 0xEF, 0xB4); // #FCEFB4
+
+    /** Invoice status badge — warm orange */
+    public static final Color COLOR_STATUS      = new Color(0xFF, 0xA7, 0x26); // #FFA726
+
+    /** All primary body text — pure black */
+    public static final Color COLOR_TEXT        = new Color(0x00, 0x00, 0x00); // #000000
+
+    /** "OFFICIAL DOCUMENT" secondary muted label */
+    public static final Color COLOR_MUTED       = new Color(0xBD, 0xBD, 0xBD); // #BDBDBD
+
+    /** Borders / divider lines */
+    public static final Color COLOR_BORDER      = new Color(0xE2, 0xE8, 0xF0); // #E2E8F0
+
+    /** Pure white (for any fills that stay white) */
+    public static final Color COLOR_WHITE       = Color.WHITE;
+
+    // Keep legacy aliases for any references outside this file
+    /** @deprecated Use COLOR_HEADER_BG */
+    @Deprecated public static final Color COLOR_PRIMARY   = COLOR_HEADER_BG;
+    /** @deprecated Use COLOR_TEXT */
+    @Deprecated public static final Color COLOR_SECONDARY = COLOR_SECTION_LABEL;
+    /** @deprecated Use COLOR_MUTED */
+    @Deprecated public static final Color COLOR_HIGHLIGHT = new Color(0xFA, 0xE5, 0x88);
+
+    // ─────────────────────────────────────────────────────────────
 
     public static PdfStyle defaultStyle() {
         return PdfStyle.builder().build();
     }
 
-    public static PdfStyle fromManager(com.freelance.freelancepm.entity.Manager manager) {
+    public static PdfStyle fromManager(Manager manager) {
         if (manager == null || manager.getBrandingColor() == null) {
             return defaultStyle();
         }

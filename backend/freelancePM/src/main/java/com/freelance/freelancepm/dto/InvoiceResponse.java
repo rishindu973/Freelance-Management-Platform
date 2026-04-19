@@ -25,7 +25,24 @@ public class InvoiceResponse {
     private Long version;
 
     private String invoiceNumber;
+    private String description; // Notes field
+
+    // Client details
     private String clientName;
+    private String clientAddress;
+    private String clientEmail;
+    private String clientPhone;
+
+    // Project details
+    private String projectName;
+
+    // Manager / Company branding details
+    private String companyName;
+    private String companyEmail;
+    private String companyPhone;
+    private String companyAddress;
+    private String logoUrl;
+
     private String failureReason;
     private LocalDateTime lastSentAt;
     private List<InvoiceLineItemResponse> lineItems;

@@ -58,6 +58,7 @@ export interface Invoice {
   clientId: number;
   projectId: number;
   status: string;
+  displayStatus?: string;
   subtotal: number;
   tax: number;
   total: number;
@@ -66,13 +67,29 @@ export interface Invoice {
   updatedAt: string;
   version: number;
   type: string;
-  description: string;
+  description: string;        // Notes field
   invoiceNumber: string;
   sequenceNumber: number;
   year: number;
   failureReason?: string;
   lastSentAt?: string;
   lineItems: any[];
+
+  // Client details (populated by backend mapper)
+  clientName?: string;
+  clientAddress?: string;
+  clientEmail?: string;
+  clientPhone?: string;
+
+  // Project details
+  projectName?: string;
+
+  // Manager / Company branding details
+  companyName?: string;
+  companyEmail?: string;
+  companyPhone?: string;
+  companyAddress?: string;
+  logoUrl?: string;
 }
 
 export const InvoiceService = {

@@ -6,13 +6,19 @@ import com.freelance.freelancepm.dto.InvoiceListDTO;
 import com.freelance.freelancepm.dto.InvoiceResponse;
 import com.freelance.freelancepm.entity.Invoice;
 import com.freelance.freelancepm.entity.InvoiceLineItem;
+import com.freelance.freelancepm.entity.Manager;
+import com.freelance.freelancepm.repository.ManagerRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.stream.Collectors;
 
 @Component
+@RequiredArgsConstructor
 public class InvoiceMapper {
+
+        private final ManagerRepository managerRepository;
 
         public InvoiceListDTO toListDTO(Invoice invoice) {
                 return InvoiceListDTO.builder()
@@ -32,8 +38,35 @@ public class InvoiceMapper {
         public InvoiceResponse toResponse(Invoice invoice) {
                 InvoiceResponse response = new InvoiceResponse();
                 response.setId(invoice.getId());
-                response.setClientId(invoice.getClient().getId());
-                response.setProjectId(invoice.getProject() != null ? invoice.getProject().getId() : null);
+                response.setDescription(invoice.getDescription());
+
+                // Client
+                if (invoice.getClient() != null) {
+                        response.setClientId(invoice.getClient().getId());
+                        response.setClientName(invoice.getClient().getName());
+                        response.setClientAddress(invoice.getClient().getAddress());
+                        response.setClientEmail(invoice.getClient().getEmail());
+                        response.setClientPhone(invoice.getClient().getPhone());
+                }
+
+                // Project
+                if (invoice.getProject() != null) {
+                        response.setProjectId(invoice.getProject().getId());
+                        response.setProjectName(invoice.getProject().getName());
+                }
+
+                // Manager / Company branding
+                Manager manager = resolveManager(invoice);
+                if (manager != null) {
+                        response.setCompanyName(manager.getCompanyName());
+                        response.setCompanyAddress(manager.getAddress());
+                        response.setCompanyPhone(manager.getContactNumber());
+                        response.setLogoUrl(manager.getLogoUrl());
+                        if (manager.getUser() != null) {
+                                response.setCompanyEmail(manager.getUser().getEmail());
+                        }
+                }
+
                 response.setStatus(invoice.getStatus());
                 response.setDisplayStatus(invoice.getStatus() != null
                                 ? invoice.getStatus().getDisplayStatus()
@@ -41,11 +74,11 @@ public class InvoiceMapper {
                 response.setSubtotal(invoice.getSubtotal());
                 response.setTax(invoice.getTax());
                 response.setTotal(invoice.getTotal());
+                response.setDueDate(invoice.getDueDate());
                 response.setCreatedAt(invoice.getCreatedAt());
                 response.setUpdatedAt(invoice.getUpdatedAt());
                 response.setVersion(invoice.getVersion());
                 response.setInvoiceNumber(invoice.getInvoiceNumber());
-                response.setClientName(invoice.getClient().getName());
                 response.setFailureReason(invoice.getFailureReason());
                 response.setLastSentAt(invoice.getLastSentAt());
 
@@ -76,5 +109,12 @@ public class InvoiceMapper {
                                 .unitPrice(req.getUnitPrice())
                                 .amount(amount)
                                 .build();
+        }
+
+        private Manager resolveManager(Invoice invoice) {
+                if (invoice.getProject() != null && invoice.getProject().getManagerId() != null) {
+                        return managerRepository.findById(invoice.getProject().getManagerId()).orElse(null);
+                }
+                return null;
         }
 }
