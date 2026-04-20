@@ -6,23 +6,25 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2, Loader2, FileText, AlertTriangle, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-import { 
-  Form, 
-  FormControl, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { InvoiceService } from '@/api/invoiceService';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import InvoicePreview from '@/components/invoices/InvoicePreview';
+import { ClientService } from '@/api/clientService';
 
 // --- Validation Schemas ---
 const lineItemSchema = z.object({
@@ -32,9 +34,10 @@ const lineItemSchema = z.object({
 });
 
 const invoiceSchema = z.object({
-  clientId: z.coerce.number().min(1, 'Client ID must be positive'),
+  clientId: z.coerce.number().min(1, 'Client ID is required'),
   projectId: z.coerce.number().optional(),
   status: z.enum(['DRAFT', 'FINAL', 'SENT', 'PAID', 'OVERDUE']).default('DRAFT'),
+  description: z.string().max(1000, 'Notes too long').optional(),
   lineItems: z.array(lineItemSchema).min(1, 'At least one line item is required'),
 }).refine((data) => {
   if (data.status === 'FINAL' || data.status === 'SENT') {
@@ -48,7 +51,7 @@ const invoiceSchema = z.object({
 
 type InvoiceFormValues = z.infer<typeof invoiceSchema>;
 
-const TAX_RATE = 0.10; // 10% tax baseline matching backend
+const TAX_RATE = 0.10;
 
 interface InvoiceFormProps {
   initialData?: any;
@@ -60,6 +63,7 @@ export default function InvoiceForm({ initialData }: InvoiceFormProps) {
   const queryClient = useQueryClient();
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [validatedData, setValidatedData] = useState<InvoiceFormValues | null>(null);
+  const [clientData, setClientData] = useState<any | null>(null);
 
   const isEditMode = !!initialData;
   const isReadOnly = useMemo(() => {
@@ -77,6 +81,7 @@ export default function InvoiceForm({ initialData }: InvoiceFormProps) {
       clientId: initialData?.clientId || 0,
       projectId: initialData?.projectId || undefined,
       status: (initialData?.status as any) || 'DRAFT',
+      description: initialData?.description || '',
       lineItems: initialData?.lineItems?.map((item: any) => ({
         description: item.description,
         quantity: item.quantity,
@@ -87,13 +92,24 @@ export default function InvoiceForm({ initialData }: InvoiceFormProps) {
 
   const { control, handleSubmit, watch, formState: { isSubmitting, isValid }, reset } = form;
 
-  // Reactively reset form if initialData changes (for example when fetched)
+  const watchClientId = watch('clientId');
+
+  // Fetch client details when clientId changes for live branding in preview
+  useEffect(() => {
+    const id = Number(watchClientId);
+    if (!id || id < 1) { setClientData(null); return; }
+    ClientService.getClientById(id)
+      .then(setClientData)
+      .catch(() => setClientData(null));
+  }, [watchClientId]);
+
   useEffect(() => {
     if (initialData) {
       reset({
         clientId: initialData.clientId,
         projectId: initialData.projectId,
         status: initialData.status,
+        description: initialData.description || '',
         lineItems: initialData.lineItems.map((item: any) => ({
           description: item.description,
           quantity: item.quantity,
@@ -103,40 +119,52 @@ export default function InvoiceForm({ initialData }: InvoiceFormProps) {
     }
   }, [initialData, reset]);
 
-  // Manage Dynamic Array Fields
-  const { fields, append, remove } = useFieldArray({
-    name: 'lineItems',
-    control,
-  });
-
+  const { fields, append, remove } = useFieldArray({ name: 'lineItems', control });
   const watchLineItems = watch('lineItems');
+  const watchDescription = watch('description');
 
-  // Reactively Calculate Auto-Totals
   const { subtotal, tax, total } = useMemo(() => {
-    let currentSubtotal = 0;
-    
-    (watchLineItems || []).forEach((item) => {
-      const quantity = Number(item?.quantity) || 0;
-      const unitPrice = Number(item?.unitPrice) || 0;
-      currentSubtotal += Math.max(0, quantity) * Math.max(0, unitPrice);
+    let s = 0;
+    (watchLineItems || []).forEach(item => {
+      s += Math.max(0, Number(item?.quantity) || 0) * Math.max(0, Number(item?.unitPrice) || 0);
     });
-
-    const calculatedTax = currentSubtotal * TAX_RATE;
-    const finalTotal = currentSubtotal + calculatedTax;
-
-    return {
-      subtotal: currentSubtotal,
-      tax: calculatedTax,
-      total: finalTotal,
-    };
+    const t = s * TAX_RATE;
+    return { subtotal: s, tax: t, total: s + t };
   }, [watchLineItems]);
+
+  // Build a live invoice preview object from current form state
+  const livePreviewInvoice = useMemo(() => ({
+    invoiceNumber: initialData?.invoiceNumber ?? '[DRAFT]',
+    createdAt: initialData?.createdAt ?? new Date().toISOString(),
+    dueDate: initialData?.dueDate ?? undefined,
+    status: form.getValues('status'),
+    description: watchDescription ?? '',
+    subtotal,
+    tax,
+    total,
+    clientName:   clientData?.name    ?? `Client #${watchClientId}`,
+    clientEmail:  clientData?.email   ?? '',
+    clientAddress: clientData?.address ?? '',
+    clientPhone:  clientData?.phone   ?? '',
+    projectId:    form.getValues('projectId'),
+    projectName:  initialData?.projectName ?? undefined,
+    companyName:  initialData?.companyName ?? 'FREELANCEFLOW',
+    companyEmail: initialData?.companyEmail ?? 'contact@freelanceflow.io',
+    logoUrl:      initialData?.logoUrl ?? undefined,
+    lineItems: (watchLineItems || []).map(item => ({
+      description: item.description,
+      quantity: Number(item.quantity),
+      unitPrice: Number(item.unitPrice),
+      amount: Math.max(0, Number(item.quantity)) * Math.max(0, Number(item.unitPrice)),
+    })),
+  }), [watchLineItems, watchDescription, clientData, watchClientId, subtotal, tax, total, initialData, form]);
 
   const mutation = useMutation({
     mutationFn: async (data: InvoiceFormValues) => {
       if (isEditMode) {
         return await InvoiceService.updateInvoice(initialData.id, {
           ...data,
-          version: initialData.version // Send current version for optimistic locking
+          version: initialData.version
         } as any);
       } else {
         return await InvoiceService.createInvoice(data as any);
@@ -144,8 +172,8 @@ export default function InvoiceForm({ initialData }: InvoiceFormProps) {
     },
     onSuccess: (data: any) => {
       const invNum = data.invoiceNumber || 'N/A';
-      toast({ 
-        title: isEditMode ? 'Invoice Updated' : 'Invoice Created', 
+      toast({
+        title: isEditMode ? 'Invoice Updated' : 'Invoice Created',
         description: `Successfully ${isEditMode ? 'updated' : 'generated'} invoice: ${invNum}`,
         action: (
           <Button onClick={() => navigate(`/invoices/${data.id}`)} variant="outline" size="sm">
@@ -160,25 +188,12 @@ export default function InvoiceForm({ initialData }: InvoiceFormProps) {
     onError: (error: any) => {
       const status = error?.response?.status;
       const message = error?.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'create'} invoice`;
-      
       if (status === 409) {
-        toast({
-          title: 'Concurrent Update Error',
-          description: 'This invoice was modified by another user. Please refresh to see the latest changes.',
-          variant: 'destructive',
-        });
+        toast({ title: 'Concurrent Update Error', description: 'This invoice was modified by another user. Please refresh.', variant: 'destructive' });
       } else if (status === 403) {
-        toast({
-          title: 'Permission Denied',
-          description: message,
-          variant: 'destructive',
-        });
+        toast({ title: 'Permission Denied', description: message, variant: 'destructive' });
       } else {
-        toast({
-          title: 'Error',
-          description: message,
-          variant: 'destructive',
-        });
+        toast({ title: 'Error', description: message, variant: 'destructive' });
       }
     },
   });
@@ -190,9 +205,7 @@ export default function InvoiceForm({ initialData }: InvoiceFormProps) {
   };
 
   const onConfirmSave = () => {
-    if (validatedData) {
-      mutation.mutate(validatedData);
-    }
+    if (validatedData) mutation.mutate(validatedData);
   };
 
   return (
@@ -203,7 +216,7 @@ export default function InvoiceForm({ initialData }: InvoiceFormProps) {
           {isEditMode ? `Edit Invoice #${initialData.invoiceNumber || initialData.id}` : 'Create Invoice'}
         </CardTitle>
         <CardDescription>
-          {isEditMode ? 'Modify existing invoice details and line items.' : 'Generate and issue a real-time invoice calculation.'}
+          {isEditMode ? 'Modify existing invoice details and line items.' : 'Fill all fields and use "Preview & Validate" to review before saving.'}
         </CardDescription>
       </CardHeader>
 
@@ -213,7 +226,7 @@ export default function InvoiceForm({ initialData }: InvoiceFormProps) {
             <AlertCircle className="h-4 w-4 text-red-600" />
             <AlertTitle className="text-red-800 font-bold">Editing Restricted</AlertTitle>
             <AlertDescription className="text-red-700">
-              Cannot edit sent invoice. Please create a credit note.
+              Cannot edit a sent invoice. Please create a credit note.
             </AlertDescription>
           </Alert>
         )}
@@ -222,23 +235,21 @@ export default function InvoiceForm({ initialData }: InvoiceFormProps) {
           <Alert className="mb-6 bg-amber-50 border-amber-200 text-amber-800">
             <AlertTriangle className="h-4 w-4 text-amber-600" />
             <AlertTitle className="font-bold">Finalized Invoice</AlertTitle>
-            <AlertDescription>
-              Warning: You are editing a finalized invoice.
-            </AlertDescription>
+            <AlertDescription>Warning: You are editing a finalized invoice.</AlertDescription>
           </Alert>
         )}
 
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            
-            {/* Invoice Meta Payload */}
+
+            {/* Invoice Meta */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={control}
                 name="clientId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Client ID</FormLabel>
+                    <FormLabel>Client ID <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input type="number" placeholder="Client ID" {...field} disabled={isReadOnly} />
                     </FormControl>
@@ -254,11 +265,11 @@ export default function InvoiceForm({ initialData }: InvoiceFormProps) {
                   <FormItem>
                     <FormLabel>Project ID (Optional)</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="Project ID..." 
-                        {...field} 
-                        value={field.value || ''} 
+                      <Input
+                        type="number"
+                        placeholder="Project ID..."
+                        {...field}
+                        value={field.value || ''}
                         disabled={isReadOnly}
                       />
                     </FormControl>
@@ -297,14 +308,34 @@ export default function InvoiceForm({ initialData }: InvoiceFormProps) {
               />
             </div>
 
-            {/* Dynamic Items Array Setup */}
-            <div className={`mt-8 border rounded-lg p-5 ${isReadOnly ? 'bg-slate-100/50' : 'bg-slate-50/50'}`}>
+            {/* Notes / Description */}
+            <FormField
+              control={control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notes <span className="text-xs text-muted-foreground">(optional — appears on invoice)</span></FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="e.g. Bank: XYZ Bank • Account: 1234567890 • Thank you for your business!"
+                      className="resize-none h-24"
+                      {...field}
+                      disabled={isReadOnly}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Line Items */}
+            <div className={`mt-2 border rounded-lg p-5 ${isReadOnly ? 'bg-slate-100/50' : 'bg-slate-50/50'}`}>
               <div className="flex justify-between items-center mb-4">
-                <h3 className="font-semibold text-lg text-slate-800">Line Items</h3>
+                <h3 className="font-semibold text-lg text-slate-800">Line Items <span className="text-red-500 text-sm">*</span></h3>
                 {!isReadOnly && (
-                  <Button 
-                    type="button" 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    variant="outline"
                     size="sm"
                     onClick={() => append({ description: '', quantity: 1, unitPrice: 0 })}
                     className="gap-2"
@@ -316,7 +347,7 @@ export default function InvoiceForm({ initialData }: InvoiceFormProps) {
 
               {fields.length === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-4 italic">
-                  Cannot construct an invoice body. Add initial line items directly.
+                  Add at least one line item to enable preview.
                 </p>
               )}
 
@@ -327,9 +358,9 @@ export default function InvoiceForm({ initialData }: InvoiceFormProps) {
                   const autoAmount = Math.max(0, itemQ) * Math.max(0, itemP);
 
                   return (
-                    <div 
-                      key={field.id} 
-                      className="flex flex-col md:flex-row gap-3 items-start bg-white p-3 rounded-md shadow-sm border border-slate-100/80 transition-all hover:bg-slate-50/50"
+                    <div
+                      key={field.id}
+                      className="flex flex-col md:flex-row gap-3 items-start bg-white p-3 rounded-md shadow-sm border border-slate-100/80"
                     >
                       <div className="flex-1 w-full">
                         <FormField
@@ -346,7 +377,7 @@ export default function InvoiceForm({ initialData }: InvoiceFormProps) {
                           )}
                         />
                       </div>
- 
+
                       <div className="w-full md:w-20">
                         <FormField
                           control={control}
@@ -362,7 +393,7 @@ export default function InvoiceForm({ initialData }: InvoiceFormProps) {
                           )}
                         />
                       </div>
- 
+
                       <div className="w-full md:w-28">
                         <FormField
                           control={control}
@@ -378,18 +409,18 @@ export default function InvoiceForm({ initialData }: InvoiceFormProps) {
                           )}
                         />
                       </div>
- 
+
                       <div className="w-full md:w-24 pt-1 md:pt-[26px] flex md:justify-center">
                         <span className="font-semibold text-slate-600 text-sm font-mono">
                           ${autoAmount.toFixed(2)}
                         </span>
                       </div>
- 
+
                       {!isReadOnly && (
                         <div className="pt-1 md:pt-[22px] w-full md:w-auto flex justify-end">
-                          <Button 
-                            type="button" 
-                            variant="ghost" 
+                          <Button
+                            type="button"
+                            variant="ghost"
                             size="icon"
                             onClick={() => remove(index)}
                             className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full"
@@ -410,8 +441,8 @@ export default function InvoiceForm({ initialData }: InvoiceFormProps) {
               )}
             </div>
 
-            {/* Calculations Aggregate SubTotals */}
-            <div className="flex justify-end pt-6">
+            {/* Totals summary */}
+            <div className="flex justify-end pt-2">
               <div className="w-full md:w-1/3 space-y-3 bg-slate-50 p-5 rounded-lg border">
                 <div className="flex justify-between text-sm text-slate-600">
                   <span>Subtotal:</span>
@@ -428,128 +459,49 @@ export default function InvoiceForm({ initialData }: InvoiceFormProps) {
               </div>
             </div>
 
-            {/* Final Trigger Execution Check */}
+            {/* Submit */}
             {!isReadOnly && (
               <div className="flex justify-end">
-                  <Button 
-                  type="submit" 
-                  className="w-full md:w-auto mt-6 font-semibold"
+                <Button
+                  type="submit"
+                  className="w-full md:w-auto mt-4 font-semibold"
                   disabled={isSubmitting || !isValid}
-                  >
+                  title={!isValid ? 'Fill all required fields before previewing' : ''}
+                >
                   {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
                   {isEditMode ? 'Update & Preview' : 'Preview & Validate'}
-                  </Button>
+                </Button>
               </div>
             )}
           </form>
         </Form>
 
-        {/* Preview Modal */}
+        {/* ── Preview Modal — renders InvoicePreview (mirrors PDF) ── */}
         <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-          <DialogContent className="max-w-4xl p-0 overflow-hidden bg-white">
-            <div className="bg-slate-900 p-8 text-white flex justify-between items-start">
-                <div>
-                    <h2 className="text-3xl font-bold tracking-tight uppercase tracking-[0.2em] mb-1">Invoice</h2>
-                    <div className="text-lg font-bold mb-2">
-                        Invoice No: {initialData?.invoiceNumber || '[DRAFT]'}
-                    </div>
-                    <p className="text-slate-400 text-xs font-mono">DATE: {new Date(initialData?.createdAt || Date.now()).toLocaleDateString()}</p>
-                </div>
-                <div className="text-right">
-                    <p className="font-bold text-lg">ANTIGRAVITY SOLUTIONS</p>
-                    <p className="text-xs text-slate-400">123 Workspace Dr, Innovation Park</p>
-                    <p className="text-xs text-slate-400">contact@antigravity.io</p>
-                </div>
+          <DialogContent className="max-w-4xl w-[95vw] max-h-[92vh] overflow-y-auto p-0 border-none bg-transparent shadow-none [&>button]:bg-white [&>button]:rounded-full [&>button]:p-1.5 [&>button]:shadow-sm">
+            <DialogHeader className="sr-only">
+              <DialogTitle>Invoice Preview</DialogTitle>
+              <DialogDescription>Review your invoice before saving.</DialogDescription>
+            </DialogHeader>
+
+            <div className="rounded-lg overflow-hidden shadow-2xl">
+              <InvoicePreview invoice={livePreviewInvoice} />
             </div>
 
-            <div className="p-10 space-y-8">
-                {/* Billing Details */}
-                <div className="grid grid-cols-2 gap-12">
-                   <div>
-                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Billed To</h4>
-                        <div className="space-y-1">
-                            <p className="font-bold text-slate-800">Client: {initialData?.clientName || `ID #${validatedData?.clientId}`}</p>
-                            <p className="text-sm text-slate-500">Detailed Client Information Registered System-wide</p>
-                        </div>
-                   </div>
-                   <div className="text-right">
-                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Invoice Info</h4>
-                        <div className="space-y-1 text-sm font-mono">
-                            <p><span className="text-slate-400 pr-2">STATUS:</span> <span className="font-bold text-slate-800 underline decoration-primary decoration-2 underline-offset-4">{validatedData?.status}</span></p>
-                            {(validatedData?.projectId || initialData?.projectId) && (
-                                <p><span className="text-slate-400 pr-2">PROJECT:</span> #{validatedData?.projectId || initialData?.projectId}</p>
-                            )}
-                        </div>
-                   </div>
-                </div>
-
-                {/* Main Table Content */}
-                <div className="border border-slate-100 rounded-lg overflow-hidden">
-                  <Table>
-                    <TableHeader className="bg-slate-50/50">
-                      <TableRow>
-                        <TableHead className="text-xs font-bold uppercase text-slate-400">Description</TableHead>
-                        <TableHead className="text-right text-xs font-bold uppercase text-slate-400">Qty</TableHead>
-                        <TableHead className="text-right text-xs font-bold uppercase text-slate-400">Unit Price</TableHead>
-                        <TableHead className="text-right text-xs font-bold uppercase text-slate-400">Amount</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {validatedData?.lineItems.map((item, idx) => (
-                        <TableRow key={idx} className="hover:bg-transparent">
-                          <TableCell className="font-medium text-slate-700 py-4">{item.description}</TableCell>
-                          <TableCell className="text-right font-mono py-4">{item.quantity}</TableCell>
-                          <TableCell className="text-right font-mono py-4">${Number(item.unitPrice).toFixed(2)}</TableCell>
-                          <TableCell className="text-right font-bold text-slate-900 py-4">
-                            ${(Number(item.quantity) * Number(item.unitPrice)).toFixed(2)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-
-                {/* Summary Section */}
-                <div className="flex justify-end">
-                  <div className="w-80 space-y-4 pt-4">
-                     <div className="space-y-2 text-sm text-slate-500 border-b border-slate-100 pb-4">
-                        <div className="flex justify-between">
-                        <span>SUBTOTAL</span>
-                        <span className="font-mono text-slate-700">${subtotal.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                        <span>TAX (10.0%)</span>
-                        <span className="font-mono text-slate-700">${tax.toFixed(2)}</span>
-                        </div>
-                     </div>
-                     <div className="flex justify-between items-baseline pt-2">
-                        <span className="font-bold text-slate-800 text-lg tracking-tight uppercase tracking-tighter">Total Due</span>
-                        <span className="text-3xl font-bold text-primary font-mono tabular-nums leading-none">${total.toFixed(2)}</span>
-                     </div>
-                  </div>
-                </div>
-
-                {/* Professional Footer */}
-                <div className="mt-12 pt-8 border-t border-slate-100 text-center space-y-2">
-                    <p className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Thank you for your business!</p>
-                    <p className="text-[9px] text-slate-300">Generated by Antigravity OS | Secure Blockchain-Enabled Invoice Reference</p>
-                </div>
-            </div>
-
-            <DialogFooter className="bg-slate-50 p-6 px-10 border-t border-slate-100 flex items-center justify-between pointer-events-auto">
+            <DialogFooter className="bg-white px-6 py-4 border-t border-slate-100 flex items-center justify-between rounded-b-lg pointer-events-auto">
               <Button type="button" variant="outline" onClick={() => setIsPreviewOpen(false)} className="bg-white">
                 Back to Editor
               </Button>
-              <Button 
-                type="button" 
+              <Button
+                type="button"
                 onClick={onConfirmSave}
                 disabled={mutation.isPending}
                 className="min-w-[160px]"
               >
                 {mutation.isPending ? (
-                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</>
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</>
                 ) : (
-                    isEditMode ? "Commit Changes" : "Finalize & Commit"
+                  isEditMode ? 'Commit Changes' : 'Finalize & Commit'
                 )}
               </Button>
             </DialogFooter>

@@ -19,15 +19,15 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
- * Orchestrates invoice PDF generation.
+ * Orchestrates invoice PDF generation using the warm yellow palette.
  *
  * <p>
- * This service provides the base structure for a new invoice PDF template.
- * It uses modular skeleton methods for rendering different sections of the
- * document.
+ * Layout mirrors the frontend InvoicePreview component exactly so that
+ * the on-screen preview and the downloaded file look identical.
  * </p>
  */
 @Service
@@ -38,6 +38,8 @@ public class InvoicePdfService {
     private final InvoiceRepository invoiceRepository;
     private final InvoiceLineItemRepository invoiceLineItemRepository;
     private final ManagerRepository managerRepository;
+
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("MMM dd, yyyy");
 
     public byte[] generateInvoicePdf(Invoice invoice) {
         if (invoice == null) {
@@ -56,7 +58,6 @@ public class InvoicePdfService {
 
         try (PDDocument document = new PDDocument()) {
             try (PdfGenerationContext context = new PdfGenerationContext(document, style)) {
-                // PDF Layout construction sequence (Modular methods)
                 drawHeader(context, invoice, manager, logoBytes);
                 drawBillingSection(context, invoice, manager);
                 drawTable(context, lineItems != null ? lineItems : List.of());
@@ -64,12 +65,11 @@ public class InvoicePdfService {
                 drawFooter(context, manager);
             }
 
-            // Post-processing: add page numbers on every page
             addPageNumbers(document, style);
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             document.save(baos);
-            log.info("Successfully generated PDF skeleton for invoice ID: {}", invoice.getId());
+            log.info("Successfully generated PDF for invoice ID: {}", invoice.getId());
             return baos.toByteArray();
         } catch (IOException e) {
             log.error("Error generating PDF for invoice ID: {}", invoice.getId(), e);
@@ -89,183 +89,203 @@ public class InvoicePdfService {
     }
 
     // ──────────────────────────────────────────────
-    // Template Methods for PDF Layout Skeletons
+    // Section Renderers
     // ──────────────────────────────────────────────
 
+    /**
+     * Header: yellow background bar.
+     * Left — "INVOICE" title + Issue Date + Due Date.
+     * Right — "Powered Via / FREELANCEFLOW / email".
+     */
     protected void drawHeader(PdfGenerationContext context, Invoice invoice, Manager manager, byte[] logoBytes)
             throws IOException {
-        org.apache.pdfbox.pdmodel.font.PDFont fontBold = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
-        org.apache.pdfbox.pdmodel.font.PDFont fontRegular = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
-        java.awt.Color primaryColor = context.getStyle().getPrimaryColor();
-        java.awt.Color textColor = PdfStyle.COLOR_TEXT;
+        PDType1Font fontBold = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
+        PDType1Font fontRegular = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
 
         float margin = context.getMargin();
         float width = context.getPageWidth();
         float y = context.getYPosition();
+        float headerH = 110;
 
-        // LEFT: "INVOICE" (large text)
-        context.drawText("INVOICE", margin, y - 30, fontBold, 36, primaryColor);
+        // Yellow header background
+        context.drawRect(0, y - headerH + style(context).getMargin(), width, headerH,
+                PdfStyle.COLOR_HEADER_BG, true);
 
-        // RIGHT: Company Details
+        // ── LEFT: INVOICE title ──
+        float textY = y - 20;
+        context.drawText("INVOICE", margin, textY, fontBold, 30, PdfStyle.COLOR_TEXT);
+        textY -= 20;
+
+        // Invoice number
+        String invNum = invoice.getInvoiceNumber() != null ? invoice.getInvoiceNumber() : "DRAFT";
+        context.drawText("No: " + invNum, margin, textY, fontRegular, 10, PdfStyle.COLOR_TEXT);
+        textY -= 16;
+
+        // Issue date
+        String issueDate = invoice.getCreatedAt() != null
+                ? invoice.getCreatedAt().format(DATE_FMT)
+                : "N/A";
+        context.drawText("Issue Date:  " + issueDate, margin, textY, fontRegular, 10, PdfStyle.COLOR_TEXT);
+        textY -= 16;
+
+        // Due date
+        String dueDate = invoice.getDueDate() != null
+                ? invoice.getDueDate().format(DATE_FMT)
+                : "N/A";
+        context.drawText("Due Date:    " + dueDate, margin, textY, fontRegular, 10, PdfStyle.COLOR_TEXT);
+
+        // ── RIGHT: Company branding ──
         float rightX = width - margin;
-        float rightY = y;
+        float rightY = y - 15;
 
-        // Logo (top right)
+        // Logo (top-right)
         if (logoBytes != null) {
-            context.drawImage(logoBytes, rightX - 60, rightY - 40, 60, 40);
-            rightY -= 50;
+            context.drawImage(logoBytes, rightX - 60, rightY - 35, 60, 35);
+            rightY -= 42;
         }
 
-        // Company Name
-        String companyName = (manager != null && manager.getCompanyName() != null
-                && !manager.getCompanyName().isEmpty())
-                        ? manager.getCompanyName()
-                        : "Company Name";
-        context.drawRightAlignedText(companyName, rightX, rightY, fontBold, 12, textColor);
-        rightY -= 15;
+        // "Powered Via" — small muted label
+        context.drawRightAlignedText("Powered Via", rightX, rightY, fontRegular, 7, PdfStyle.COLOR_MUTED);
+        rightY -= 13;
 
-        // Owner Name
-        String ownerName = (manager != null && manager.getFullName() != null && !manager.getFullName().isEmpty())
-                ? manager.getFullName()
-                : "Owner Name";
-        context.drawRightAlignedText(ownerName, rightX, rightY, fontRegular, 10, textColor);
-        rightY -= 15;
+        // "FREELANCEFLOW" — bold brand name
+        String brand = (manager != null && manager.getCompanyName() != null
+                && !manager.getCompanyName().isBlank())
+                        ? manager.getCompanyName().toUpperCase()
+                        : "FREELANCEFLOW";
+        context.drawRightAlignedText(brand, rightX, rightY, fontBold, 14, PdfStyle.COLOR_TEXT);
+        rightY -= 14;
 
-        // Address
-        String address = (manager != null && manager.getAddress() != null && !manager.getAddress().isEmpty())
-                ? manager.getAddress()
-                : "Company Address";
-        context.drawRightAlignedText(address, rightX, rightY, fontRegular, 10, textColor);
-        rightY -= 15;
+        // Company email
+        String email = (manager != null && manager.getUser() != null
+                && manager.getUser().getEmail() != null)
+                        ? manager.getUser().getEmail()
+                        : "contact@freelanceflow.io";
+        context.drawRightAlignedText(email, rightX, rightY, fontRegular, 9, PdfStyle.COLOR_TEXT);
 
-        // Phone
-        String phone = (manager != null && manager.getContactNumber() != null && !manager.getContactNumber().isEmpty())
-                ? manager.getContactNumber()
-                : "Company Phone";
-        context.drawRightAlignedText(phone, rightX, rightY, fontRegular, 10, textColor);
-        rightY -= 15;
-
-        // Email
-        String email = (manager != null && manager.getUser() != null && manager.getUser().getEmail() != null)
-                ? manager.getUser().getEmail()
-                : "company@email.com";
-        context.drawRightAlignedText(email, rightX, rightY, fontRegular, 10, textColor);
-
-        // Set Y position below the lowest component in the header
-        context.setYPosition(Math.min(y - 50, rightY - 30));
+        context.setYPosition(y - headerH - 20);
     }
 
+    /**
+     * Billing section: "BILL TO" (client) on the left, invoice meta on the right.
+     * Section labels in yellow (#F9DC5C), all other text black.
+     */
     protected void drawBillingSection(PdfGenerationContext context, Invoice invoice, Manager manager)
             throws IOException {
-        org.apache.pdfbox.pdmodel.font.PDFont fontBold = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
-        org.apache.pdfbox.pdmodel.font.PDFont fontRegular = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
-        java.awt.Color primaryColor = context.getStyle().getPrimaryColor();
-        java.awt.Color textColor = PdfStyle.COLOR_TEXT;
+        PDType1Font fontBold = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
+        PDType1Font fontRegular = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
 
         float margin = context.getMargin();
         float width = context.getPageWidth();
         float y = context.getYPosition();
 
-        // LEFT: BILL TO
+        // ── LEFT: BILL TO ──
         float leftY = y;
-        context.drawText("BILL TO", margin, leftY, fontBold, 12, primaryColor);
-        leftY -= 15;
+        context.drawText("BILLED TO", margin, leftY, fontBold, 8, PdfStyle.COLOR_SECTION_LABEL);
+        leftY -= 16;
 
         com.freelance.freelancepm.model.Client client = invoice.getClient();
         if (client != null) {
-            String clientName = (client.getName() != null && !client.getName().isEmpty()) ? client.getName()
-                    : "Client Name";
-            context.drawText(clientName, margin, leftY, fontBold, 10, textColor);
-            leftY -= 15;
+            String clientName = nonEmpty(client.getName(), "Client Name");
+            context.drawText(clientName, margin, leftY, fontBold, 11, PdfStyle.COLOR_TEXT);
+            leftY -= 14;
 
-            String address = (client.getAddress() != null && !client.getAddress().isEmpty()) ? client.getAddress()
-                    : "Client Address";
-            context.drawText(address, margin, leftY, fontRegular, 10, textColor);
-            leftY -= 15;
+            String address = nonEmpty(client.getAddress(), "");
+            if (!address.isEmpty()) {
+                context.drawText(address, margin, leftY, fontRegular, 9, PdfStyle.COLOR_TEXT);
+                leftY -= 13;
+            }
 
-            String phone = (client.getPhone() != null && !client.getPhone().isEmpty()) ? client.getPhone()
-                    : "Client Phone";
-            context.drawText(phone, margin, leftY, fontRegular, 10, textColor);
-            leftY -= 15;
+            String phone = nonEmpty(client.getPhone(), "");
+            if (!phone.isEmpty()) {
+                context.drawText(phone, margin, leftY, fontRegular, 9, PdfStyle.COLOR_TEXT);
+                leftY -= 13;
+            }
 
-            String email = (client.getEmail() != null && !client.getEmail().isEmpty()) ? client.getEmail()
-                    : "client@email.com";
-            context.drawText(email, margin, leftY, fontRegular, 10, textColor);
-            leftY -= 15;
+            String email = nonEmpty(client.getEmail(), "");
+            if (!email.isEmpty()) {
+                context.drawText(email, margin, leftY, fontRegular, 9, PdfStyle.COLOR_TEXT);
+                leftY -= 13;
+            }
         } else {
-            leftY -= 60; // Leave space anyway if client is null
+            leftY -= 52;
         }
 
-        // RIGHT: Invoice Info
+        // ── RIGHT: PAYMENT INFO ──
         float rightX = width - margin;
         float rightY = y;
 
-        java.time.format.DateTimeFormatter dateFormatter = java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy");
+        context.drawRightAlignedText("PAYMENT INFO", rightX, rightY, fontBold, 8, PdfStyle.COLOR_SECTION_LABEL);
+        rightY -= 16;
 
-        // Invoice Number
-        context.drawRightAlignedText("Invoice Number: " + invoice.getInvoiceNumber(), rightX, rightY, fontRegular, 10,
-                textColor);
-        rightY -= 15;
+        // Status badge (orange)
+        String status = invoice.getStatus() != null ? invoice.getStatus().name() : "DRAFT";
+        context.drawRightAlignedText("Status:  " + status, rightX, rightY, fontBold, 10, PdfStyle.COLOR_STATUS);
+        rightY -= 14;
 
-        // Issue Date
-        String issueDateStr = invoice.getCreatedAt() != null ? invoice.getCreatedAt().format(dateFormatter) : "N/A";
-        context.drawRightAlignedText("Issue Date: " + issueDateStr, rightX, rightY, fontRegular, 10, textColor);
-        rightY -= 15;
+        // Project reference
+        if (invoice.getProject() != null) {
+            String projName = nonEmpty(invoice.getProject().getName(), "Project #" + invoice.getProject().getId());
+            context.drawRightAlignedText("Project: " + projName, rightX, rightY, fontRegular, 9, PdfStyle.COLOR_TEXT);
+            rightY -= 13;
+        }
 
-        // Due Date
-        String dueDateStr = invoice.getDueDate() != null ? invoice.getDueDate().format(dateFormatter) : "N/A";
-        context.drawRightAlignedText("Due Date: " + dueDateStr, rightX, rightY, fontRegular, 10, textColor);
-        rightY -= 15;
-
-        context.setYPosition(Math.min(leftY, rightY) - 30);
+        context.setYPosition(Math.min(leftY, rightY) - 25);
     }
 
+    /**
+     * Line items table.
+     * Header row background: #FCEFB4. All text: black.
+     */
     protected void drawTable(PdfGenerationContext context, List<InvoiceLineItem> lineItems) throws IOException {
-        org.apache.pdfbox.pdmodel.font.PDFont fontBold = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
-        org.apache.pdfbox.pdmodel.font.PDFont fontRegular = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
-        java.awt.Color primaryColor = context.getStyle().getPrimaryColor();
-        java.awt.Color textColor = PdfStyle.COLOR_TEXT;
+        PDType1Font fontBold = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
+        PDType1Font fontRegular = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
 
         float margin = context.getMargin();
         float width = context.getPageWidth();
         float rightEdge = width - margin;
         float y = context.getYPosition();
 
-        // Column X coordinates
         float colItemX = margin;
         float colDescX = margin + 40;
         float colQtyX = rightEdge - 180;
         float colPriceX = rightEdge - 90;
         float colAmountX = rightEdge;
 
-        // Header Row
-        context.drawLine(margin, y + 10, rightEdge, y + 10, primaryColor, 1.5f);
-        context.drawText("Item", colItemX, y, fontBold, 10, primaryColor);
-        context.drawText("Description", colDescX, y, fontBold, 10, primaryColor);
-        context.drawRightAlignedText("Quantity", colQtyX, y, fontBold, 10, primaryColor);
-        context.drawRightAlignedText("Unit Price", colPriceX, y, fontBold, 10, primaryColor);
-        context.drawRightAlignedText("Amount", colAmountX, y, fontBold, 10, primaryColor);
-        y -= 15;
-        context.drawLine(margin, y + 10, rightEdge, y + 10, primaryColor, 1.5f);
+        // Table header row — #FCEFB4 background
+        float rowH = 20;
+        context.drawRect(margin, y - rowH + 12, rightEdge - margin, rowH,
+                PdfStyle.COLOR_TABLE_HEADER, true);
 
-        // Data Rows
-        y -= 15;
+        context.drawText("Item", colItemX, y, fontBold, 9, PdfStyle.COLOR_TEXT);
+        context.drawText("Description", colDescX, y, fontBold, 9, PdfStyle.COLOR_TEXT);
+        context.drawRightAlignedText("Qty", colQtyX, y, fontBold, 9, PdfStyle.COLOR_TEXT);
+        context.drawRightAlignedText("Unit Price", colPriceX, y, fontBold, 9, PdfStyle.COLOR_TEXT);
+        context.drawRightAlignedText("Amount", colAmountX, y, fontBold, 9, PdfStyle.COLOR_TEXT);
+        y -= rowH;
+
+        // Divider below header
+        context.drawLine(margin, y + 10, rightEdge, y + 10, PdfStyle.COLOR_BORDER, 1f);
+        y -= 10;
+
+        // Data rows
         if (lineItems != null) {
-            int itemIndex = 1;
+            int idx = 1;
             for (InvoiceLineItem item : lineItems) {
                 context.setYPosition(y);
                 context.ensureSpace(30, (ctx) -> {
-                    float headerY = ctx.getYPosition();
-                    ctx.drawLine(margin, headerY + 10, rightEdge, headerY + 10, primaryColor, 1.5f);
-                    ctx.drawText("Item", colItemX, headerY, fontBold, 10, primaryColor);
-                    ctx.drawText("Description", colDescX, headerY, fontBold, 10, primaryColor);
-                    ctx.drawRightAlignedText("Quantity", colQtyX, headerY, fontBold, 10, primaryColor);
-                    ctx.drawRightAlignedText("Unit Price", colPriceX, headerY, fontBold, 10, primaryColor);
-                    ctx.drawRightAlignedText("Amount", colAmountX, headerY, fontBold, 10, primaryColor);
-                    ctx.setYPosition(headerY - 15);
-                    ctx.drawLine(margin, ctx.getYPosition() + 10, rightEdge, ctx.getYPosition() + 10, primaryColor,
-                            1.5f);
-                    ctx.setYPosition(ctx.getYPosition() - 15);
+                    float hy = ctx.getYPosition();
+                    ctx.drawRect(margin, hy - rowH + 12, rightEdge - margin, rowH,
+                            PdfStyle.COLOR_TABLE_HEADER, true);
+                    ctx.drawText("Item", colItemX, hy, fontBold, 9, PdfStyle.COLOR_TEXT);
+                    ctx.drawText("Description", colDescX, hy, fontBold, 9, PdfStyle.COLOR_TEXT);
+                    ctx.drawRightAlignedText("Qty", colQtyX, hy, fontBold, 9, PdfStyle.COLOR_TEXT);
+                    ctx.drawRightAlignedText("Unit Price", colPriceX, hy, fontBold, 9, PdfStyle.COLOR_TEXT);
+                    ctx.drawRightAlignedText("Amount", colAmountX, hy, fontBold, 9, PdfStyle.COLOR_TEXT);
+                    ctx.setYPosition(hy - rowH);
+                    ctx.drawLine(margin, ctx.getYPosition() + 8, rightEdge, ctx.getYPosition() + 8,
+                            PdfStyle.COLOR_BORDER, 1f);
+                    ctx.setYPosition(ctx.getYPosition() - 8);
                 });
 
                 y = context.getYPosition();
@@ -273,38 +293,41 @@ public class InvoicePdfService {
                 java.text.DecimalFormat df = new java.text.DecimalFormat("#,##0.00");
                 String qtyStr = item.getQuantity() != null ? item.getQuantity().toString() : "0";
                 String priceStr = item.getUnitPrice() != null ? "$" + df.format(item.getUnitPrice()) : "$0.00";
-                String amountStr = item.getAmount() != null ? "$" + df.format(item.getAmount()) : "$0.00";
+                String amtStr = item.getAmount() != null ? "$" + df.format(item.getAmount()) : "$0.00";
                 String desc = item.getDescription() != null ? item.getDescription() : "";
 
-                context.drawText(String.valueOf(itemIndex++), colItemX, y, fontRegular, 10, textColor);
+                context.drawText(String.valueOf(idx++), colItemX, y, fontRegular, 9, PdfStyle.COLOR_TEXT);
 
-                List<String> lines = context.parseLines(desc, colQtyX - colDescX - 20, fontRegular, 10);
+                List<String> lines = context.parseLines(desc, colQtyX - colDescX - 20, fontRegular, 9);
                 float descY = y;
                 for (String line : lines) {
-                    context.drawText(line, colDescX, descY, fontRegular, 10, textColor);
+                    context.drawText(line, colDescX, descY, fontRegular, 9, PdfStyle.COLOR_TEXT);
                     descY -= 12;
                 }
 
-                context.drawRightAlignedText(qtyStr, colQtyX, y, fontRegular, 10, textColor);
-                context.drawRightAlignedText(priceStr, colPriceX, y, fontRegular, 10, textColor);
-                context.drawRightAlignedText(amountStr, colAmountX, y, fontRegular, 10, textColor);
+                context.drawRightAlignedText(qtyStr, colQtyX, y, fontRegular, 9, PdfStyle.COLOR_TEXT);
+                context.drawRightAlignedText(priceStr, colPriceX, y, fontRegular, 9, PdfStyle.COLOR_TEXT);
+                context.drawRightAlignedText(amtStr, colAmountX, y, fontRegular, 9, PdfStyle.COLOR_TEXT);
 
-                float rowHeight = Math.max(20, lines.size() * 12 + 10);
-                y -= rowHeight;
+                float rh = Math.max(20, lines.size() * 12 + 8);
+                y -= rh;
+
+                context.drawLine(margin, y + 8, rightEdge, y + 8, PdfStyle.COLOR_BORDER, 0.5f);
             }
         }
 
-        context.drawLine(margin, y + 10, rightEdge, y + 10, primaryColor, 1f);
-        context.setYPosition(y - 20);
+        context.setYPosition(y - 15);
     }
 
+    /**
+     * Totals: Notes on left, Subtotal / Total box on right.
+     * Total box background: #FAE588. All text black.
+     */
     protected void drawTotalsSection(PdfGenerationContext context, Invoice invoice) throws IOException {
-        context.ensureSpace(120, null); // Maintain spacing to avoid overlapping the footer
+        context.ensureSpace(130, null);
 
-        org.apache.pdfbox.pdmodel.font.PDFont fontBold = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
-        org.apache.pdfbox.pdmodel.font.PDFont fontRegular = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
-        java.awt.Color primaryColor = context.getStyle().getPrimaryColor();
-        java.awt.Color textColor = PdfStyle.COLOR_TEXT;
+        PDType1Font fontBold = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
+        PDType1Font fontRegular = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
 
         float margin = context.getMargin();
         float width = context.getPageWidth();
@@ -313,123 +336,108 @@ public class InvoicePdfService {
 
         java.text.DecimalFormat df = new java.text.DecimalFormat("#,##0.00");
         String subtotalStr = invoice.getSubtotal() != null ? "$" + df.format(invoice.getSubtotal()) : "$0.00";
+        String taxStr = invoice.getTax() != null ? "$" + df.format(invoice.getTax()) : "$0.00";
         String totalStr = invoice.getTotal() != null ? "$" + df.format(invoice.getTotal()) : "$0.00";
 
-        // LEFT: Notes
+        // ── LEFT: Notes ──
         float leftY = y;
-        context.drawText("NOTES:", margin, leftY, fontBold, 10, primaryColor);
-        leftY -= 15;
+        context.drawText("NOTES:", margin, leftY, fontBold, 9, PdfStyle.COLOR_SECTION_LABEL);
+        leftY -= 14;
+
         String notes = invoice.getDescription();
-        if (notes != null && !notes.isEmpty()) {
-            List<String> lines = context.parseLines(notes, 250, fontRegular, 10);
+        if (notes != null && !notes.isBlank()) {
+            List<String> lines = context.parseLines(notes, 250, fontRegular, 9);
             for (String line : lines) {
-                context.drawText(line, margin, leftY, fontRegular, 10, textColor);
+                context.drawText(line, margin, leftY, fontRegular, 9, PdfStyle.COLOR_TEXT);
                 leftY -= 12;
             }
         } else {
-            context.drawText("Thank you for your business.", margin, leftY, fontRegular, 10, textColor);
+            context.drawText("Thank you for your business.", margin, leftY, fontRegular, 9, PdfStyle.COLOR_TEXT);
             leftY -= 12;
         }
 
-        // RIGHT: Subtotal / Total
+        // ── RIGHT: Subtotal / Tax / Total ──
         float rightY = y;
-        float labelX = rightEdge - 150;
+        float labelX = rightEdge - 160;
+        float boxW = 170;
+        float boxH = 70;
 
-        // Subtotal
-        context.drawText("Subtotal", labelX, rightY, fontRegular, 10, textColor);
-        context.drawRightAlignedText(subtotalStr, rightEdge, rightY, fontRegular, 10, textColor);
+        context.drawText("Subtotal", labelX, rightY, fontRegular, 9, PdfStyle.COLOR_TEXT);
+        context.drawRightAlignedText(subtotalStr, rightEdge, rightY, fontRegular, 9, PdfStyle.COLOR_TEXT);
+        rightY -= 16;
+
+        context.drawText("Tax (10%)", labelX, rightY, fontRegular, 9, PdfStyle.COLOR_TEXT);
+        context.drawRightAlignedText(taxStr, rightEdge, rightY, fontRegular, 9, PdfStyle.COLOR_TEXT);
         rightY -= 20;
 
-        // Total
-        context.drawText("TOTAL", labelX, rightY, fontBold, 14, primaryColor);
-        context.drawRightAlignedText(totalStr, rightEdge, rightY, fontBold, 14, primaryColor);
-        rightY -= 20;
+        // Total box with yellow background
+        context.drawRect(labelX - 10, rightY - 14, boxW + 10, 30,
+                PdfStyle.COLOR_HEADER_BG, true);
 
-        context.setYPosition(Math.min(leftY, rightY) - 30);
+        context.drawText("TOTAL DUE", labelX, rightY, fontBold, 12, PdfStyle.COLOR_TEXT);
+        context.drawRightAlignedText(totalStr, rightEdge, rightY, fontBold, 14, PdfStyle.COLOR_TEXT);
+
+        context.setYPosition(Math.min(leftY, rightY - 20) - 30);
     }
 
+    /**
+     * Footer: footer highlight row in #FCEFB4, "Powered Via / FREELANCEFLOW"
+     * branding.
+     */
     protected void drawFooter(PdfGenerationContext context, Manager manager) throws IOException {
-        org.apache.pdfbox.pdmodel.font.PDFont fontBold = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
-        org.apache.pdfbox.pdmodel.font.PDFont fontRegular = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
-        java.awt.Color primaryColor = context.getStyle().getPrimaryColor();
-        java.awt.Color textColor = PdfStyle.COLOR_TEXT;
+        PDType1Font fontBold = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
+        PDType1Font fontRegular = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
 
         float margin = context.getMargin();
         float width = context.getPageWidth();
         float centerX = width / 2;
-        float footerY = 60; // Fixed footer position at the bottom of the page
+        float footerY = 70;
 
-        // Horizontal Line above footer
-        context.drawLine(margin, footerY + 20, width - margin, footerY + 20, PdfStyle.COLOR_MUTED, 0.5f);
+        // Footer highlight bar (#FCEFB4)
+        context.drawRect(0, footerY - 5, width, 28, PdfStyle.COLOR_FOOTER_HL, true);
 
-        // Center: "Powered by FREELANCEFLOW" and Placeholder Logo
-        String text1 = "Powered by FREELANCEFLOW";
-        float text1Width = fontBold.getStringWidth(text1) / 1000 * 10;
+        // "Verified By FreelanceFlow Secure Infrastructure · <InvoiceNumber>"
+        String invNum = context.getCurrentPageNumber() + "*";
+        String verText = "Verified By FreelanceFlow Secure Infrastructure · " + invNum;
+        float verW = fontRegular.getStringWidth(verText) / 1000 * 8;
+        float verX = centerX - verW / 2;
+        context.drawText(verText, verX, footerY + 5, fontRegular, 8, PdfStyle.COLOR_TEXT);
 
-        float logoBoxSize = 12;
-        float gap = 5;
-        float totalTopWidth = logoBoxSize + gap + text1Width;
-        float startTopX = centerX - (totalTopWidth / 2);
+        // ── Below the bar: Powered Via / FREELANCEFLOW / email ──
+        float brandY = footerY - 18;
 
-        // Placeholder Logo (a simple unfilled box + cross)
-        context.drawRect(startTopX, footerY - 2, logoBoxSize, logoBoxSize, primaryColor, false);
-        context.drawLine(startTopX, footerY - 2, startTopX + logoBoxSize, footerY - 2 + logoBoxSize, primaryColor,
-                0.5f);
-        context.drawLine(startTopX, footerY - 2 + logoBoxSize, startTopX + logoBoxSize, footerY - 2, primaryColor,
-                0.5f);
+        // "Powered Via" — small muted
+        String poweredVia = "Powered Via";
+        float pvW = fontRegular.getStringWidth(poweredVia) / 1000 * 7;
+        context.drawText(poweredVia, centerX - pvW / 2, brandY, fontRegular, 7, PdfStyle.COLOR_MUTED);
+        brandY -= 12;
 
-        // "Powered by FREELANCEFLOW"
-        context.drawText(text1, startTopX + logoBoxSize + gap, footerY, fontBold, 10, primaryColor);
+        // "FREELANCEFLOW" — bold
+        String brand = (manager != null && manager.getCompanyName() != null
+                && !manager.getCompanyName().isBlank())
+                        ? manager.getCompanyName().toUpperCase()
+                        : "FREELANCEFLOW";
+        float bW = fontBold.getStringWidth(brand) / 1000 * 9;
+        context.drawText(brand, centerX - bW / 2, brandY, fontBold, 9, PdfStyle.COLOR_TEXT);
+        brandY -= 11;
 
-        // Below text
-        String text2Part1 = "This invoice was generated using FREELANCEFLOW. Visit ";
-        String linkText = "https://freelanceflow.com";
-        String text2Part3 = " for more information.";
-
-        float text2Part1Width = fontRegular.getStringWidth(text2Part1) / 1000 * 8;
-        float linkTextWidth = fontRegular.getStringWidth(linkText) / 1000 * 8;
-        float text2Part3Width = fontRegular.getStringWidth(text2Part3) / 1000 * 8;
-
-        float totalWidth = text2Part1Width + linkTextWidth + text2Part3Width;
-        float startX = centerX - (totalWidth / 2);
-        float linkStartX = startX + text2Part1Width;
-        float linkY = footerY - 15;
-
-        context.drawText(text2Part1, startX, linkY, fontRegular, 8, textColor);
-
-        // Link text (underlined)
-        context.drawText(linkText, linkStartX, linkY, fontRegular, 8, primaryColor);
-        context.drawLine(linkStartX, linkY - 1, linkStartX + linkTextWidth, linkY - 1, primaryColor, 0.5f);
-
-        // Remaining text
-        context.drawText(text2Part3, linkStartX + linkTextWidth, linkY, fontRegular, 8, textColor);
-
-        // Add PDF Hyperlink Annotation (Ensure clickable PDF link)
-        org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationLink txtLink = new org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationLink();
-        org.apache.pdfbox.pdmodel.interactive.action.PDActionURI action = new org.apache.pdfbox.pdmodel.interactive.action.PDActionURI();
-        action.setURI(linkText);
-        txtLink.setAction(action);
-
-        org.apache.pdfbox.pdmodel.common.PDRectangle position = new org.apache.pdfbox.pdmodel.common.PDRectangle();
-        position.setLowerLeftX(linkStartX);
-        position.setLowerLeftY(linkY - 2);
-        position.setUpperRightX(linkStartX + linkTextWidth);
-        position.setUpperRightY(linkY + 10);
-        txtLink.setRectangle(position);
-
-        org.apache.pdfbox.pdmodel.interactive.annotation.PDBorderStyleDictionary borderULine = new org.apache.pdfbox.pdmodel.interactive.annotation.PDBorderStyleDictionary();
-        borderULine.setStyle(org.apache.pdfbox.pdmodel.interactive.annotation.PDBorderStyleDictionary.STYLE_UNDERLINE);
-        borderULine.setWidth(0); // hide native border since we drew an underline manually
-        txtLink.setBorderStyle(borderULine);
-
-        org.apache.pdfbox.pdmodel.PDDocument document = context.getDocument();
-        org.apache.pdfbox.pdmodel.PDPage page = document.getPage(context.getCurrentPageNumber() - 1);
-        page.getAnnotations().add(txtLink);
+        // Email
+        String email = (manager != null && manager.getUser() != null
+                && manager.getUser().getEmail() != null)
+                        ? manager.getUser().getEmail()
+                        : "contact@freelanceflow.io";
+        float eW = fontRegular.getStringWidth(email) / 1000 * 7;
+        context.drawText(email, centerX - eW / 2, brandY, fontRegular, 7, PdfStyle.COLOR_TEXT);
     }
 
     // ──────────────────────────────────────────────
-    // Private helpers
+    // Helpers
     // ──────────────────────────────────────────────
+
+    /** Returns the PdfStyle from the context. */
+    private PdfStyle style(PdfGenerationContext ctx) {
+        return ctx.getStyle();
+    }
 
     private Manager resolveManager(Invoice invoice) {
         if (invoice.getProject() != null && invoice.getProject().getManagerId() != null) {
@@ -459,16 +467,21 @@ public class InvoicePdfService {
         int totalPages = document.getNumberOfPages();
         for (int i = 0; i < totalPages; i++) {
             PDPage page = document.getPage(i);
-            try (PDPageContentStream contentStream = new PDPageContentStream(document, page,
+            try (PDPageContentStream cs = new PDPageContentStream(document, page,
                     PDPageContentStream.AppendMode.APPEND, true, true)) {
-                contentStream.beginText();
-                contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8);
+                cs.beginText();
+                cs.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8);
                 float x = page.getMediaBox().getWidth() - style.getMargin() - 60;
                 float y = style.getMargin() / 2;
-                contentStream.newLineAtOffset(x, y);
-                contentStream.showText("Page " + (i + 1) + " of " + totalPages);
-                contentStream.endText();
+                cs.newLineAtOffset(x, y);
+                cs.showText("Page " + (i + 1) + " of " + totalPages);
+                cs.endText();
             }
         }
+    }
+
+    /** Returns value if non-null/non-blank, otherwise fallback. */
+    private String nonEmpty(String value, String fallback) {
+        return (value != null && !value.isBlank()) ? value : fallback;
     }
 }

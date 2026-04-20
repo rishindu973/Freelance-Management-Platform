@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
@@ -22,7 +23,9 @@ public class InvoiceCreateRequest {
 
     private InvoiceStatus status;
 
-    private java.time.LocalDate dueDate;
+    private LocalDate dueDate;
+
+    private String description; // Notes / custom message
 
     private BigDecimal subtotal;
     private BigDecimal tax;

@@ -53,6 +53,7 @@ public class InvoiceService implements IInvoiceService {
                 .project(project)
                 .status(req.getStatus() != null ? req.getStatus() : InvoiceStatus.DRAFT)
                 .dueDate(req.getDueDate())
+                .description(req.getDescription())
                 .lineItems(new ArrayList<>())
                 .year(LocalDate.now().getYear())
                 .build();
