@@ -41,12 +41,13 @@ public class StandardReportPdfLayout implements ReportPdfLayout {
         float textY = context.getYPosition() - 25;
 
         PDFont gebukFont = loadLogoFont(context);
-        context.drawText("FreeLanceFlow", margin, textY, gebukFont, 26, Color.WHITE);
-        context.drawRightAlignedText("FINANCIAL PERFORMANCE", width - margin, textY, FONT_BOLD, 16, Color.WHITE);
+        context.drawText("FreelanceFlow", margin, textY, gebukFont, 26, PdfStyle.COLOR_TEXT);
+        context.drawRightAlignedText("FINANCIAL PERFORMANCE", width - margin, textY, FONT_BOLD, 16,
+                PdfStyle.COLOR_TEXT);
 
         textY -= 20;
         String dateRange = "Period: " + startDate.format(DATE_FORMATTER) + " to " + endDate.format(DATE_FORMATTER);
-        context.drawRightAlignedText(dateRange, width - margin, textY, FONT_REGULAR, 8, PdfStyle.COLOR_MUTED);
+        context.drawRightAlignedText(dateRange, width - margin, textY, FONT_REGULAR, 8, PdfStyle.COLOR_TEXT);
 
         context.setYPosition(context.getYPosition() - headerHeight - 30);
     }
@@ -58,13 +59,13 @@ public class StandardReportPdfLayout implements ReportPdfLayout {
         float cardWidth = (context.getPageWidth() - (margin * 2) - 20) / 3;
         float y = context.getYPosition();
 
-        drawCard(context, "TOTAL REVENUE", report.getTotalRevenue(), margin, y, cardWidth, style.getPrimaryColor());
+        drawCard(context, "TOTAL REVENUE", report.getTotalRevenue(), margin, y, cardWidth, PdfStyle.COLOR_TEXT);
         drawCardNumber(context, "PROJECTS COMPLETED", report.getProjectsCompleted(), margin + cardWidth + 10, y,
                 cardWidth,
-                style.getSecondaryColor());
+                PdfStyle.COLOR_TEXT);
         drawCardNumber(context, "INVOICES GENERATED", report.getInvoicesGenerated(), margin + (cardWidth + 10) * 2, y,
                 cardWidth,
-                CORPORATE_BLUE);
+                PdfStyle.COLOR_TEXT);
 
         context.setYPosition(y - 80);
     }
@@ -75,7 +76,7 @@ public class StandardReportPdfLayout implements ReportPdfLayout {
         context.drawRect(x, y - 55, w, 65, PdfStyle.COLOR_HIGHLIGHT, true);
         context.drawRect(x, y - 55, w, 65, PdfStyle.COLOR_BORDER, false);
 
-        context.drawText(label, x + 12, y - 10, FONT_BOLD, 7, PdfStyle.COLOR_MUTED);
+        context.drawText(label, x + 12, y - 10, FONT_BOLD, 7, PdfStyle.COLOR_TEXT);
         context.drawText("$" + formatMoney(amount), x + 12, y - 40, FONT_BOLD, 15, valueColor);
     }
 
@@ -85,7 +86,7 @@ public class StandardReportPdfLayout implements ReportPdfLayout {
         context.drawRect(x, y - 55, w, 65, PdfStyle.COLOR_HIGHLIGHT, true);
         context.drawRect(x, y - 55, w, 65, PdfStyle.COLOR_BORDER, false);
 
-        context.drawText(label, x + 12, y - 10, FONT_BOLD, 7, PdfStyle.COLOR_MUTED);
+        context.drawText(label, x + 12, y - 10, FONT_BOLD, 7, PdfStyle.COLOR_TEXT);
         context.drawText(String.valueOf(amount), x + 12, y - 40, FONT_BOLD, 15, valueColor);
     }
 
@@ -97,7 +98,7 @@ public class StandardReportPdfLayout implements ReportPdfLayout {
         float width = context.getPageWidth() - (margin * 2);
 
         context.drawText("PROJECT-WISE BREAKDOWN", margin, context.getYPosition(), FONT_BOLD, 10,
-                style.getSecondaryColor());
+                PdfStyle.COLOR_TEXT);
         context.moveY(20);
 
         drawTableHeader(context);
@@ -112,12 +113,12 @@ public class StandardReportPdfLayout implements ReportPdfLayout {
 
             float textY = y + 2;
             context.drawText(detail.projectName(), margin + 10, textY, FONT_BOLD, style.getFontSizeText(),
-                    style.getPrimaryColor());
+                    PdfStyle.COLOR_TEXT);
             context.drawText(detail.clientName(), margin + 200, textY, FONT_REGULAR, style.getFontSizeText(),
                     PdfStyle.COLOR_TEXT);
 
             context.drawRightAlignedText("$" + formatMoney(detail.revenue()), margin + width - 10, textY, FONT_BOLD,
-                    style.getFontSizeText(), CORPORATE_BLUE);
+                    style.getFontSizeText(), PdfStyle.COLOR_TEXT);
 
             context.moveY(25);
             alternate = !alternate;
@@ -133,9 +134,9 @@ public class StandardReportPdfLayout implements ReportPdfLayout {
         context.drawRect(margin, y - 5, width, 20, PdfStyle.COLOR_BORDER, true);
 
         float textY = y + 2;
-        context.drawText("PROJECT", margin + 10, textY, FONT_BOLD, 8, Color.WHITE);
-        context.drawText("CLIENT", margin + 200, textY, FONT_BOLD, 8, Color.WHITE);
-        context.drawRightAlignedText("REVENUE", margin + width - 10, textY, FONT_BOLD, 8, Color.WHITE);
+        context.drawText("PROJECT", margin + 10, textY, FONT_BOLD, 8, PdfStyle.COLOR_TEXT);
+        context.drawText("CLIENT", margin + 200, textY, FONT_BOLD, 8, PdfStyle.COLOR_TEXT);
+        context.drawRightAlignedText("REVENUE", margin + width - 10, textY, FONT_BOLD, 8, PdfStyle.COLOR_TEXT);
 
         context.setYPosition(y - 20);
     }
