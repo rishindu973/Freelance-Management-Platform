@@ -32,15 +32,31 @@ public class ReportController {
         return ResponseEntity.ok(reportService.getReport(startDate, endDate));
     }
 
-    @GetMapping("/{id}/download")
-    public ResponseEntity<byte[]> downloadReport(@PathVariable Integer id) {
-        byte[] pdfContent = reportPdfService.generateReportPdf(id);
+    @GetMapping("/download")
+    public ResponseEntity<byte[]> downloadReport(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
 
-        String fileName = "FreelanceFlow_Report_" + id + ".pdf";
+        if (endDate == null)
+            endDate = LocalDate.now();
+        if (startDate == null)
+            startDate = endDate.minusDays(30);
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(pdfContent);
+        try {
+            byte[] pdfContent = reportPdfService.generateReportPdf(startDate, endDate);
+
+            String fileName = "FreelanceFlow_Report_" + startDate + "_to_" + endDate + ".pdf";
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .body(pdfContent);
+        } catch (Exception e) {
+            try (java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.FileWriter("error_log.txt"))) {
+                e.printStackTrace(pw);
+            } catch (Exception ignored) {
+            }
+            throw new RuntimeException("PDF Generation Error: " + e.getMessage(), e);
+        }
     }
 }

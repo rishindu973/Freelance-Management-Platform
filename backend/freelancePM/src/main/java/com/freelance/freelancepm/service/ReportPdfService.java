@@ -1,15 +1,27 @@
 package com.freelance.freelancepm.service;
 
 import com.freelance.freelancepm.entity.Manager;
-import com.freelance.freelancepm.entity.Report;
+import com.freelance.freelancepm.entity.Payment;
+import com.freelance.freelancepm.dto.ReportResponse;
 import com.freelance.freelancepm.repository.ManagerRepository;
-import com.freelance.freelancepm.repository.ReportRepository;
+import com.freelance.freelancepm.repository.PaymentRepository;
 import com.freelance.freelancepm.service.pdf.PdfGenerationContext;
 import com.freelance.freelancepm.service.pdf.PdfStyle;
 import com.freelance.freelancepm.service.pdf.ReportPdfLayout;
 import lombok.RequiredArgsConstructor;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -18,23 +30,53 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class ReportPdfService {
 
-    private final ReportRepository reportRepository;
+    private final ReportService reportService;
+    private final PaymentRepository paymentRepository;
     private final ManagerRepository managerRepository;
     private final ReportPdfLayout reportLayout;
 
-    public byte[] generateReportPdf(Integer reportId) {
+    public record ProjectRevenueDetails(String projectName, String clientName, BigDecimal revenue) {
+    }
 
-        Report report = reportRepository.findById(reportId)
-                .orElseThrow(() -> new RuntimeException("Report not found"));
+    @Transactional(readOnly = true)
+    public byte[] generateReportPdf(LocalDate startDate, LocalDate endDate) {
+
+        ReportResponse reportData = reportService.getReport(startDate, endDate);
         Manager manager = managerRepository.findAll().stream().findFirst().orElse(null);
+        List<Payment> payments = paymentRepository.findByPaymentDateBetween(
+                startDate.atStartOfDay(),
+                endDate.atTime(23, 59, 59));
+
+        Map<String, ProjectRevenueDetails> breakdownMap = new HashMap<>();
+
+        for (Payment payment : payments) {
+            String projectName = "Unknown Project";
+            String clientName = "Unknown Client";
+
+            if (payment.getInvoice() != null && payment.getInvoice().getProject() != null) {
+                projectName = payment.getInvoice().getProject().getName();
+                if (payment.getInvoice().getProject().getClient() != null) {
+                    clientName = payment.getInvoice().getProject().getClient().getName();
+                }
+            }
+
+            String key = projectName + "||" + clientName;
+            ProjectRevenueDetails current = breakdownMap.getOrDefault(key,
+                    new ProjectRevenueDetails(projectName, clientName, BigDecimal.ZERO));
+            breakdownMap.put(key,
+                    new ProjectRevenueDetails(projectName, clientName, current.revenue().add(payment.getAmount())));
+        }
+
+        List<ProjectRevenueDetails> projectBreakdown = new ArrayList<>(breakdownMap.values());
+        projectBreakdown.sort((a, b) -> b.revenue().compareTo(a.revenue())); // Sort by highest revenue
 
         try (PDDocument document = new PDDocument();
                 ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             PdfStyle style = PdfStyle.fromManager(manager);
             try (PdfGenerationContext context = new PdfGenerationContext(document, style)) {
-                reportLayout.drawHeader(context, report, manager, null);
-                reportLayout.drawSummaryCards(context, report);
-                reportLayout.drawBreakdownTable(context, report.getDetails());
+                reportLayout.drawHeader(context, startDate, endDate, manager, null);
+                reportLayout.drawSummaryCards(context, reportData);
+                reportLayout.drawBreakdownTable(context, projectBreakdown);
                 reportLayout.drawFooter(context, manager);
             }
             document.save(out);

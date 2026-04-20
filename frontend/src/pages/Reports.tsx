@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { ReportService, ReportResponse } from "@/api/reportService";
-import { DollarSign, FolderPlus, CheckCircle2, FileText } from "lucide-react";
+import { DollarSign, FolderPlus, CheckCircle2, FileText, Download, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/components/ui/use-toast";
 import {
     BarChart,
     Bar,
@@ -17,6 +20,9 @@ export default function Reports() {
     const [data, setData] = useState<ReportResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const { toast } = useToast();
+    const [isDownloading, setIsDownloading] = useState(false);
+    const [downloadProgress, setDownloadProgress] = useState(0);
 
     // Default to roughly last 30 days
     const today = new Date();
@@ -37,6 +43,45 @@ export default function Reports() {
             setError("Failed to fetch report data.");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDownloadPdf = async () => {
+        setIsDownloading(true);
+        setDownloadProgress(0);
+        try {
+            const { blob, filename: serverFilename } = await ReportService.downloadReportPdf(
+                startDate,
+                endDate,
+                (progress) => setDownloadProgress(progress)
+            );
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+
+            const finalFilename = serverFilename || `Report_${startDate}_to_${endDate}.pdf`;
+
+            link.setAttribute('download', finalFilename);
+            document.body.appendChild(link);
+            link.click();
+
+            link.parentNode?.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
+            toast({
+                title: "Download Started",
+                description: `Your file "${finalFilename}" is being saved.`,
+            });
+        } catch (error: any) {
+            console.error("PDF Download Error:", error);
+            toast({
+                title: "Download Error",
+                description: "Failed to generate PDF. Please try again later.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsDownloading(false);
+            setDownloadProgress(0);
         }
     };
 
@@ -69,6 +114,32 @@ export default function Reports() {
                 <div>
                     <h1 className="text-2xl font-semibold text-foreground">Custom Date Range Reports</h1>
                     <p className="text-sm text-muted-foreground">Select a timeline to view granular reporting metrics.</p>
+                </div>
+                <div>
+                    <Button
+                        variant="default"
+                        className="gap-2 relative overflow-hidden bg-primary hover:bg-primary/90"
+                        onClick={handleDownloadPdf}
+                        disabled={isDownloading || loading || !!error}
+                    >
+                        {isDownloading ? (
+                            <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <span>{downloadProgress > 0 ? `${downloadProgress}%` : 'Preparing...'}</span>
+                                {downloadProgress > 0 && (
+                                    <Progress
+                                        value={downloadProgress}
+                                        className="absolute bottom-0 left-0 right-0 h-0.5 w-full rounded-none"
+                                    />
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                <Download className="h-4 w-4" />
+                                <span>Download PDF</span>
+                            </>
+                        )}
+                    </Button>
                 </div>
             </div>
 
