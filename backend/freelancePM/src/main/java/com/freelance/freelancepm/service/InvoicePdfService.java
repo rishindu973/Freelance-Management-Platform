@@ -101,6 +101,7 @@ public class InvoicePdfService {
             throws IOException {
         PDType1Font fontBold = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
         PDType1Font fontRegular = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
+        org.apache.pdfbox.pdmodel.font.PDFont logoFont = loadLogoFont(context);
 
         float margin = context.getMargin();
         float width = context.getPageWidth();
@@ -148,12 +149,12 @@ public class InvoicePdfService {
         context.drawRightAlignedText("Powered Via", rightX, rightY, fontRegular, 7, PdfStyle.COLOR_MUTED);
         rightY -= 13;
 
-        // "FREELANCEFLOW" — bold brand name
+        // "FreelanceFlow" — brand name using logoFont
         String brand = (manager != null && manager.getCompanyName() != null
                 && !manager.getCompanyName().isBlank())
-                        ? manager.getCompanyName().toUpperCase()
-                        : "FREELANCEFLOW";
-        context.drawRightAlignedText(brand, rightX, rightY, fontBold, 14, PdfStyle.COLOR_TEXT);
+                        ? manager.getCompanyName()
+                        : "FreelanceFlow";
+        context.drawRightAlignedText(brand, rightX, rightY, logoFont, 14, PdfStyle.COLOR_TEXT);
         rightY -= 14;
 
         // Company email
@@ -387,6 +388,7 @@ public class InvoicePdfService {
     protected void drawFooter(PdfGenerationContext context, Manager manager) throws IOException {
         PDType1Font fontBold = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
         PDType1Font fontRegular = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
+        org.apache.pdfbox.pdmodel.font.PDFont logoFont = loadLogoFont(context);
 
         float margin = context.getMargin();
         float width = context.getPageWidth();
@@ -412,13 +414,13 @@ public class InvoicePdfService {
         context.drawText(poweredVia, centerX - pvW / 2, brandY, fontRegular, 7, PdfStyle.COLOR_MUTED);
         brandY -= 12;
 
-        // "FREELANCEFLOW" — bold
+        // "FreelanceFlow" — brand name
         String brand = (manager != null && manager.getCompanyName() != null
                 && !manager.getCompanyName().isBlank())
-                        ? manager.getCompanyName().toUpperCase()
-                        : "FREELANCEFLOW";
-        float bW = fontBold.getStringWidth(brand) / 1000 * 9;
-        context.drawText(brand, centerX - bW / 2, brandY, fontBold, 9, PdfStyle.COLOR_TEXT);
+                        ? manager.getCompanyName()
+                        : "FreelanceFlow";
+        float bW = logoFont.getStringWidth(brand) / 1000 * 9;
+        context.drawText(brand, centerX - bW / 2, brandY, logoFont, 9, PdfStyle.COLOR_TEXT);
         brandY -= 11;
 
         // Email
@@ -483,5 +485,14 @@ public class InvoicePdfService {
     /** Returns value if non-null/non-blank, otherwise fallback. */
     private String nonEmpty(String value, String fallback) {
         return (value != null && !value.isBlank()) ? value : fallback;
+    }
+
+    private org.apache.pdfbox.pdmodel.font.PDFont loadLogoFont(PdfGenerationContext context) throws IOException {
+        try (java.io.InputStream is = getClass().getResourceAsStream("/fonts/gebuk.ttf")) {
+            if (is == null) {
+                return new PDType1Font(Standard14Fonts.FontName.HELVETICA);
+            }
+            return org.apache.pdfbox.pdmodel.font.PDType0Font.load(context.getDocument(), is);
+        }
     }
 }
