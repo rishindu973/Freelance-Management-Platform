@@ -23,6 +23,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
 @Service
 @RequiredArgsConstructor
 public class ReportPdfService {
