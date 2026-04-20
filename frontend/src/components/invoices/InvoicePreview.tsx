@@ -1,10 +1,19 @@
 import React from 'react';
 
-// Using a flexible structure for the invoice prop to accommodate different backend shapes
+// ─── Color palette (mirrors PdfStyle.java exactly) ───────────────────────────
+const C = {
+  HEADER_BG:     '#FAE588', // header bar + total box background
+  SECTION_LABEL: '#F9DC5C', // "BILLED TO", "PAYMENT INFO", "NOTES:"
+  TABLE_HEADER:  '#FCEFB4', // table header row background
+  FOOTER_HL:     '#FCEFB4', // footer verified-line highlight
+  STATUS:        '#FFA726', // warm orange — invoice status badge
+  TEXT:          '#000000', // all body text
+  MUTED:         '#BDBDBD', // secondary label ("Powered Via")
+  WHITE:         '#FFFFFF',
+};
+
 interface InvoiceLineItem {
   id?: number;
-  item?: string;
-  name?: string;
   description?: string;
   quantity: number;
   unitPrice: number;
@@ -14,161 +23,195 @@ interface InvoiceLineItem {
 export interface InvoicePreviewProps {
   invoice: {
     invoiceNumber?: string;
-    issueDate?: string;
-    createdAt?: string; // Fallback for issue date
+    createdAt?: string;
     dueDate?: string;
+    status?: string;
     total?: number;
     subtotal?: number;
-    notes?: string;
-    description?: string;
-    client?: {
-      name?: string;
-      address?: string;
-      email?: string;
-    };
-    clientName?: string; // fallback if client object is missing
-    items?: InvoiceLineItem[];
+    tax?: number;
+    description?: string;      // Notes
+
+    // Client
+    clientName?: string;
+    clientAddress?: string;
+    clientEmail?: string;
+    clientPhone?: string;
+
+    // Project
+    projectName?: string;
+    projectId?: number;
+
+    // Company branding
+    companyName?: string;
+    companyEmail?: string;
+    companyPhone?: string;
+    companyAddress?: string;
+    logoUrl?: string;
+
     lineItems?: InvoiceLineItem[];
     [key: string]: any;
   } | null;
 }
+
+const fmt = {
+  currency: (v?: number) =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v ?? 0),
+
+  date: (d?: string) => {
+    if (!d || d === 'N/A') return 'N/A';
+    try {
+      return new Intl.DateTimeFormat('en-US', {
+        year: 'numeric', month: 'long', day: 'numeric',
+      }).format(new Date(d));
+    } catch { return d; }
+  },
+};
 
 const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice }) => {
   if (!invoice) {
     return <div className="p-8 text-center text-gray-500">No invoice data available.</div>;
   }
 
-  // Fallbacks and data normalization
-  const items = invoice.items || invoice.lineItems || [];
-  const invoiceNumber = invoice.invoiceNumber || 'INV-XXXX';
-  const issueDate = invoice.issueDate || invoice.createdAt || new Date().toISOString().split('T')[0];
-  const dueDate = invoice.dueDate || 'N/A';
-  const clientName = invoice.client?.name || invoice.clientName || 'Unknown Client';
-  const clientEmail = invoice.client?.email || '';
-  const clientAddress = invoice.client?.address || '';
-  const notes = invoice.notes || invoice.description || 'Thank you for your business.';
-
-  const formatCurrency = (amount: number | undefined) => {
-    if (amount === undefined) return '$0.00';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
-
-  const formatDate = (dateStr: string) => {
-    if (!dateStr || dateStr === 'N/A') return 'N/A';
-    try {
-      const date = new Date(dateStr);
-      return new Intl.DateTimeFormat('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      }).format(date);
-    } catch {
-      return dateStr;
-    }
-  };
+  const items        = invoice.lineItems ?? [];
+  const invoiceNum   = invoice.invoiceNumber ?? 'DRAFT';
+  const issueDate    = invoice.createdAt;
+  const dueDate      = invoice.dueDate;
+  const clientName   = invoice.clientName   ?? 'Client';
+  const clientEmail  = invoice.clientEmail  ?? '';
+  const clientAddr   = invoice.clientAddress ?? '';
+  const clientPhone  = invoice.clientPhone  ?? '';
+  const status       = invoice.status ?? 'DRAFT';
+  const projectName  = invoice.projectName  ?? (invoice.projectId ? `Project #${invoice.projectId}` : null);
+  const companyName  = invoice.companyName  ?? 'FREELANCEFLOW';
+  const companyEmail = invoice.companyEmail ?? 'contact@freelanceflow.io';
+  const notes        = invoice.description  ?? '';
+  const subtotal     = invoice.subtotal;
+  const tax          = invoice.tax;
+  const total        = invoice.total;
 
   return (
-    <div className="bg-white text-black p-8 md:p-12 max-w-4xl mx-auto shadow-sm border border-gray-200 font-sans print:shadow-none print:border-none print:p-0">
-      {/* 1. HEADER */}
-      <div className="flex justify-between items-start border-b-2 border-black pb-8 mb-8">
+    <div style={{ fontFamily: 'sans-serif', color: C.TEXT, backgroundColor: C.WHITE, maxWidth: 800, margin: '0 auto', padding: '0', boxShadow: '0 2px 16px rgba(0,0,0,0.10)' }}>
+
+      {/* ── 1. HEADER ── */}
+      <div style={{ backgroundColor: C.HEADER_BG, padding: '28px 40px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        {/* Left */}
         <div>
-          <h1 className="text-4xl font-bold tracking-widest uppercase">Invoice</h1>
+          <div style={{ fontSize: 32, fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase', lineHeight: 1 }}>INVOICE</div>
+          <div style={{ fontSize: 11, marginTop: 8 }}>No: <strong>{invoiceNum}</strong></div>
+          <div style={{ fontSize: 10, marginTop: 4 }}>Issue Date: &nbsp;<strong>{fmt.date(issueDate)}</strong></div>
+          <div style={{ fontSize: 10, marginTop: 3 }}>Due Date: &nbsp;&nbsp;&nbsp;<strong>{fmt.date(dueDate)}</strong></div>
         </div>
-        <div className="text-right">
-          <div className="font-bold text-xl mb-1 flex items-center justify-end gap-2">
-            {/* Generic Logo Placeholder */}
-            <div className="w-6 h-6 bg-black rounded-sm print:print-color-adjust-exact"></div>
-            Company Name
-          </div>
-          <p className="text-sm">123 Business Road</p>
-          <p className="text-sm">Business City, BC 12345</p>
-          <p className="text-sm">contact@company.com</p>
+        {/* Right — branding */}
+        <div style={{ textAlign: 'right' }}>
+          {invoice.logoUrl && (
+            <img src={invoice.logoUrl} alt="logo" style={{ height: 36, marginBottom: 6, marginLeft: 'auto' }} />
+          )}
+          <div style={{ fontSize: 9, color: C.MUTED, letterSpacing: '0.08em' }}>Powered Via</div>
+          <div style={{ fontSize: 15, fontWeight: 900, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{companyName}</div>
+          <div style={{ fontSize: 10, marginTop: 2 }}>{companyEmail}</div>
         </div>
       </div>
 
-      {/* 2. BILLING SECTION */}
-      <div className="flex justify-between items-start mb-10">
-        <div>
-          <h2 className="text-sm font-bold uppercase text-gray-500 mb-2">Billed To</h2>
-          <p className="font-bold text-lg">{clientName}</p>
-          {clientAddress && <p className="text-sm whitespace-pre-wrap">{clientAddress}</p>}
-          {clientEmail && <p className="text-sm">{clientEmail}</p>}
-        </div>
-        <div className="text-right">
-          <div className="mb-2">
-            <span className="text-sm font-bold uppercase text-gray-500 mr-4">Invoice No.</span>
-            <span className="font-bold">{invoiceNumber}</span>
-          </div>
-          <div className="mb-2">
-            <span className="text-sm font-bold uppercase text-gray-500 mr-4">Issue Date</span>
-            <span>{formatDate(issueDate)}</span>
-          </div>
+      <div style={{ padding: '28px 40px' }}>
+
+        {/* ── 2. BILLING SECTION ── */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 28 }}>
+          {/* BILLED TO */}
           <div>
-            <span className="text-sm font-bold uppercase text-gray-500 mr-4">Due Date</span>
-            <span>{formatDate(dueDate)}</span>
+            <div style={{ fontSize: 8, fontWeight: 900, color: C.SECTION_LABEL, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 8 }}>BILLED TO</div>
+            <div style={{ fontWeight: 700, fontSize: 13 }}>{clientName}</div>
+            {clientAddr  && <div style={{ fontSize: 10, marginTop: 3 }}>{clientAddr}</div>}
+            {clientPhone && <div style={{ fontSize: 10, marginTop: 2 }}>{clientPhone}</div>}
+            {clientEmail && <div style={{ fontSize: 10, marginTop: 2 }}>{clientEmail}</div>}
           </div>
-        </div>
-      </div>
-
-      {/* 3. TABLE */}
-      <div className="mb-8 overflow-hidden rounded-sm">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="border-y-2 border-black">
-              <th className="py-3 px-2 font-bold uppercase text-sm w-1/4">Item</th>
-              <th className="py-3 px-2 font-bold uppercase text-sm w-1/3">Description</th>
-              <th className="py-3 px-2 font-bold uppercase text-sm text-right">Qty</th>
-              <th className="py-3 px-2 font-bold uppercase text-sm text-right">Unit Price</th>
-              <th className="py-3 px-2 font-bold uppercase text-sm text-right">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.length > 0 ? (
-              items.map((item, index) => (
-                <tr key={index} className="border-b border-gray-300 last:border-b-2 last:border-black">
-                  <td className="py-3 px-2 text-sm">{item.item || item.name || `Item ${index + 1}`}</td>
-                  <td className="py-3 px-2 text-sm text-gray-600">{item.description || '-'}</td>
-                  <td className="py-3 px-2 text-sm text-right">{item.quantity}</td>
-                  <td className="py-3 px-2 text-sm text-right">{formatCurrency(item.unitPrice)}</td>
-                  <td className="py-3 px-2 text-sm text-right font-medium">{formatCurrency(item.amount)}</td>
-                </tr>
-              ))
-            ) : (
-              <tr className="border-b-2 border-black">
-                <td colSpan={5} className="py-6 text-center text-sm text-gray-500 italic">
-                  No line items found.
-                </td>
-              </tr>
+          {/* PAYMENT INFO */}
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: 8, fontWeight: 900, color: C.SECTION_LABEL, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 8 }}>PAYMENT INFO</div>
+            {/* Status badge */}
+            <div style={{
+              display: 'inline-block', backgroundColor: C.STATUS, color: C.WHITE,
+              fontWeight: 700, fontSize: 10, borderRadius: 4, padding: '2px 10px', letterSpacing: '0.05em'
+            }}>{status}</div>
+            {projectName && (
+              <div style={{ fontSize: 10, marginTop: 6 }}>Project: <strong>{projectName}</strong></div>
             )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* 4. NOTES + TOTAL */}
-      <div className="flex justify-between items-start mb-16">
-        <div className="w-1/2 pr-8">
-          <h3 className="text-sm font-bold uppercase text-gray-500 mb-2">Notes</h3>
-          <p className="text-sm text-gray-700 whitespace-pre-wrap">{notes}</p>
-        </div>
-        <div className="w-64">
-          <div className="flex justify-between py-2 border-b border-gray-300">
-            <span className="text-sm font-bold">Subtotal</span>
-            <span className="text-sm">{formatCurrency(invoice.subtotal || invoice.total)}</span>
-          </div>
-          <div className="flex justify-between py-3 border-b-2 border-black bg-gray-50 px-2 mt-2 print:print-color-adjust-exact print:bg-gray-50">
-            <span className="text-base font-bold uppercase">Total Due</span>
-            <span className="text-lg font-bold">{formatCurrency(invoice.total)}</span>
           </div>
         </div>
-      </div>
 
-      {/* 5. FOOTER */}
-      <div className="pt-8 flex flex-col items-center justify-center text-center text-xs text-gray-500 border-t border-gray-200">
-        <p className="font-bold tracking-widest text-black mb-1">Powered by FREELANCEFLOW</p>
-        <p>This invoice was generated using FREELANCEFLOW. Visit https://freelanceflow.com</p>
+        {/* ── 3. TABLE ── */}
+        <div style={{ borderRadius: 4, overflow: 'hidden', marginBottom: 24 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10 }}>
+            <thead>
+              <tr style={{ backgroundColor: C.TABLE_HEADER }}>
+                <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: 9 }}>#</th>
+                <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: 9 }}>Description</th>
+                <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: 9 }}>Qty</th>
+                <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: 9 }}>Unit Price</th>
+                <th style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: 9 }}>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.length > 0 ? items.map((item, i) => (
+                <tr key={i} style={{ borderBottom: '1px solid #E2E8F0' }}>
+                  <td style={{ padding: '9px 10px' }}>{i + 1}</td>
+                  <td style={{ padding: '9px 10px' }}>{item.description ?? '-'}</td>
+                  <td style={{ padding: '9px 10px', textAlign: 'right' }}>{item.quantity}</td>
+                  <td style={{ padding: '9px 10px', textAlign: 'right' }}>{fmt.currency(item.unitPrice)}</td>
+                  <td style={{ padding: '9px 10px', textAlign: 'right', fontWeight: 700 }}>{fmt.currency(item.amount ?? item.quantity * item.unitPrice)}</td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan={5} style={{ padding: '20px', textAlign: 'center', color: '#888', fontStyle: 'italic' }}>No line items.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* ── 4. NOTES + TOTALS ── */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 32 }}>
+          {/* Notes */}
+          <div style={{ flex: 1, paddingRight: 32, maxWidth: '55%' }}>
+            <div style={{ fontSize: 8, fontWeight: 900, color: C.SECTION_LABEL, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 6 }}>NOTES</div>
+            <div style={{ fontSize: 10, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+              {notes || 'Thank you for your business.'}
+            </div>
+          </div>
+          {/* Totals */}
+          <div style={{ width: 220 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: '1px solid #E2E8F0', fontSize: 10 }}>
+              <span style={{ fontWeight: 700}}>Subtotal</span>
+              <span>{fmt.currency(subtotal)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: '1px solid #E2E8F0', fontSize: 10 }}>
+              <span style={{ fontWeight: 700 }}>Tax (10%)</span>
+              <span>{fmt.currency(tax)}</span>
+            </div>
+            {/* Total box */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', marginTop: 8, backgroundColor: C.HEADER_BG, borderRadius: 4 }}>
+              <span style={{ fontWeight: 900, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em' }}>TOTAL DUE</span>
+              <span style={{ fontWeight: 900, fontSize: 16 }}>{fmt.currency(total)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── 5. FOOTER ── */}
+        <div style={{ marginTop: 16 }}>
+          {/* Verified bar */}
+          <div style={{ backgroundColor: C.FOOTER_HL, padding: '6px 12px', borderRadius: 4, textAlign: 'center', fontSize: 8, marginBottom: 12 }}>
+            Verified By FreelanceFlow Secure Infrastructure · {invoiceNum}
+          </div>
+          {/* Branding */}
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 7, color: C.MUTED, letterSpacing: '0.1em' }}>Powered Via</div>
+            <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{companyName}</div>
+            <div style={{ fontSize: 8, marginTop: 2, color: '#555' }}>{companyEmail}</div>
+          </div>
+          <div style={{ textAlign: 'center', fontSize: 7, color: C.MUTED, marginTop: 8 }}>
+            © 2026 FreelanceFlow PM OS | Confidential Document
+          </div>
+        </div>
+
       </div>
     </div>
   );
