@@ -53,10 +53,10 @@ public class ReportPdfService {
             String projectName = "Unknown Project";
             String clientName = "Unknown Client";
 
-            if (payment.getInvoice() != null && payment.getInvoice().getProject() != null) {
-                projectName = payment.getInvoice().getProject().getName();
-                if (payment.getInvoice().getProject().getClient() != null) {
-                    clientName = payment.getInvoice().getProject().getClient().getName();
+            if (payment.getInvoice() != null && payment.getInvoice().getProjects() != null && !payment.getInvoice().getProjects().isEmpty()) {
+                projectName = payment.getInvoice().getProjects().stream().map(p -> p.getName()).collect(Collectors.joining(", "));
+                if (payment.getInvoice().getClient() != null) {
+                    clientName = payment.getInvoice().getClient().getName();
                 }
             }
 

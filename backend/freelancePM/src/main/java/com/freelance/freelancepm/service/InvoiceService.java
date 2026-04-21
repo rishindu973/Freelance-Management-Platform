@@ -46,11 +46,13 @@ public class InvoiceService implements IInvoiceService {
     @Transactional
     public InvoiceResponse create(InvoiceCreateRequest req) {
         Client client = findClient(req.getClientId());
-        Project project = req.getProjectId() != null ? findProject(req.getProjectId()) : null;
+        List<Project> projects = req.getProjectIds() != null && !req.getProjectIds().isEmpty() 
+                                 ? findProjects(req.getProjectIds()) 
+                                 : new ArrayList<>();
 
         Invoice invoice = Invoice.builder()
                 .client(client)
-                .project(project)
+                .projects(projects)
                 .status(req.getStatus() != null ? req.getStatus() : InvoiceStatus.DRAFT)
                 .dueDate(req.getDueDate())
                 .description(req.getDescription())
@@ -73,8 +75,11 @@ public class InvoiceService implements IInvoiceService {
             invoice.setClient(findClient(req.getClientId()));
             assignInvoiceNumber(invoice);
         }
-        if (req.getProjectId() != null) {
-            invoice.setProject(findProject(req.getProjectId()));
+        if (req.getProjectIds() != null && !req.getProjectIds().isEmpty()) {
+            invoice.setProjects(findProjects(req.getProjectIds()));
+        }
+        if (req.getDescription() != null) {
+            invoice.setDescription(req.getDescription());
         }
         if (req.getStatus() != null) {
             invoice.setStatus(req.getStatus());
@@ -145,20 +150,40 @@ public class InvoiceService implements IInvoiceService {
             return;
         }
 
-        log.info("Handing off invoice {} dispatch to async dispatcher", invoiceId);
+        // ── Pre-flight validation log ────────────────────────────────────────
+        log.info("[Send] Starting send flow for invoice ID: {}, number: {}, status: {}",
+                invoiceId, invoice.getInvoiceNumber(), invoice.getStatus());
+        log.info("[Send] Client: {}, Line items: {}, Total: {}",
+                invoice.getClient() != null ? invoice.getClient().getName() : "<null>",
+                invoice.getLineItems() != null ? invoice.getLineItems().size() : 0,
+                invoice.getTotal());
+        // ────────────────────────────────────────────────────────────────────
+
+        log.info("[Send] Generating PDF for invoice ID: {}", invoiceId);
 
         // 1. Prepare data for async processing
         byte[] pdfBytes = pdfService.generateInvoicePdf(invoiceId);
+        log.info("[Send] PDF generated successfully ({} bytes) for invoice ID: {}",
+                pdfBytes.length, invoiceId);
+
         String filename = String.format("Invoice_%s.pdf", invoice.getInvoiceNumber());
 
         Manager manager = null;
-        if (invoice.getProject() != null && invoice.getProject().getManagerId() != null) {
-            manager = managerRepository.findById(invoice.getProject().getManagerId()).orElse(null);
+        if (invoice.getProjects() != null && !invoice.getProjects().isEmpty() && invoice.getProjects().get(0).getManagerId() != null) {
+            manager = managerRepository.findById(invoice.getProjects().get(0).getManagerId()).orElse(null);
         }
 
         if (manager == null) {
-            throw new IllegalStateException("Manager details not found for branding invoice email");
+            log.error("[Send] Cannot dispatch invoice ID: {} — no manager linked to project. "
+                    + "Ensure the invoice has an associated project with a valid manager.",
+                    invoiceId);
+            throw new IllegalStateException(
+                    "Cannot send invoice " + invoice.getInvoiceNumber()
+                    + ": no manager is associated with the linked project. "
+                    + "Please assign a project manager before sending.");
         }
+
+        log.info("Handing off invoice {} dispatch to async dispatcher", invoiceId);
 
         String dueDate = invoice.getDueDate() != null ? invoice.getDueDate().format(DateTimeFormatter.ISO_DATE) : "N/A";
 
@@ -269,9 +294,12 @@ public class InvoiceService implements IInvoiceService {
             throw new IllegalArgumentException("Invoice must be associated with a client");
         }
 
-        if (invoice.getProject() != null && invoice.getProject().getClient() != null &&
-                !invoice.getProject().getClient().getId().equals(invoice.getClient().getId())) {
-            throw new IllegalArgumentException("Project does not belong to the selected client");
+        if (invoice.getProjects() != null && !invoice.getProjects().isEmpty()) {
+            for (Project project : invoice.getProjects()) {
+                if (project.getClient() != null && !project.getClient().getId().equals(invoice.getClient().getId())) {
+                    throw new IllegalArgumentException("All selected projects must belong to the selected client");
+                }
+            }
         }
 
         if (InvoiceStatus.FINAL.equals(invoice.getStatus())) {
@@ -308,9 +336,12 @@ public class InvoiceService implements IInvoiceService {
                 .orElseThrow(() -> new NotFoundException("Client not found"));
     }
 
-    private Project findProject(Integer projectId) {
-        return projectRepository.findById(projectId)
-                .orElseThrow(() -> new NotFoundException("Project not found"));
+    private List<Project> findProjects(List<Integer> projectIds) {
+        List<Project> projects = projectRepository.findAllById(projectIds);
+        if (projects.size() != projectIds.size()) {
+            throw new NotFoundException("One or more projects not found");
+        }
+        return projects;
     }
 
     private Invoice findInvoice(Integer invoiceId) {

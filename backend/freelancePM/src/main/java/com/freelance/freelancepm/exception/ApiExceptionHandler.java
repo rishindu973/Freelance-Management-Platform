@@ -1,5 +1,6 @@
 package com.freelance.freelancepm.exception;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -12,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
+@Slf4j
 public class ApiExceptionHandler {
 
     @ExceptionHandler(NotFoundException.class)
@@ -56,13 +58,18 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleOther(Exception ex) {
+        // Always log the FULL stack trace so the real root cause is visible in logs.
+        // Without this, a LazyInitializationException or NPE becomes a silent black box.
+        log.error("[GlobalHandler] Unhandled exception ({}): {}",
+                ex.getClass().getSimpleName(), ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                 "error", "INTERNAL_ERROR",
-                "message", ex.getMessage()));
+                "message", ex.getMessage() != null ? ex.getMessage() : "An unexpected error occurred"));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleBadRequest(IllegalArgumentException ex) {
+        log.warn("[GlobalHandler] Bad request ({}): {}", ex.getClass().getSimpleName(), ex.getMessage());
         return ResponseEntity.badRequest().body(Map.of(
                 "error", "BAD_REQUEST",
                 "message", ex.getMessage()));
@@ -70,6 +77,7 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalState(IllegalStateException ex) {
+        log.warn("[GlobalHandler] Illegal state ({}): {}", ex.getClass().getSimpleName(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
                 "error", "BAD_REQUEST",
                 "message", ex.getMessage()));
