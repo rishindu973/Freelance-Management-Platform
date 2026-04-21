@@ -35,13 +35,13 @@ public class ClientController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Client> getClient(@PathVariable Integer id) {
+    public ResponseEntity<Client> getClient(@PathVariable("id") Integer id) {
         Optional<Client> client = clientService.getClientById(id);
         return client.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Client> updateClient(@PathVariable Integer id, @RequestBody Client clientDetails) {
+    public ResponseEntity<Client> updateClient(@PathVariable("id") Integer id, @RequestBody Client clientDetails) {
         Optional<Client> clientOpt = clientService.getClientById(id);
         if (clientOpt.isEmpty())
             return ResponseEntity.notFound().build();
@@ -56,7 +56,7 @@ public class ClientController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteClient(@PathVariable Integer id) {
+    public ResponseEntity<String> deleteClient(@PathVariable("id") Integer id) {
         Optional<Client> clientOptional = clientService.getClientById(id);
         if (clientOptional.isPresent()) {
             clientService.deleteClientById(id);

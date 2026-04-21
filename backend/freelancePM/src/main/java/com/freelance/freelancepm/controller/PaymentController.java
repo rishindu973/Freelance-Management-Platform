@@ -33,7 +33,7 @@ public class PaymentController {
     }
 
     @GetMapping("/client/{clientId}")
-    public ResponseEntity<java.util.List<PaymentDTO>> getPaymentsByClient(@PathVariable Integer clientId) {
+    public ResponseEntity<java.util.List<PaymentDTO>> getPaymentsByClient(@PathVariable("clientId") Integer clientId) {
         java.util.List<Payment> payments = paymentService.getPaymentsByClient(clientId);
         java.util.List<PaymentDTO> dtos = payments.stream().map(payment -> PaymentDTO.builder()
                 .id(payment.getId())

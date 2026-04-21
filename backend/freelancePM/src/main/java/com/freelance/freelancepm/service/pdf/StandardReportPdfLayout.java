@@ -159,9 +159,9 @@ public class StandardReportPdfLayout implements ReportPdfLayout {
         try (InputStream is = getClass().getResourceAsStream("/fonts/gebuk.ttf")) {
             if (is == null)
                 return FONT_BOLD;
-            try {
-                return PDType0Font.load(context.getDocument(), is);
-            } catch (IOException e) {
+            try (InputStream patchedIs = com.freelance.freelancepm.util.FontUtils.patchFont(is)) {
+                return PDType0Font.load(context.getDocument(), patchedIs);
+            } catch (Exception e) {
                 return FONT_BOLD;
             }
         }

@@ -41,10 +41,10 @@ public class FreelancerPortalController {
     }
 
     @GetMapping("/assignments/{projectId}")
-    public ResponseEntity<?> getAssignmentById(@PathVariable Integer projectId, Principal principal) {
+    public ResponseEntity<?> getAssignmentById(@PathVariable("projectId") Integer projectId, Principal principal) {
         Freelancer freelancer = getAuthenticatedFreelancer(principal);
         List<ProjectResponse> assignedProjects = projectService.getProjectsForFreelancer(freelancer.getId());
-        
+
         ProjectResponse found = assignedProjects.stream()
                 .filter(p -> p.getId().equals(projectId))
                 .findFirst()
@@ -62,7 +62,8 @@ public class FreelancerPortalController {
         Freelancer freelancer = getAuthenticatedFreelancer(principal);
         String newStatus = body.get("status");
 
-        if (newStatus == null || (!newStatus.equalsIgnoreCase("available") && !newStatus.equalsIgnoreCase("busy") && !newStatus.equalsIgnoreCase("unavailable"))) {
+        if (newStatus == null || (!newStatus.equalsIgnoreCase("available") && !newStatus.equalsIgnoreCase("busy")
+                && !newStatus.equalsIgnoreCase("unavailable"))) {
             return ResponseEntity.badRequest()
                     .body(java.util.Map.of("error", "Status must be 'available', 'busy', or 'unavailable'."));
         }
@@ -72,7 +73,6 @@ public class FreelancerPortalController {
 
         return ResponseEntity.ok(java.util.Map.of(
                 "message", "Availability updated successfully.",
-                "status", freelancer.getStatus()
-        ));
+                "status", freelancer.getStatus()));
     }
 }

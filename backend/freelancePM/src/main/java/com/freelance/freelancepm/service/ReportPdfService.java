@@ -23,9 +23,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-
 @Service
 @RequiredArgsConstructor
 public class ReportPdfService {
@@ -53,8 +50,15 @@ public class ReportPdfService {
             String projectName = "Unknown Project";
             String clientName = "Unknown Client";
 
-            if (payment.getInvoice() != null && payment.getInvoice().getProjects() != null && !payment.getInvoice().getProjects().isEmpty()) {
-                projectName = payment.getInvoice().getProjects().stream().map(p -> p.getName()).collect(Collectors.joining(", "));
+            if (payment.getInvoice() != null) {
+                if (payment.getInvoice().getProjects() != null && !payment.getInvoice().getProjects().isEmpty()) {
+                    projectName = payment.getInvoice().getProjects().stream()
+                            .map(p -> p.getName())
+                            .collect(Collectors.joining(", "));
+                } else {
+                    projectName = "General / No Project";
+                }
+
                 if (payment.getInvoice().getClient() != null) {
                     clientName = payment.getInvoice().getClient().getName();
                 }

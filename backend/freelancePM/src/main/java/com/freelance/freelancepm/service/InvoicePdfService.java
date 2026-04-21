@@ -557,7 +557,11 @@ public class InvoicePdfService {
             if (is == null) {
                 return new PDType1Font(Standard14Fonts.FontName.HELVETICA);
             }
-            return org.apache.pdfbox.pdmodel.font.PDType0Font.load(context.getDocument(), is);
+            try (java.io.InputStream patchedIs = com.freelance.freelancepm.util.FontUtils.patchFont(is)) {
+                return org.apache.pdfbox.pdmodel.font.PDType0Font.load(context.getDocument(), patchedIs);
+            } catch (Exception e) {
+                return new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
+            }
         }
     }
 }

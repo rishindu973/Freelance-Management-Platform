@@ -63,8 +63,7 @@ class InvoiceServiceTest {
     @Mock
     private InvoiceCalculationService calculationService;
 
-    @Spy
-    private InvoiceMapper invoiceMapper = new InvoiceMapper();
+    private InvoiceMapper invoiceMapper;
 
     @InjectMocks
     private InvoiceService invoiceService;
@@ -74,6 +73,8 @@ class InvoiceServiceTest {
 
     @BeforeEach
     void setUp() {
+        invoiceMapper = spy(new InvoiceMapper(managerRepository));
+        org.springframework.test.util.ReflectionTestUtils.setField(invoiceService, "invoiceMapper", invoiceMapper);
         mockClient = new Client();
         mockClient.setId(1);
         mockClient.setCode("ABC");
@@ -121,7 +122,7 @@ class InvoiceServiceTest {
 
         Project project = new Project();
         project.setManagerId(5);
-        invoice.setProject(project);
+        invoice.getProjects().add(project);
 
         Manager manager = new Manager();
         manager.setCompanyName("Manager Co");
@@ -230,7 +231,8 @@ class InvoiceServiceTest {
         Pageable pageable = PageRequest.of(0, 10);
         Page<Invoice> page = new PageImpl<>(List.of(invoice1, invoice2));
 
-        when(invoiceRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
+        when(invoiceRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Invoice>>any(), eq(pageable)))
+                .thenReturn(page);
 
         // Act
         Page<InvoiceListDTO> result = invoiceService.listAll(null, null, null, pageable);
@@ -240,7 +242,7 @@ class InvoiceServiceTest {
         assertEquals(2, result.getTotalElements());
         assertEquals(1, result.getContent().get(0).getId());
         assertEquals("John Doe", result.getContent().get(0).getClientName());
-        verify(invoiceRepository).findAll(any(Specification.class), eq(pageable));
+        verify(invoiceRepository).findAll(org.mockito.ArgumentMatchers.<Specification<Invoice>>any(), eq(pageable));
     }
 
     @Test
@@ -249,7 +251,8 @@ class InvoiceServiceTest {
         Pageable pageable = PageRequest.of(1, 5);
         Page<Invoice> emptyPage = new PageImpl<>(List.of());
 
-        when(invoiceRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(emptyPage);
+        when(invoiceRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Invoice>>any(), eq(pageable)))
+                .thenReturn(emptyPage);
 
         LocalDate startDate = LocalDate.of(2026, 1, 1);
         LocalDate endDate = LocalDate.of(2026, 1, 31);
@@ -260,7 +263,7 @@ class InvoiceServiceTest {
         // Assert
         assertNotNull(result);
         assertEquals(0, result.getTotalElements());
-        verify(invoiceRepository).findAll(any(Specification.class), eq(pageable));
+        verify(invoiceRepository).findAll(org.mockito.ArgumentMatchers.<Specification<Invoice>>any(), eq(pageable));
     }
 
     @Test
@@ -279,7 +282,8 @@ class InvoiceServiceTest {
     @Test
     void listAll_EmptyResult_ShouldReturnEmptyPage() {
         Pageable pageable = PageRequest.of(0, 10);
-        when(invoiceRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(Page.empty());
+        when(invoiceRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Invoice>>any(), eq(pageable)))
+                .thenReturn(Page.empty());
 
         Page<InvoiceListDTO> result = invoiceService.listAll(null, null, null, pageable);
 

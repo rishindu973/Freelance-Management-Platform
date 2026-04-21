@@ -54,13 +54,13 @@ public class InvoiceController {
 
     @GetMapping
     public ResponseEntity<Page<InvoiceListDTO>> list(
-            @RequestParam(required = false) Integer clientId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "date") String sortBy,
-            @RequestParam(defaultValue = "desc") String direction) {
+            @RequestParam(name = "clientId", required = false) Integer clientId,
+            @RequestParam(name = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(name = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestParam(name = "sortBy", defaultValue = "date") String sortBy,
+            @RequestParam(name = "direction", defaultValue = "desc") String direction) {
 
         Sort.Direction sortDirection = direction.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
         String sortProperty = switch (sortBy.toLowerCase()) {
@@ -88,7 +88,8 @@ public class InvoiceController {
                     ? invoice.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
                     : "N-A";
 
-            // Null-safe sanitisation — prevents NPE when clientName or invoiceNumber is null
+            // Null-safe sanitisation — prevents NPE when clientName or invoiceNumber is
+            // null
             String clientName = (invoice.getClientName() != null ? invoice.getClientName() : "Unknown")
                     .replaceAll("[^a-zA-Z0-9-]", "_");
             String invoiceNumber = (invoice.getInvoiceNumber() != null ? invoice.getInvoiceNumber() : "DRAFT")

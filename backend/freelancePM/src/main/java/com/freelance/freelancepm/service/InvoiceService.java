@@ -46,9 +46,9 @@ public class InvoiceService implements IInvoiceService {
     @Transactional
     public InvoiceResponse create(InvoiceCreateRequest req) {
         Client client = findClient(req.getClientId());
-        List<Project> projects = req.getProjectIds() != null && !req.getProjectIds().isEmpty() 
-                                 ? findProjects(req.getProjectIds()) 
-                                 : new ArrayList<>();
+        List<Project> projects = req.getProjectIds() != null && !req.getProjectIds().isEmpty()
+                ? findProjects(req.getProjectIds())
+                : new ArrayList<>();
 
         Invoice invoice = Invoice.builder()
                 .client(client)
@@ -169,18 +169,17 @@ public class InvoiceService implements IInvoiceService {
         String filename = String.format("Invoice_%s.pdf", invoice.getInvoiceNumber());
 
         Manager manager = null;
-        if (invoice.getProjects() != null && !invoice.getProjects().isEmpty() && invoice.getProjects().get(0).getManagerId() != null) {
+        if (invoice.getProjects() != null && !invoice.getProjects().isEmpty()
+                && invoice.getProjects().get(0).getManagerId() != null) {
             manager = managerRepository.findById(invoice.getProjects().get(0).getManagerId()).orElse(null);
         }
 
         if (manager == null) {
-            log.error("[Send] Cannot dispatch invoice ID: {} — no manager linked to project. "
-                    + "Ensure the invoice has an associated project with a valid manager.",
-                    invoiceId);
-            throw new IllegalStateException(
-                    "Cannot send invoice " + invoice.getInvoiceNumber()
-                    + ": no manager is associated with the linked project. "
-                    + "Please assign a project manager before sending.");
+            manager = managerRepository.findAll().stream().findFirst().orElse(null);
+        }
+
+        if (manager == null) {
+            throw new IllegalStateException("Cannot send invoice: no manager is configured in the system.");
         }
 
         log.info("Handing off invoice {} dispatch to async dispatcher", invoiceId);

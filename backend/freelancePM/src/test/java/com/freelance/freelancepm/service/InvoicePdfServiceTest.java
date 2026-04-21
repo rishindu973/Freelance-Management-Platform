@@ -49,7 +49,7 @@ class InvoicePdfServiceTest {
         // Arrange
         Integer invoiceId = 1;
         String invoiceNumber = "INV-2024-001";
-        
+
         Client client = new Client();
         client.setId(1);
         client.setName("Test Client");
@@ -85,7 +85,8 @@ class InvoicePdfServiceTest {
         assertNotNull(pdfBytes);
         assertTrue(pdfBytes.length > 0, "PDF byte array should not be empty");
 
-        // We only verify page numbering exists, since the layout is currently a skeleton without full content drawing.
+        // We only verify page numbering exists, since the layout is currently a
+        // skeleton without full content drawing.
         String pdfText = extractTextFromPdf(pdfBytes);
         assertTrue(pdfText.contains("Page 1 of 1"), "PDF should render default page numbering via post-processing");
     }
@@ -125,7 +126,7 @@ class InvoicePdfServiceTest {
         try (PDDocument document = Loader.loadPDF(pdfBytes)) {
             // Because layout logic is skeleton-only, we expect 1 page.
             assertEquals(1, document.getNumberOfPages(), "Skeleton PDF will only have one page initially");
-            
+
             PDFTextStripper stripper = new PDFTextStripper();
             String text = stripper.getText(document);
             assertTrue(text.contains("Page 1 of 1"), "Should contain page numbering");
@@ -147,7 +148,7 @@ class InvoicePdfServiceTest {
         // Arrange
         Integer invoiceId = 3;
         String customBrand = "Antigravity Premium Corp";
-        
+
         com.freelance.freelancepm.entity.Manager manager = new com.freelance.freelancepm.entity.Manager();
         manager.setCompanyName(customBrand);
         manager.setBrandingColor("#FF0000"); // Red
@@ -162,7 +163,7 @@ class InvoicePdfServiceTest {
                 .id(invoiceId)
                 .invoiceNumber("INV-CUSTOM-001")
                 .client(client)
-                .project(project)
+                .projects(List.of(project))
                 .status(InvoiceStatus.FINAL)
                 .createdAt(LocalDateTime.now())
                 .total(new BigDecimal("500.00"))
