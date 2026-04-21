@@ -53,9 +53,10 @@ public class Invoice {
     @JoinColumn(name = "client_id", nullable = false)
     private Client client;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "project_id")
-    private Project project;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "invoice_project", joinColumns = @JoinColumn(name = "invoice_id"), inverseJoinColumns = @JoinColumn(name = "project_id"))
+    @Builder.Default
+    private List<Project> projects = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)

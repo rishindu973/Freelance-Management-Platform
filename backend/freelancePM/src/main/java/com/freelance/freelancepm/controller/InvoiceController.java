@@ -9,7 +9,9 @@ import com.freelance.freelancepm.service.IInvoiceService;
 import com.freelance.freelancepm.service.InvoicePdfService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +28,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 @RestController
 @RequestMapping("/api/invoices")
 @RequiredArgsConstructor
+@Slf4j
 @CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174" })
 public class InvoiceController {
 
@@ -72,24 +75,49 @@ public class InvoiceController {
     }
 
     @GetMapping("/{id}/pdf")
-    public ResponseEntity<byte[]> downloadPdf(@PathVariable("id") Integer id) {
-        InvoiceResponse invoice = invoiceService.getById(id);
-        byte[] pdfBytes = invoicePdfService.generateInvoicePdf(id);
+    public ResponseEntity<?> downloadPdf(@PathVariable("id") Integer id) {
+        log.info("[Download] PDF download requested for invoice ID: {}", id);
+        try {
+            InvoiceResponse invoice = invoiceService.getById(id);
 
-        String date = invoice.getCreatedAt() != null
-                ? invoice.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-                : "N-A";
+            log.info("[Download] Generating PDF for invoice: {}, client: {}",
+                    invoice.getInvoiceNumber(), invoice.getClientName());
+            byte[] pdfBytes = invoicePdfService.generateInvoicePdf(id);
 
-        // Sanitize filename components (simple version)
-        String clientName = invoice.getClientName().replaceAll("[^a-zA-Z0-9-]", "_");
-        String invoiceNumber = invoice.getInvoiceNumber().replaceAll("[^a-zA-Z0-9-]", "_");
+            String date = invoice.getCreatedAt() != null
+                    ? invoice.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                    : "N-A";
 
-        String filename = String.format("Invoice_%s_%s_%s.pdf", invoiceNumber, clientName, date);
+            // Null-safe sanitisation — prevents NPE when clientName or invoiceNumber is null
+            String clientName = (invoice.getClientName() != null ? invoice.getClientName() : "Unknown")
+                    .replaceAll("[^a-zA-Z0-9-]", "_");
+            String invoiceNumber = (invoice.getInvoiceNumber() != null ? invoice.getInvoiceNumber() : "DRAFT")
+                    .replaceAll("[^a-zA-Z0-9-]", "_");
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(pdfBytes);
+            String filename = String.format("Invoice_%s_%s_%s.pdf", invoiceNumber, clientName, date);
+            log.info("[Download] Sending PDF file: {}, size: {} bytes", filename, pdfBytes.length);
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .body(pdfBytes);
+
+        } catch (IllegalArgumentException e) {
+            log.error("[Download] Invoice not found for PDF download, ID: {}", id, e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(java.util.Map.of(
+                            "error", "NOT_FOUND",
+                            "message", e.getMessage()));
+        } catch (Exception e) {
+            log.error("[Download] PDF generation failed for invoice ID: {} — {}", id, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(java.util.Map.of(
+                            "error", "PDF_GENERATION_FAILED",
+                            "message", "Failed to generate PDF. Please try again later.",
+                            "detail", e.getMessage() != null ? e.getMessage() : "Unknown error"));
+        }
     }
 
     @PostMapping("/{id}/send")

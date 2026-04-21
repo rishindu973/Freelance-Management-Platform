@@ -16,6 +16,7 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -46,22 +47,47 @@ public class InvoicePdfService {
             throw new IllegalArgumentException("Invoice must not be null");
         }
 
+        log.info("[PDF] Starting generation for invoice ID: {}, number: {}",
+                invoice.getId(), invoice.getInvoiceNumber());
+
         List<InvoiceLineItem> lineItems = invoice.getLineItems();
         if (lineItems == null || lineItems.isEmpty()) {
-            log.warn("Invoice ID {} has no line items — PDF will contain an empty table", invoice.getId());
+            log.warn("[PDF] Invoice ID {} has no line items — PDF will contain an empty table",
+                    invoice.getId());
+        } else {
+            log.debug("[PDF] Invoice ID {} has {} line item(s)", invoice.getId(), lineItems.size());
         }
 
+        log.debug("[PDF] Resolving manager for invoice ID: {}", invoice.getId());
         Manager manager = resolveManager(invoice);
-        byte[] logoBytes = fetchLogoBytes(manager);
+        if (manager == null) {
+            log.warn("[PDF] No manager found for invoice ID: {} — using fallback branding",
+                    invoice.getId());
+        } else {
+            log.debug("[PDF] Manager resolved: {} (company: {})",
+                    manager.getFullName(), manager.getCompanyName());
+        }
 
+        byte[] logoBytes = fetchLogoBytes(manager);
         PdfStyle style = (manager != null) ? PdfStyle.fromManager(manager) : PdfStyle.defaultStyle();
 
         try (PDDocument document = new PDDocument()) {
             try (PdfGenerationContext context = new PdfGenerationContext(document, style)) {
+
+                log.debug("[PDF] Drawing header for invoice ID: {}", invoice.getId());
                 drawHeader(context, invoice, manager, logoBytes);
+
+                log.debug("[PDF] Drawing billing section for invoice ID: {}", invoice.getId());
                 drawBillingSection(context, invoice, manager);
+
+                log.debug("[PDF] Drawing line-items table ({} items) for invoice ID: {}",
+                        lineItems != null ? lineItems.size() : 0, invoice.getId());
                 drawTable(context, lineItems != null ? lineItems : List.of());
+
+                log.debug("[PDF] Drawing totals section for invoice ID: {}", invoice.getId());
                 drawTotalsSection(context, invoice);
+
+                log.debug("[PDF] Drawing footer for invoice ID: {}", invoice.getId());
                 drawFooter(context, manager);
             }
 
@@ -69,21 +95,58 @@ public class InvoicePdfService {
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             document.save(baos);
-            log.info("Successfully generated PDF for invoice ID: {}", invoice.getId());
+            log.info("[PDF] Successfully generated {} bytes for invoice ID: {}",
+                    baos.size(), invoice.getId());
             return baos.toByteArray();
         } catch (IOException e) {
-            log.error("Error generating PDF for invoice ID: {}", invoice.getId(), e);
-            throw new RuntimeException("Failed to generate PDF", e);
+            log.error("[PDF] IOException during generation for invoice ID: {} — {}",
+                    invoice.getId(), e.getMessage(), e);
+            throw new RuntimeException("Failed to generate PDF for invoice " + invoice.getInvoiceNumber(), e);
+        } catch (Exception e) {
+            log.error("[PDF] Unexpected error during generation for invoice ID: {} — {}",
+                    invoice.getId(), e.getMessage(), e);
+            throw new RuntimeException("Failed to generate PDF for invoice " + invoice.getInvoiceNumber(), e);
         }
     }
 
+    /**
+     * Loads an invoice by ID and generates its PDF.
+     *
+     * <p>
+     * MUST run inside a transaction so that lazy associations
+     * ({@code invoice.lineItems}, {@code invoice.project}) can be
+     * initialized without a {@code LazyInitializationException}.
+     * </p>
+     */
+    @Transactional(readOnly = true)
     public byte[] generateInvoicePdf(Integer invoiceId) {
-        Invoice invoice = invoiceRepository.findById(invoiceId)
-                .orElseThrow(() -> new IllegalArgumentException("Invoice not found with ID: " + invoiceId));
+        log.info("[PDF] Lookup triggered for invoice ID: {}", invoiceId);
 
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> {
+                    log.error("[PDF] Invoice not found in database: ID={}", invoiceId);
+                    return new IllegalArgumentException("Invoice not found with ID: " + invoiceId);
+                });
+
+        log.debug("[PDF] Invoice found: number={}, status={}, client={}",
+                invoice.getInvoiceNumber(),
+                invoice.getStatus(),
+                invoice.getClient() != null ? invoice.getClient().getName() : "<null>");
+
+        // Explicitly load line items — forces initialization while the session is still
+        // open
         List<InvoiceLineItem> lineItems = invoiceLineItemRepository.findByInvoiceId(invoiceId);
+        log.debug("[PDF] Explicitly loaded {} line item(s) for invoice ID: {}",
+                lineItems.size(), invoiceId);
+
+        // Replace the lazy collection with the eagerly-loaded list
         invoice.getLineItems().clear();
         invoice.getLineItems().addAll(lineItems);
+
+        // Explicitly initialize the projects collection
+        if (invoice.getProjects() != null) {
+            invoice.getProjects().size();
+        }
 
         return generateInvoicePdf(invoice);
     }
@@ -224,11 +287,13 @@ public class InvoicePdfService {
         context.drawRightAlignedText("Status:  " + status, rightX, rightY, fontBold, 10, PdfStyle.COLOR_STATUS);
         rightY -= 14;
 
-        // Project reference
-        if (invoice.getProject() != null) {
-            String projName = nonEmpty(invoice.getProject().getName(), "Project #" + invoice.getProject().getId());
-            context.drawRightAlignedText("Project: " + projName, rightX, rightY, fontRegular, 9, PdfStyle.COLOR_TEXT);
-            rightY -= 13;
+        // Project references (multiple)
+        if (invoice.getProjects() != null && !invoice.getProjects().isEmpty()) {
+            for (com.freelance.freelancepm.entity.Project project : invoice.getProjects()) {
+                String projName = nonEmpty(project.getName(), "Project #" + project.getId());
+                context.drawRightAlignedText("Project: " + projName, rightX, rightY, fontRegular, 9, PdfStyle.COLOR_TEXT);
+                rightY -= 13;
+            }
         }
 
         context.setYPosition(Math.min(leftY, rightY) - 25);
@@ -442,8 +507,8 @@ public class InvoicePdfService {
     }
 
     private Manager resolveManager(Invoice invoice) {
-        if (invoice.getProject() != null && invoice.getProject().getManagerId() != null) {
-            return managerRepository.findById(invoice.getProject().getManagerId()).orElse(null);
+        if (invoice.getProjects() != null && !invoice.getProjects().isEmpty() && invoice.getProjects().get(0).getManagerId() != null) {
+            return managerRepository.findById(invoice.getProjects().get(0).getManagerId()).orElse(null);
         }
         return null;
     }
