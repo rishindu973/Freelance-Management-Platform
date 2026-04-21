@@ -49,10 +49,14 @@ public class InvoiceMapper {
                         response.setClientPhone(invoice.getClient().getPhone());
                 }
 
-                // Project
-                if (invoice.getProject() != null) {
-                        response.setProjectId(invoice.getProject().getId());
-                        response.setProjectName(invoice.getProject().getName());
+                // Projects
+                if (invoice.getProjects() != null && !invoice.getProjects().isEmpty()) {
+                        response.setProjectIds(invoice.getProjects().stream()
+                                        .map(p -> p.getId())
+                                        .collect(Collectors.toList()));
+                        response.setProjectNames(invoice.getProjects().stream()
+                                        .map(p -> p.getName())
+                                        .collect(Collectors.toList()));
                 }
 
                 // Manager / Company branding
@@ -112,8 +116,11 @@ public class InvoiceMapper {
         }
 
         private Manager resolveManager(Invoice invoice) {
-                if (invoice.getProject() != null && invoice.getProject().getManagerId() != null) {
-                        return managerRepository.findById(invoice.getProject().getManagerId()).orElse(null);
+                if (invoice.getProjects() != null && !invoice.getProjects().isEmpty()) {
+                        Integer managerId = invoice.getProjects().get(0).getManagerId();
+                        if (managerId != null) {
+                                return managerRepository.findById(managerId).orElse(null);
+                        }
                 }
                 return null;
         }

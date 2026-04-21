@@ -33,8 +33,9 @@ public class InvoiceResponse {
     private String clientEmail;
     private String clientPhone;
 
-    // Project details
-    private String projectName;
+    // Project details (one or more)
+    private List<Integer> projectIds;
+    private List<String> projectNames;
 
     // Manager / Company branding details
     private String companyName;

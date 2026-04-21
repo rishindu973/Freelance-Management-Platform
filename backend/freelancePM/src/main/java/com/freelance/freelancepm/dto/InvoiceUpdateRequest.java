@@ -13,8 +13,17 @@ public class InvoiceUpdateRequest {
     @Positive(message = "Client ID must be positive")
     private Integer clientId;
 
-    @Positive(message = "Project ID must be positive")
-    private Integer projectId;
+    /**
+     * Optional — replaces the full project list when provided and non-empty.
+     * Pass null or omit to leave existing projects unchanged.
+     */
+    private List<Integer> projectIds;
+
+    /**
+     * Optional — updates the notes/service description.
+     * Pass null or omit to leave existing description unchanged.
+     */
+    private String description;
 
     private InvoiceStatus status;
 
