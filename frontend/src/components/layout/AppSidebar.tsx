@@ -33,8 +33,6 @@ const mainItems = [
   { title: "Team", url: "/freelancers", icon: Users },
   { title: "Clients", url: "/clients", icon: Building2 },
   { title: "Projects", url: "/projects", icon: FolderKanban },
-  { title: "Tasks", url: "/tasks", icon: ListChecks },
-  { title: "Deliverables", url: "/deliverables", icon: Upload },
   { title: "Invoices", url: "/invoices", icon: FileText },
   { title: "Payments", url: "/payments", icon: CreditCard },
   { title: "Reports", url: "/reports", icon: BarChart3 },
