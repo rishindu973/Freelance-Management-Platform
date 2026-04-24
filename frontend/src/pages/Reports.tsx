@@ -102,7 +102,7 @@ export default function Reports() {
     }
 
     const kpis = [
-        { label: "Total Revenue", value: `$${data?.totalRevenue?.toLocaleString(undefined, { minimumFractionDigits: 2 }) ?? "0"}`, icon: DollarSign },
+        { label: "Total Revenue", value: `LKR ${data?.totalRevenue?.toLocaleString(undefined, { minimumFractionDigits: 2 }) ?? "0"}`, icon: DollarSign },
         { label: "Projects Started", value: data?.projectsStarted ?? 0, icon: FolderPlus },
         { label: "Projects Completed", value: data?.projectsCompleted ?? 0, icon: CheckCircle2 },
         { label: "Invoices Generated", value: data?.invoicesGenerated ?? 0, icon: FileText },
@@ -197,7 +197,7 @@ export default function Reports() {
                                         tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
                                         axisLine={false}
                                         tickLine={false}
-                                        tickFormatter={(v) => `$${v}`}
+                                        tickFormatter={(v) => `LKR ${v}`}
                                     />
                                     <Tooltip
                                         cursor={{ fill: "hsl(var(--muted))" }}
@@ -207,7 +207,7 @@ export default function Reports() {
                                             borderRadius: "8px",
                                             fontSize: 12,
                                         }}
-                                        formatter={(value: number) => [`$${value.toLocaleString()}`, "Revenue"]}
+                                        formatter={(value: number) => [`LKR ${value.toLocaleString()}`, "Revenue"]}
                                         labelFormatter={(label) => `Date: ${label}`}
                                     />
                                     <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />

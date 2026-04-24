@@ -18,14 +18,16 @@ public class InvoiceCreateRequest {
     @Positive(message = "Client ID must be positive")
     private Integer clientId;
 
-    @NotEmpty(message = "At least one project is required")
     private List<Integer> projectIds;
 
     private InvoiceStatus status;
 
     private LocalDate dueDate;
 
-    /** Notes / service description — entered manually by the manager at creation time. */
+    /**
+     * Notes / service description — entered manually by the manager at creation
+     * time.
+     */
     private String description;
 
     private BigDecimal subtotal;

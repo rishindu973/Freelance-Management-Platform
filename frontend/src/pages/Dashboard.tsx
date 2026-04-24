@@ -66,7 +66,7 @@ const Dashboard = () => {
     { label: "Total Projects", value: data.totalProjects, change: "All time", icon: FolderPlus, positive: true },
     { label: "Active", value: data.activeProjects, change: "In progress", icon: TrendingUp, positive: true },
     { label: "Completed", value: data.completedProjects, change: "Finished", icon: CheckCircle2, positive: true },
-    { label: "Total Income", value: data.totalIncome ? `$${data.totalIncome.toLocaleString()}` : "$0", change: "From paid invoices", icon: DollarSign, positive: true },
+    { label: "Total Income", value: data.totalIncome ? `LKR ${data.totalIncome.toLocaleString()}` : "LKR 0", change: "From paid invoices", icon: DollarSign, positive: true },
   ];
 
   const projectStatus = [
@@ -118,7 +118,7 @@ const Dashboard = () => {
       {/* Project row */}
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="col-span-2">
-            <NearDeadlineProjects />
+          <NearDeadlineProjects />
         </div>
         {/* Project status pie */}
         <div className="rounded-xl border bg-card p-5 shadow-sm">

@@ -127,14 +127,14 @@ export default function Payments() {
                                     <SelectContent>
                                         {invoices.map((inv) => (
                                             <SelectItem key={inv.id} value={String(inv.id)}>
-                                                {inv.invoiceNumber || `INV-${inv.id}`} - ${inv.total}
+                                                {inv.invoiceNumber || `INV-${inv.id}`} - LKR {inv.total}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label>Amount Paid ($)</Label>
+                                <Label>Amount Paid (LKR)</Label>
                                 <Input
                                     type="number"
                                     min="0"
@@ -226,7 +226,7 @@ export default function Payments() {
                                         <TableCell className="text-muted-foreground">
                                             {inv ? (inv.invoiceNumber || `INV-${inv.id}`) : `INV-${payment.invoiceId}`}
                                         </TableCell>
-                                        <TableCell className="font-semibold">${payment.amount?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
+                                        <TableCell className="font-semibold">LKR {payment.amount?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
                                         <TableCell className="text-muted-foreground">
                                             {payment.paymentDate ? new Date(payment.paymentDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "N/A"}
                                         </TableCell>

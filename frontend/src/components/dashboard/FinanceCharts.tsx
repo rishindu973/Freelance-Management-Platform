@@ -83,7 +83,7 @@ export function FinanceCharts() {
                                 <XAxis dataKey="label" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
                                 <YAxis tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
                                 <Tooltip
-                                    formatter={(value: number) => [`$${value.toLocaleString()}`, 'Profit']}
+                                    formatter={(value: number) => [`LKR ${value.toLocaleString()}`, 'Profit']}
                                     contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0' }}
                                 />
                                 <ReferenceLine y={0} stroke="#cbd5e1" />
@@ -106,7 +106,7 @@ export function FinanceCharts() {
                                 <XAxis dataKey="label" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
                                 <YAxis tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
                                 <Tooltip
-                                    formatter={(value: number) => [`$${value.toLocaleString()}`, undefined]}
+                                    formatter={(value: number) => [`LKR ${value.toLocaleString()}`, undefined]}
                                     contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0' }}
                                     cursor={{ fill: 'transparent' }}
                                 />
@@ -145,7 +145,7 @@ export function FinanceCharts() {
                                 </Pie>
                                 <Tooltip
                                     formatter={(value: number, name: string, props: any) => {
-                                        return [`$${value.toLocaleString()} (${props.payload.percentage.toFixed(1)}%)`, name];
+                                        return [`LKR ${value.toLocaleString()} (${props.payload.percentage.toFixed(1)}%)`, name];
                                     }}
                                     contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0' }}
                                 />

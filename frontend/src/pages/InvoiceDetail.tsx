@@ -301,9 +301,9 @@ export default function InvoiceDetail() {
                   <TableRow key={idx} className="hover:bg-slate-50/30 transition-colors border-b border-slate-50">
                     <TableCell className="font-bold text-slate-700 py-6 px-6">{item.description}</TableCell>
                     <TableCell className="text-right font-mono text-slate-600 py-6 px-6 font-bold">{item.quantity}</TableCell>
-                    <TableCell className="text-right font-mono text-slate-600 py-6 px-6 font-bold">${Number(item.unitPrice).toFixed(2)}</TableCell>
+                    <TableCell className="text-right font-mono text-slate-600 py-6 px-6 font-bold">LKR {Number(item.unitPrice).toFixed(2)}</TableCell>
                     <TableCell className="text-right font-black text-slate-900 py-6 px-6 text-base tracking-tight">
-                      ${(Number(item.quantity) * Number(item.unitPrice)).toFixed(2)}
+                      LKR {(Number(item.quantity) * Number(item.unitPrice)).toFixed(2)}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -327,16 +327,16 @@ export default function InvoiceDetail() {
               <div className="space-y-3 p-6 pt-0 border-b border-slate-100">
                 <div className="flex justify-between items-center text-sm">
                   <span className="font-bold text-slate-400 uppercase tracking-widest text-[9px]">SUBTOTAL</span>
-                  <span className="font-black text-slate-700 font-mono tracking-tight text-base">${Number(invoice.subtotal).toFixed(2)}</span>
+                  <span className="font-black text-slate-700 font-mono tracking-tight text-base">LKR {Number(invoice.subtotal).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
                   <span className="font-bold text-slate-400 uppercase tracking-widest text-[9px]">TAX (10.0%)</span>
-                  <span className="font-black text-slate-700 font-mono tracking-tight text-base">${Number(invoice.tax).toFixed(2)}</span>
+                  <span className="font-black text-slate-700 font-mono tracking-tight text-base">LKR {Number(invoice.tax).toFixed(2)}</span>
                 </div>
               </div>
               <div className="flex justify-between items-center p-5 pt-3 rounded-xl shadow-sm" style={{ backgroundColor: '#FAE588' }}>
                 <span className="font-black text-xs uppercase tracking-[0.25em] text-black">Total Due</span>
-                <span className="text-4xl font-black font-mono tabular-nums tracking-tighter leading-none text-black">${Number(invoice.total).toFixed(2)}</span>
+                <span className="font-black font-mono tabular-nums tracking-tight text-black text-2xl" style={{ whiteSpace: 'nowrap' }}>LKR {Number(invoice.total).toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -371,3 +371,4 @@ export default function InvoiceDetail() {
     </div>
   );
 }
+

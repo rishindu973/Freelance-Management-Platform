@@ -234,7 +234,7 @@ export default function ProjectDetail() {
 
   const currentTeam = project.team || [];
   const budgetDisplay = project.budget != null
-    ? `$${Number(project.budget).toLocaleString()}`
+    ? `LKR ${Number(project.budget).toLocaleString()}`
     : "Not set";
 
   return (
@@ -357,7 +357,7 @@ export default function ProjectDetail() {
                   value={formData.budget ?? ""}
                   onChange={(e) => setFormData({ ...formData, budget: e.target.value ? Number(e.target.value) : undefined })}
                   className="mt-1 h-8 text-sm"
-                  placeholder="Budget ($)"
+                  placeholder="Budget (LKR)"
                 />
               ) : (
                 <p className="text-sm font-semibold text-foreground">{budgetDisplay}</p>

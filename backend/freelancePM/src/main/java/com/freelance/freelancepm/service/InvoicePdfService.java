@@ -291,7 +291,8 @@ public class InvoicePdfService {
         if (invoice.getProjects() != null && !invoice.getProjects().isEmpty()) {
             for (com.freelance.freelancepm.entity.Project project : invoice.getProjects()) {
                 String projName = nonEmpty(project.getName(), "Project #" + project.getId());
-                context.drawRightAlignedText("Project: " + projName, rightX, rightY, fontRegular, 9, PdfStyle.COLOR_TEXT);
+                context.drawRightAlignedText("Project: " + projName, rightX, rightY, fontRegular, 9,
+                        PdfStyle.COLOR_TEXT);
                 rightY -= 13;
             }
         }
@@ -312,8 +313,8 @@ public class InvoicePdfService {
         float rightEdge = width - margin;
         float y = context.getYPosition();
 
-        float colItemX = margin;
-        float colDescX = margin + 40;
+        float colItemX = margin + 10;
+        float colDescX = margin + 50;
         float colQtyX = rightEdge - 180;
         float colPriceX = rightEdge - 90;
         float colAmountX = rightEdge;
@@ -358,8 +359,8 @@ public class InvoicePdfService {
 
                 java.text.DecimalFormat df = new java.text.DecimalFormat("#,##0.00");
                 String qtyStr = item.getQuantity() != null ? item.getQuantity().toString() : "0";
-                String priceStr = item.getUnitPrice() != null ? "$" + df.format(item.getUnitPrice()) : "$0.00";
-                String amtStr = item.getAmount() != null ? "$" + df.format(item.getAmount()) : "$0.00";
+                String priceStr = item.getUnitPrice() != null ? "LKR " + df.format(item.getUnitPrice()) : "LKR 0.00";
+                String amtStr = item.getAmount() != null ? "LKR " + df.format(item.getAmount()) : "LKR 0.00";
                 String desc = item.getDescription() != null ? item.getDescription() : "";
 
                 context.drawText(String.valueOf(idx++), colItemX, y, fontRegular, 9, PdfStyle.COLOR_TEXT);
@@ -401,9 +402,9 @@ public class InvoicePdfService {
         float y = context.getYPosition();
 
         java.text.DecimalFormat df = new java.text.DecimalFormat("#,##0.00");
-        String subtotalStr = invoice.getSubtotal() != null ? "$" + df.format(invoice.getSubtotal()) : "$0.00";
-        String taxStr = invoice.getTax() != null ? "$" + df.format(invoice.getTax()) : "$0.00";
-        String totalStr = invoice.getTotal() != null ? "$" + df.format(invoice.getTotal()) : "$0.00";
+        String subtotalStr = invoice.getSubtotal() != null ? "LKR " + df.format(invoice.getSubtotal()) : "LKR 0.00";
+        String taxStr = invoice.getTax() != null ? "LKR " + df.format(invoice.getTax()) : "LKR 0.00";
+        String totalStr = invoice.getTotal() != null ? "LKR " + df.format(invoice.getTotal()) : "LKR 0.00";
 
         // ── LEFT: Notes ──
         float leftY = y;
@@ -436,12 +437,13 @@ public class InvoicePdfService {
         context.drawRightAlignedText(taxStr, rightEdge, rightY, fontRegular, 9, PdfStyle.COLOR_TEXT);
         rightY -= 20;
 
-        // Total box with yellow background
-        context.drawRect(labelX - 10, rightY - 14, boxW + 10, 30,
+        // Total box with yellow background — taller box to avoid label/amount collision
+        float boxHeight = 36;
+        context.drawRect(labelX - 10, rightY - boxHeight + 14, boxW + 10, boxHeight,
                 PdfStyle.COLOR_HEADER_BG, true);
 
-        context.drawText("TOTAL DUE", labelX, rightY, fontBold, 12, PdfStyle.COLOR_TEXT);
-        context.drawRightAlignedText(totalStr, rightEdge, rightY, fontBold, 14, PdfStyle.COLOR_TEXT);
+        context.drawText("TOTAL DUE", labelX, rightY, fontBold, 10, PdfStyle.COLOR_TEXT);
+        context.drawRightAlignedText(totalStr, rightEdge, rightY, fontBold, 13, PdfStyle.COLOR_TEXT);
 
         context.setYPosition(Math.min(leftY, rightY - 20) - 30);
     }
@@ -507,7 +509,8 @@ public class InvoicePdfService {
     }
 
     private Manager resolveManager(Invoice invoice) {
-        if (invoice.getProjects() != null && !invoice.getProjects().isEmpty() && invoice.getProjects().get(0).getManagerId() != null) {
+        if (invoice.getProjects() != null && !invoice.getProjects().isEmpty()
+                && invoice.getProjects().get(0).getManagerId() != null) {
             return managerRepository.findById(invoice.getProjects().get(0).getManagerId()).orElse(null);
         }
         return null;
@@ -555,7 +558,7 @@ public class InvoicePdfService {
     private org.apache.pdfbox.pdmodel.font.PDFont loadLogoFont(PdfGenerationContext context) throws IOException {
         try (java.io.InputStream is = getClass().getResourceAsStream("/fonts/gebuk.ttf")) {
             if (is == null) {
-                return new PDType1Font(Standard14Fonts.FontName.HELVETICA);
+                return new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
             }
             try (java.io.InputStream patchedIs = com.freelance.freelancepm.util.FontUtils.patchFont(is)) {
                 return org.apache.pdfbox.pdmodel.font.PDType0Font.load(context.getDocument(), patchedIs);

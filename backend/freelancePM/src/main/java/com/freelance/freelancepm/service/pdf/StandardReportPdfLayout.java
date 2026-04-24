@@ -77,7 +77,7 @@ public class StandardReportPdfLayout implements ReportPdfLayout {
         context.drawRect(x, y - 55, w, 65, PdfStyle.COLOR_BORDER, false);
 
         context.drawText(label, x + 12, y - 10, FONT_BOLD, 7, PdfStyle.COLOR_TEXT);
-        context.drawText("$" + formatMoney(amount), x + 12, y - 40, FONT_BOLD, 15, valueColor);
+        context.drawText("LKR " + formatMoney(amount), x + 12, y - 40, FONT_BOLD, 15, valueColor);
     }
 
     private void drawCardNumber(PdfGenerationContext context, String label, long amount, float x, float y, float w,
@@ -117,7 +117,7 @@ public class StandardReportPdfLayout implements ReportPdfLayout {
             context.drawText(detail.clientName(), margin + 200, textY, FONT_REGULAR, style.getFontSizeText(),
                     PdfStyle.COLOR_TEXT);
 
-            context.drawRightAlignedText("$" + formatMoney(detail.revenue()), margin + width - 10, textY, FONT_BOLD,
+            context.drawRightAlignedText("LKR " + formatMoney(detail.revenue()), margin + width - 10, textY, FONT_BOLD,
                     style.getFontSizeText(), PdfStyle.COLOR_TEXT);
 
             context.moveY(25);

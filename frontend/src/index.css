@@ -3,6 +3,12 @@
 @tailwind utilities;
 
 /* FreelanceFlow Design System — Calm, Minimal, Professional */
+@font-face {
+  font-family: 'Gebuk';
+  src: url('./assets/fonts/gebuk.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
 
 @layer base {
   :root {

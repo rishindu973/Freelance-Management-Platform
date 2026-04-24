@@ -20,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -169,6 +170,9 @@ export default function Invoices() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Create New Invoice</DialogTitle>
+              <DialogDescription className="sr-only">
+                Provide client and amount details to create an invoice.
+              </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="space-y-2">
@@ -187,7 +191,10 @@ export default function Invoices() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Total Amount ($)</Label>
+                  <div className="flex justify-between items-center">
+                    <Label>Base Amount (LKR)</Label>
+                    <span className="text-[10px] text-muted-foreground">+10% tax</span>
+                  </div>
                   <Input
                     type="number"
                     min="0"
@@ -342,10 +349,7 @@ export default function Invoices() {
                     <TableCell className="text-muted-foreground">
                       {invoice.createdAt ? new Date(invoice.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "N/A"}
                     </TableCell>
-                    <TableCell className="font-semibold flex items-center gap-1.5 py-3">
-                      <span className="text-muted-foreground/60 text-xs font-normal">AUD</span>
-                      ${invoice.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </TableCell>
+                    <TableCell className="font-semibold text-primary">LKR {invoice.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
                     <TableCell className="text-right pr-6">
                       <div className="flex items-center justify-end gap-3">
                         <StatusBadge status={invoice.status}>
