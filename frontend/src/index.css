@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* FreelanceFlow Design System — Calm, Minimal, Professional */
+@font-face {
+  font-family: 'Gebuk';
+  src: url('./assets/fonts/gebuk.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@layer base {
+  :root {
+    /* Backgrounds — light warm yellow */
+    --background: 48 100% 98%;
+    --foreground: 220 20% 20%;
+
+    /* Cream secondary surface — warm yellow tint */
+    --cream: 45 60% 95%;
+
+    /* Cards — slightly warm white */
+    --card: 48 80% 99%;
+    --card-foreground: 220 20% 20%;
+
+    --popover: 48 80% 99%;
+    --popover-foreground: 220 20% 20%;
+
+    /* Primary — sage green */
+    --primary: 152 35% 42%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary — warm yellow-tinted surface */
+    --secondary: 45 30% 93%;
+    --secondary-foreground: 220 20% 25%;
+
+    /* Muted */
+    --muted: 45 20% 93%;
+    --muted-foreground: 220 10% 50%;
+
+    /* Accent — warm golden */
+    --accent: 45 35% 90%;
+    --accent-foreground: 220 20% 20%;
+
+    /* Status colors */
+    --destructive: 0 55% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 152 40% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 40 70% 52%;
+    --warning-foreground: 220 20% 15%;
+
+    /* Borders — gentle warm */
+    --border: 45 20% 88%;
+    --input: 45 20% 88%;
+    --ring: 152 35% 42%;
+
+    --radius: 0.625rem;
+
+    /* Sidebar — warm golden */
+    --sidebar-background: 45 45% 95%;
+    --sidebar-foreground: 220 20% 20%;
+    --sidebar-primary: 152 35% 42%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 45 35% 90%;
+    --sidebar-accent-foreground: 220 20% 20%;
+    --sidebar-border: 45 20% 88%;
+    --sidebar-ring: 152 35% 42%;
+  }
+
+  .dark {
+    --background: 220 15% 10%;
+    --foreground: 45 20% 90%;
+
+    --cream: 220 12% 13%;
+
+    --card: 220 13% 12%;
+    --card-foreground: 45 20% 90%;
+
+    --popover: 220 13% 12%;
+    --popover-foreground: 45 20% 90%;
+
+    --primary: 152 35% 55%;
+    --primary-foreground: 220 15% 10%;
+
+    --secondary: 220 12% 16%;
+    --secondary-foreground: 45 20% 90%;
+
+    --muted: 220 12% 16%;
+    --muted-foreground: 220 10% 55%;
+
+    --accent: 220 12% 18%;
+    --accent-foreground: 45 20% 90%;
+
+    --destructive: 0 50% 45%;
+    --destructive-foreground: 45 20% 90%;
+
+    --success: 152 35% 42%;
+    --success-foreground: 45 20% 90%;
+
+    --warning: 40 60% 48%;
+    --warning-foreground: 45 20% 90%;
+
+    --border: 220 12% 18%;
+    --input: 220 12% 18%;
+    --ring: 152 35% 55%;
+
+    --sidebar-background: 220 13% 12%;
+    --sidebar-foreground: 45 20% 90%;
+    --sidebar-primary: 152 35% 55%;
+    --sidebar-primary-foreground: 220 15% 10%;
+    --sidebar-accent: 220 12% 18%;
+    --sidebar-accent-foreground: 45 20% 90%;
+    --sidebar-border: 220 12% 18%;
+    --sidebar-ring: 152 35% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
