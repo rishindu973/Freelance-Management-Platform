@@ -70,10 +70,10 @@ const Dashboard = () => {
   ];
 
   const projectStatus = [
-    { name: "Active", value: data.activeProjects, color: "hsl(140, 25%, 48%)" },
-    { name: "Completed", value: data.completedProjects, color: "hsl(36, 14%, 89%)" },
-    { name: "Pending", value: data.pendingProjects, color: "hsl(38, 60%, 55%)" },
-    { name: "Overdue", value: data.overdueProjects, color: "hsl(0, 45%, 55%)" },
+    { name: "Active", value: data.activeProjects, color: "hsl(152, 40%, 45%)" },
+    { name: "Completed", value: data.completedProjects, color: "hsl(45, 20%, 88%)" },
+    { name: "Pending", value: data.pendingProjects, color: "hsl(40, 70%, 52%)" },
+    { name: "Overdue", value: data.overdueProjects, color: "hsl(0, 55%, 55%)" },
   ].filter(s => s.value > 0);
 
   const upcomingDeadlines = data.upcomingDeadlines.map((p) => ({
@@ -134,8 +134,8 @@ const Dashboard = () => {
                 </Pie>
                 <Tooltip
                   contentStyle={{
-                    background: "hsl(0, 0%, 100%)",
-                    border: "1px solid hsl(36, 14%, 89%)",
+                    background: "hsl(48, 80%, 99%)",
+                    border: "1px solid hsl(45, 20%, 88%)",
                     borderRadius: "8px",
                     fontSize: 12,
                   }}
