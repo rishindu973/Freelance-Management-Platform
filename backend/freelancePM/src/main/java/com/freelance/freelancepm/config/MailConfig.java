@@ -11,22 +11,22 @@ import java.util.Properties;
 @Configuration
 public class MailConfig {
 
-    @Value("${spring.mail.host}")
+    @Value("${spring.mail.host:smtp.sendgrid.net}")
     private String host;
 
-    @Value("${spring.mail.port}")
+    @Value("${spring.mail.port:587}")
     private int port;
 
-    @Value("${spring.mail.username}")
+    @Value("${spring.mail.username:apikey}")
     private String username;
 
-    @Value("${spring.mail.password}")
+    @Value("${spring.mail.password:${sendgrid.api.key:}}")
     private String password;
 
-    @Value("${spring.mail.properties.mail.smtp.auth}")
+    @Value("${spring.mail.properties.mail.smtp.auth:true}")
     private String auth;
 
-    @Value("${spring.mail.properties.mail.smtp.starttls.enable}")
+    @Value("${spring.mail.properties.mail.smtp.starttls.enable:true}")
     private String starttls;
 
     @Bean
