@@ -119,7 +119,7 @@ public class Invoice {
 
     public static final BigDecimal TAX_RATE = new BigDecimal("0.10");
 
-    // Helper methods for bidirectional relationship
+    // Helper methods for bidirectional relationship.
     public void addLineItem(InvoiceLineItem lineItem) {
         lineItems.add(lineItem);
         lineItem.setInvoice(this);

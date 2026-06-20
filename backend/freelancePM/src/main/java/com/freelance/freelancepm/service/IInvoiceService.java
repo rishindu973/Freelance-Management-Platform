@@ -30,8 +30,10 @@ public interface IInvoiceService {
      * @param endDate   filter invoices created on or before this date (nullable)
      * @param pageable  pagination and sorting options
      * @return matching invoices as paginated lightweight list DTOs
+     * 
      */
-    Page<InvoiceListDTO> listAll(Integer managerId, Integer clientId, LocalDate startDate, LocalDate endDate, Pageable pageable);
+    Page<InvoiceListDTO> listAll(Integer managerId, Integer clientId, LocalDate startDate, LocalDate endDate,
+            Pageable pageable);
 
     void sendInvoice(Integer invoiceId, SendInvoiceRequest request);
 

@@ -9,7 +9,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.Optional;
 
-// Single Responsibility: Handles business logic for Clients
+// Single Responsibility: Handles business logic for Clients 
 @Service
 public class ClientService implements IClientService {
 

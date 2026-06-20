@@ -26,6 +26,7 @@ public class InvoiceSpecifications {
 
     /**
      * Filters invoices created on or after the given date-time.
+     * 
      */
     public static Specification<Invoice> createdOnOrAfter(LocalDateTime from) {
         return (root, query, cb) -> cb.greaterThanOrEqualTo(root.get("createdAt"), from);

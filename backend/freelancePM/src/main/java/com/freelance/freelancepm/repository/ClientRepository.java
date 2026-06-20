@@ -12,5 +12,6 @@ import java.util.Optional;
 @Repository
 public interface ClientRepository extends JpaRepository<Client, Integer> {
     Page<Client> findAllByManagerId(Integer managerId, Pageable pageable);
+
     Optional<Client> findByIdAndManagerId(Integer id, Integer managerId);
 }

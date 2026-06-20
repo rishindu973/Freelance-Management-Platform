@@ -6,7 +6,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-// Single Responsibility: This class only represents the Client entity
+// Single Responsibility: This class only represents the Client entity 
 @Entity
 @Table(name = "client")
 public class Client {

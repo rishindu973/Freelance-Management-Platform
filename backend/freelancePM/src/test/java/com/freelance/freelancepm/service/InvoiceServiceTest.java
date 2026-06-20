@@ -137,7 +137,7 @@ class InvoiceServiceTest {
         when(pdfService.generateInvoicePdf(invoiceId)).thenReturn("pdf content".getBytes());
         when(managerRepository.findById(5)).thenReturn(Optional.of(manager));
 
-        // Act
+        // Act.
         invoiceService.sendInvoice(invoiceId, request);
 
         // Assert: dispatch delegated to EmailDispatcherService
