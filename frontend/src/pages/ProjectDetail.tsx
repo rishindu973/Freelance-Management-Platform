@@ -147,9 +147,35 @@ export default function ProjectDetail() {
     fetchProject();
   }, [id]);
 
+  // Sync progress automatically with task completion
+  useEffect(() => {
+    if (tasks.length > 0) {
+      const doneCount = tasks.filter((t) => t.status === "done").length;
+      setProgressValue(Math.round((doneCount / tasks.length) * 100));
+    }
+  }, [tasks]);
+
+  const handleTaskStatusChange = (taskId: string, newStatus: TaskStatus) => {
+    setTasks(tasks.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
+  };
+
   const handleSave = async () => {
     try {
       if (id) {
+        if (formData.status === "completed") {
+          const hasIncompleteTasks = tasks.some(t => t.status !== "done");
+          if (hasIncompleteTasks) {
+            toast({
+              title: "Caution",
+              description: "Please mark all tasks as 'Done' before completing the project.",
+              variant: "destructive"
+            });
+            return;
+          }
+          setProgressValue(100);
+          await ProjectService.updateProgress(Number(id), "completed", 100);
+        }
+
         await ProjectService.updateProject(Number(id), formData);
         toast({ title: "Project updated", description: "Changes saved successfully." });
         setIsEditing(false);
@@ -434,7 +460,18 @@ export default function ProjectDetail() {
                       <TableCell className="text-muted-foreground">{t.assignee}</TableCell>
                       <TableCell className="text-muted-foreground">{fmt(t.deadline)}</TableCell>
                       <TableCell><Badge variant="outline" className={priorityStyle[t.priority]}>{t.priority}</Badge></TableCell>
-                      <TableCell><Badge variant="outline" className={taskStatusStyle[t.status]}>{t.status.replace("-", " ")}</Badge></TableCell>
+                      <TableCell>
+                        <Select value={t.status} onValueChange={(v) => handleTaskStatusChange(t.id, v as TaskStatus)}>
+                          <SelectTrigger className={`w-[130px] h-8 text-xs border ${taskStatusStyle[t.status]}`}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="todo">To Do</SelectItem>
+                            <SelectItem value="in-progress">In Progress</SelectItem>
+                            <SelectItem value="done">Done</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
