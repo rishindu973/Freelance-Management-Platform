@@ -78,7 +78,7 @@ export function TopBar() {
   };
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-3 border-transparent bg-white/40 backdrop-blur-md px-4 shadow-sm">
+    <header className="flex h-14 shrink-0 items-center gap-3 border-transparent bg-white/40 backdrop-blur-md px-4 shadow-sm relative z-[100]">
       <SidebarTrigger className="-ml-1" />
 
       <div className="h-5 w-px bg-border" />
@@ -95,18 +95,18 @@ export function TopBar() {
           </Button>
 
           {notificationsOpen && (
-            <div className="absolute right-0 top-full mt-2 w-80 rounded-xl border bg-card p-4 shadow-lg ring-1 ring-black/5 z-50 animate-in fade-in slide-in-from-top-2">
-              <div className="mb-3 border-b pb-3">
-                <p className="font-semibold text-foreground text-sm">Notifications</p>
+            <div className="absolute right-0 top-full mt-3 w-80 rounded-xl border border-white/20 bg-white/90 backdrop-blur-md p-5 shadow-[0_8px_30px_rgba(15,23,42,0.12)] z-[100] animate-in fade-in slide-in-from-top-2">
+              <div className="mb-4 border-b border-slate-100 pb-3">
+                <p className="font-bold tracking-wide text-slate-800 text-xs uppercase">Notifications</p>
               </div>
-              <div className="space-y-3 max-h-64 overflow-y-auto">
+              <div className="space-y-4 max-h-64 overflow-y-auto pr-1">
                 {notifications.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No new notifications.</p>
+                  <p className="text-xs text-slate-400">No new notifications.</p>
                 ) : (
                   notifications.map((notif) => (
                     <div key={notif.id} className="text-sm">
-                      <p className="text-foreground">{notif.description}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-slate-700 font-medium text-xs leading-relaxed">{notif.description}</p>
+                      <p className="text-[10px] font-medium text-slate-400 mt-1 uppercase tracking-wider">
                         {new Date(notif.timestamp).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                       </p>
                     </div>
@@ -131,29 +131,31 @@ export function TopBar() {
           </button>
 
           {dropdownOpen && (
-            <div className="absolute right-0 top-full mt-2 w-64 rounded-xl border bg-card p-4 shadow-lg ring-1 ring-black/5 z-50 animate-in fade-in slide-in-from-top-2">
-              <div className="mb-3 border-b pb-3">
-                <p className="font-semibold text-foreground text-sm">{manager?.fullName || "N/A"}</p>
-                <p className="text-xs text-muted-foreground">{manager?.email || "N/A"}</p>
+            <div className="absolute right-0 top-full mt-3 w-72 rounded-xl border border-white/20 bg-white/90 backdrop-blur-md p-5 shadow-[0_8px_30px_rgba(15,23,42,0.12)] z-[100] animate-in fade-in slide-in-from-top-2">
+              <div className="mb-4 border-b border-slate-100 pb-4">
+                <p className="font-bold text-slate-900 text-sm tracking-tight">{manager?.fullName || "N/A"}</p>
+                <p className="text-xs font-medium text-slate-500 mt-0.5">{manager?.email || "N/A"}</p>
               </div>
-              <div className="space-y-2 text-sm text-muted-foreground mb-4">
-                <div className="flex justify-between">
-                  <span className="font-medium">Company:</span>
-                  <span className="text-foreground">{manager?.companyName || "N/A"}</span>
+              <div className="space-y-3 text-xs text-slate-600 mb-6">
+                <div className="flex justify-between items-center">
+                  <span className="font-semibold text-slate-400 uppercase tracking-wider text-[10px]">Company</span>
+                  <span className="font-medium text-slate-800">{manager?.companyName || "N/A"}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Contact:</span>
-                  <span className="text-foreground">{manager?.contactNumber || "N/A"}</span>
+                <div className="flex justify-between items-center">
+                  <span className="font-semibold text-slate-400 uppercase tracking-wider text-[10px]">Contact</span>
+                  <span className="font-medium text-slate-800">{manager?.contactNumber || "N/A"}</span>
                 </div>
               </div>
-              <Button
-                variant="destructive"
-                size="sm"
-                className="w-full flex items-center justify-center gap-2"
-                onClick={logout}
-              >
-                <LogOut className="h-4 w-4" /> Sign out
-              </Button>
+              <div className="bg-red-50/50 rounded-lg p-1.5 border border-red-100/50">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full flex items-center justify-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-100/50 font-bold tracking-wide"
+                  onClick={logout}
+                >
+                  <LogOut className="h-4 w-4" /> Sign out
+                </Button>
+              </div>
             </div>
           )}
         </div>
