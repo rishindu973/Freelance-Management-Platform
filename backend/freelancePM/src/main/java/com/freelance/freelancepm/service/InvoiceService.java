@@ -39,6 +39,7 @@ public class InvoiceService implements IInvoiceService {
     private final InvoiceCalculationService calculationService;
     private final InvoiceStatusTransitionService transitionService;
     private final PaymentValidationService paymentValidationService;
+    private final ActivityService activityService;
 
     private boolean regeneratePdfOnUpdate = true; // Configuration flag
 
@@ -195,6 +196,8 @@ public class InvoiceService implements IInvoiceService {
                 dueDate,
                 pdfBytes,
                 filename);
+
+        activityService.logActivity(manager.getId(), com.freelance.freelancepm.entity.Activity.ActivityType.INVOICE_SENT, "Sent invoice to client: " + invoice.getClient().getName());
     }
 
     @Override

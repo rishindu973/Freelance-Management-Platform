@@ -24,6 +24,7 @@ public class ProjectService implements IProjectService {
     private final ProjectRepository projectRepository;
     private final FreelancerRepository freelancerRepository;
     private final ClientRepository clientRepository;
+    private final ActivityService activityService;
 
     public ProjectResponse create(Integer managerId, ProjectCreateRequest req) {
         Client client = null;
@@ -44,7 +45,10 @@ public class ProjectService implements IProjectService {
                 .budget(req.getBudget())
                 .build();
 
-        return toResponse(projectRepository.save(p), req.getClientId());
+        Project saved = projectRepository.save(p);
+        activityService.logActivity(managerId, com.freelance.freelancepm.entity.Activity.ActivityType.PROJECT_CREATED, "Created new project: " + req.getName());
+
+        return toResponse(saved, req.getClientId());
     }
 
     public org.springframework.data.domain.Page<ProjectResponse> list(Integer managerId, String status, Integer clientId, String search, LocalDate from,

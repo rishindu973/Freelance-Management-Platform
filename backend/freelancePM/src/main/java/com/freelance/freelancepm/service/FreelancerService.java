@@ -27,6 +27,7 @@ public class FreelancerService implements IFreelancerService {
     private final ManagerRepository managerRepository;
     private final PasswordEncoder passwordEncoder;
     private final IEmailService emailService;
+    private final ActivityService activityService;
 
     @Transactional
     @Override
@@ -71,6 +72,8 @@ public class FreelancerService implements IFreelancerService {
         // SRP: Delegate credential delivery to EmailService
         emailService.sendWelcomeEmail(newUser.getEmail(), rawPassword);
         emailService.sendVerificationEmail(newUser.getEmail(), token);
+
+        activityService.logActivity(managerId, com.freelance.freelancepm.entity.Activity.ActivityType.MEMBER_ADDED, "Added new freelancer: " + freelancerDTO.getFullName());
 
         TeamResponseDTO response = new TeamResponseDTO();
         response.setMemberName(freelancerDTO.getFullName());

@@ -122,7 +122,7 @@ export default function Login() {
                                     <FormItem>
                                         <FormLabel>Email</FormLabel>
                                         <FormControl>
-                                            <Input placeholder={selectedRole === 'MANAGER' ? "manager@kingsman.com" : "freelancer@example.com"} {...field} />
+                                            <Input placeholder={selectedRole === 'MANAGER' ? "manager@example.com" : "freelancer@example.com"} {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
