@@ -124,7 +124,6 @@ export default function Clients() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>ID</TableHead>
                             <TableHead>Name</TableHead>
                             <TableHead>Email</TableHead>
                             <TableHead>Phone</TableHead>
@@ -134,21 +133,20 @@ export default function Clients() {
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center">
+                                <TableCell colSpan={4} className="text-center">
                                     Loading clients...
                                 </TableCell>
                             </TableRow>
                         ) : clients.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center text-muted-foreground p-8">
+                                <TableCell colSpan={4} className="text-center text-muted-foreground p-8">
                                     No clients found. Add a new client to get started.
                                 </TableCell>
                             </TableRow>
                         ) : (
                             clients.map((client) => (
                                 <TableRow key={client.id}>
-                                    <TableCell className="font-medium">{client.id}</TableCell>
-                                    <TableCell>{client.name}</TableCell>
+                                    <TableCell className="font-medium">{client.name}</TableCell>
                                     <TableCell>{client.email}</TableCell>
                                     <TableCell>{client.phone}</TableCell>
                                     <TableCell className="text-right whitespace-nowrap">

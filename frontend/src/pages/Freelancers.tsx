@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { Plus, Trash2, Edit, ExternalLink } from "lucide-react";
+import { Plus, Trash2, Pencil, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
@@ -188,13 +188,13 @@ export default function Freelancers() {
                                         tableLayout: 'fixed'
                                     }}
                                 >
-                                    <TableCell className="font-medium truncate">
+                                    <TableCell className="font-medium truncate w-[30%]">
                                         <div className="truncate">{freelancer.fullName}</div>
                                         <div className="text-xs text-muted-foreground truncate">{freelancer.email}</div>
                                     </TableCell>
-                                    <TableCell className="truncate">{freelancer.title}</TableCell>
-                                    <TableCell className="truncate">{freelancer.contactNumber}</TableCell>
-                                    <TableCell className="truncate">
+                                    <TableCell className="truncate w-[20%]">{freelancer.title}</TableCell>
+                                    <TableCell className="truncate w-[20%]">{freelancer.contactNumber}</TableCell>
+                                    <TableCell className="truncate w-[15%]">
                                         {freelancer.driveLink ? (
                                             <a
                                                 href={freelancer.driveLink.startsWith('http') ? freelancer.driveLink : `https://${freelancer.driveLink}`}
@@ -208,14 +208,14 @@ export default function Freelancers() {
                                             <span className="text-muted-foreground text-sm">N/A</span>
                                         )}
                                     </TableCell>
-                                    <TableCell className="text-right whitespace-nowrap">
+                                    <TableCell className="text-right whitespace-nowrap w-[15%]">
                                         <Button
                                             variant="ghost"
                                             size="icon"
                                             onClick={() => handleOpenEditDialog(freelancer)}
                                             className="text-muted-foreground hover:text-foreground"
                                         >
-                                            <Edit className="h-4 w-4" />
+                                            <Pencil className="h-4 w-4" />
                                         </Button>
                                         <Button
                                             variant="ghost"
