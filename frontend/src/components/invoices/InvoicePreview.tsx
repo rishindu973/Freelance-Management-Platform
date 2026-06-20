@@ -2,13 +2,14 @@ import React from 'react';
 
 // ─── Color palette (mirrors PdfStyle.java exactly) ───────────────────────────
 const C = {
-  HEADER_BG: '#FAE588', // header bar + total box background
-  SECTION_LABEL: '#F9DC5C', // "BILLED TO", "PAYMENT INFO", "NOTES:"
-  TABLE_HEADER: '#FCEFB4', // table header row background
-  FOOTER_HL: '#FCEFB4', // footer verified-line highlight
+  HEADER_BG: '#064E3B', // Deep Forest Alpine Green
+  HEADER_TEXT: '#FFFFFF', // Solid White
+  SECTION_LABEL: '#0F172A', // Deep Slate Midnight Navy
+  TABLE_HEADER: '#F4F6F5', // Alabaster Ice Mist
+  FOOTER_HL: '#F4F6F5', // Alabaster Ice Mist
   STATUS: '#FFA726', // warm orange — invoice status badge
-  TEXT: '#000000', // all body text
-  MUTED: '#BDBDBD', // secondary label ("Powered Via")
+  TEXT: '#0F172A', // Deep Slate Midnight Navy
+  MUTED: '#BDBDBD', // secondary label
   WHITE: '#FFFFFF',
 };
 
@@ -95,19 +96,19 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice }) => {
       {/* ── 1. HEADER ── */}
       <div style={{ backgroundColor: C.HEADER_BG, padding: '28px 40px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         {/* Left */}
-        <div>
+        <div style={{ color: C.HEADER_TEXT }}>
           <div style={{ fontSize: 32, fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase', lineHeight: 1 }}>INVOICE</div>
           <div style={{ fontSize: 11, marginTop: 8 }}>No: <strong>{invoiceNum}</strong></div>
           <div style={{ fontSize: 10, marginTop: 4 }}>Issue Date: &nbsp;<strong>{fmt.date(issueDate)}</strong></div>
           <div style={{ fontSize: 10, marginTop: 3 }}>Due Date: &nbsp;&nbsp;&nbsp;<strong>{fmt.date(dueDate)}</strong></div>
         </div>
         {/* Right — branding */}
-        <div style={{ textAlign: 'right' }}>
+        <div style={{ textAlign: 'right', color: C.HEADER_TEXT }}>
           {invoice.logoUrl && (
             <img src={invoice.logoUrl} alt="logo" style={{ height: 36, marginBottom: 6, marginLeft: 'auto' }} />
           )}
-          <div style={{ fontSize: 9, color: C.MUTED, letterSpacing: '0.08em' }}>Powered Via</div>
-          <div style={{ fontSize: 15, fontWeight: 900, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{companyName}</div>
+          <div style={{ fontSize: 9, color: C.HEADER_TEXT, letterSpacing: '0.08em', opacity: 0.8 }}>Powered Via</div>
+          <div style={{ fontSize: 15, fontFamily: 'Gebuk, sans-serif', fontWeight: 900, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{companyName}</div>
           <div style={{ fontSize: 10, marginTop: 2 }}>{companyEmail}</div>
         </div>
       </div>
@@ -188,7 +189,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice }) => {
               <span>{fmt.currency(tax)}</span>
             </div>
             {/* Total box */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', marginTop: 8, backgroundColor: C.HEADER_BG, borderRadius: 4 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', marginTop: 8, backgroundColor: C.HEADER_BG, borderRadius: 4, color: C.HEADER_TEXT }}>
               <span style={{ fontWeight: 900, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em' }}>TOTAL DUE</span>
               <span style={{ fontWeight: 900, fontSize: 16 }}>{fmt.currency(total)}</span>
             </div>
@@ -204,7 +205,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice }) => {
           {/* Branding */}
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 7, color: C.MUTED, letterSpacing: '0.1em' }}>Powered Via</div>
-            <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{companyName}</div>
+            <div style={{ fontSize: 10, fontFamily: 'Gebuk, sans-serif', fontWeight: 900, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{companyName}</div>
             <div style={{ fontSize: 8, marginTop: 2, color: '#555' }}>{companyEmail}</div>
           </div>
           <div style={{ textAlign: 'center', fontSize: 7, color: C.MUTED, marginTop: 8 }}>

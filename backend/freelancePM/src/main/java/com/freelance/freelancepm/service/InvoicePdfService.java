@@ -177,26 +177,26 @@ public class InvoicePdfService {
 
         // ── LEFT: INVOICE title ──
         float textY = y - 20;
-        context.drawText("INVOICE", margin, textY, fontBold, 30, PdfStyle.COLOR_TEXT);
+        context.drawText("INVOICE", margin, textY, fontBold, 30, PdfStyle.COLOR_HEADER_TEXT);
         textY -= 20;
 
         // Invoice number
         String invNum = invoice.getInvoiceNumber() != null ? invoice.getInvoiceNumber() : "DRAFT";
-        context.drawText("No: " + invNum, margin, textY, fontRegular, 10, PdfStyle.COLOR_TEXT);
+        context.drawText("No: " + invNum, margin, textY, fontRegular, 10, PdfStyle.COLOR_HEADER_TEXT);
         textY -= 16;
 
         // Issue date
         String issueDate = invoice.getCreatedAt() != null
                 ? invoice.getCreatedAt().format(DATE_FMT)
                 : "N/A";
-        context.drawText("Issue Date:  " + issueDate, margin, textY, fontRegular, 10, PdfStyle.COLOR_TEXT);
+        context.drawText("Issue Date:  " + issueDate, margin, textY, fontRegular, 10, PdfStyle.COLOR_HEADER_TEXT);
         textY -= 16;
 
         // Due date
         String dueDate = invoice.getDueDate() != null
                 ? invoice.getDueDate().format(DATE_FMT)
                 : "N/A";
-        context.drawText("Due Date:    " + dueDate, margin, textY, fontRegular, 10, PdfStyle.COLOR_TEXT);
+        context.drawText("Due Date:    " + dueDate, margin, textY, fontRegular, 10, PdfStyle.COLOR_HEADER_TEXT);
 
         // ── RIGHT: Company branding ──
         float rightX = width - margin;
@@ -209,7 +209,7 @@ public class InvoicePdfService {
         }
 
         // "Powered Via" — small muted label
-        context.drawRightAlignedText("Powered Via", rightX, rightY, fontRegular, 7, PdfStyle.COLOR_MUTED);
+        context.drawRightAlignedText("Powered Via", rightX, rightY, fontRegular, 7, PdfStyle.COLOR_HEADER_TEXT);
         rightY -= 13;
 
         // "FreelanceFlow" — brand name using logoFont
@@ -217,7 +217,7 @@ public class InvoicePdfService {
                 && !manager.getCompanyName().isBlank())
                         ? manager.getCompanyName()
                         : "FreelanceFlow";
-        context.drawRightAlignedText(brand, rightX, rightY, logoFont, 14, PdfStyle.COLOR_TEXT);
+        context.drawRightAlignedText(brand, rightX, rightY, logoFont, 14, PdfStyle.COLOR_HEADER_TEXT);
         rightY -= 14;
 
         // Company email
@@ -225,7 +225,7 @@ public class InvoicePdfService {
                 && manager.getUser().getEmail() != null)
                         ? manager.getUser().getEmail()
                         : "contact@freelanceflow.io";
-        context.drawRightAlignedText(email, rightX, rightY, fontRegular, 9, PdfStyle.COLOR_TEXT);
+        context.drawRightAlignedText(email, rightX, rightY, fontRegular, 9, PdfStyle.COLOR_HEADER_TEXT);
 
         context.setYPosition(y - headerH - 20);
     }
@@ -442,8 +442,8 @@ public class InvoicePdfService {
         context.drawRect(labelX - 10, rightY - boxHeight + 14, boxW + 10, boxHeight,
                 PdfStyle.COLOR_HEADER_BG, true);
 
-        context.drawText("TOTAL DUE", labelX, rightY, fontBold, 10, PdfStyle.COLOR_TEXT);
-        context.drawRightAlignedText(totalStr, rightEdge, rightY, fontBold, 13, PdfStyle.COLOR_TEXT);
+        context.drawText("TOTAL DUE", labelX, rightY, fontBold, 10, PdfStyle.COLOR_HEADER_TEXT);
+        context.drawRightAlignedText(totalStr, rightEdge, rightY, fontBold, 13, PdfStyle.COLOR_HEADER_TEXT);
 
         context.setYPosition(Math.min(leftY, rightY - 20) - 30);
     }
