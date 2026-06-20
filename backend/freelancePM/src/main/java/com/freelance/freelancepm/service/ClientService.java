@@ -4,8 +4,9 @@ import com.freelance.freelancepm.model.Client;
 import com.freelance.freelancepm.repository.ClientRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import java.util.Optional;
 
 // Single Responsibility: Handles business logic for Clients
@@ -27,19 +28,20 @@ public class ClientService implements IClientService {
 
     // Retrieve all clients
     @Override
-    public List<Client> getAllClients() {
-        return clientRepository.findAll();
+    public Page<Client> getAllClients(Integer managerId, Pageable pageable) {
+        return clientRepository.findAllByManagerId(managerId, pageable);
     }
 
     // Retrieve client by ID
     @Override
-    public Optional<Client> getClientById(Integer id) {
-        return clientRepository.findById(id);
+    public Optional<Client> getClientById(Integer id, Integer managerId) {
+        return clientRepository.findByIdAndManagerId(id, managerId);
     }
 
     // Delete client by ID
     @Override
-    public void deleteClientById(Integer id) {
-        clientRepository.deleteById(id);
+    public void deleteClientById(Integer id, Integer managerId) {
+        Optional<Client> clientOpt = clientRepository.findByIdAndManagerId(id, managerId);
+        clientOpt.ifPresent(client -> clientRepository.deleteById(client.getId()));
     }
 }

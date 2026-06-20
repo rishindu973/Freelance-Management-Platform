@@ -27,6 +27,9 @@ public class Client {
     @jakarta.persistence.Column(length = 10)
     private String code;
 
+    @jakarta.persistence.Column(name = "manager_id")
+    private Integer managerId;
+
     // Default constructor
     public Client() {
     }
@@ -86,5 +89,13 @@ public class Client {
 
     public void setCode(String code) {
         this.code = code;
+    }
+
+    public Integer getManagerId() {
+        return managerId;
+    }
+
+    public void setManagerId(Integer managerId) {
+        this.managerId = managerId;
     }
 }

@@ -235,7 +235,7 @@ class InvoiceServiceTest {
                 .thenReturn(page);
 
         // Act
-        Page<InvoiceListDTO> result = invoiceService.listAll(null, null, null, pageable);
+        Page<InvoiceListDTO> result = invoiceService.listAll(1, null, null, null, pageable);
 
         // Assert
         assertNotNull(result);
@@ -258,7 +258,7 @@ class InvoiceServiceTest {
         LocalDate endDate = LocalDate.of(2026, 1, 31);
 
         // Act
-        Page<InvoiceListDTO> result = invoiceService.listAll(1, startDate, endDate, pageable);
+        Page<InvoiceListDTO> result = invoiceService.listAll(1, 1, startDate, endDate, pageable);
 
         // Assert
         assertNotNull(result);
@@ -275,7 +275,7 @@ class InvoiceServiceTest {
 
         // Act & Assert
         IllegalArgumentException act = assertThrows(IllegalArgumentException.class,
-                () -> invoiceService.listAll(1, startDate, endDate, pageable));
+                () -> invoiceService.listAll(1, 1, startDate, endDate, pageable));
         assertEquals("startDate must not be after endDate", act.getMessage());
     }
 
@@ -285,7 +285,7 @@ class InvoiceServiceTest {
         when(invoiceRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Invoice>>any(), eq(pageable)))
                 .thenReturn(Page.empty());
 
-        Page<InvoiceListDTO> result = invoiceService.listAll(null, null, null, pageable);
+        Page<InvoiceListDTO> result = invoiceService.listAll(1, null, null, null, pageable);
 
         assertTrue(result.isEmpty());
         assertEquals(0, result.getTotalElements());
