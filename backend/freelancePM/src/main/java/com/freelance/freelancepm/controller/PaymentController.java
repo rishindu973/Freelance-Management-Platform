@@ -19,7 +19,7 @@ public class PaymentController {
     @PostMapping
     public ResponseEntity<PaymentDTO> createPayment(@RequestBody PaymentDTO dto) {
 
-        Payment payment = paymentService.recordPayment(dto.getInvoiceId(), dto.getAmount());
+        Payment payment = paymentService.recordPayment(dto.getInvoiceId(), dto.getAmount(), dto.getStatus());
 
         PaymentDTO response = PaymentDTO.builder()
                 .id(payment.getId())

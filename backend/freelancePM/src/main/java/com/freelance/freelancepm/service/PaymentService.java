@@ -21,7 +21,7 @@ public class PaymentService {
     private final InvoiceRepository invoiceRepository;
 
     // SCRUM 46: Track client payments (completed and due)
-    public Payment recordPayment(Integer invoiceId, BigDecimal amount) {
+    public Payment recordPayment(Integer invoiceId, BigDecimal amount, String status) {
 
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new RuntimeException("Invoice not found"));
@@ -31,7 +31,7 @@ public class PaymentService {
                 .invoice(invoice)
                 .amount(amount)
                 .paymentDate(LocalDateTime.now())
-                .status("completed")
+                .status(status != null ? status.toLowerCase() : "completed")
                 .build();
 
         paymentRepository.save(payment);
@@ -40,6 +40,7 @@ public class PaymentService {
         List<Payment> payments = paymentRepository.findByInvoiceId(invoiceId);
 
         BigDecimal totalPaid = payments.stream()
+                .filter(p -> "completed".equalsIgnoreCase(p.getStatus()))
                 .map(Payment::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
@@ -77,6 +78,7 @@ public class PaymentService {
         List<Payment> payments = paymentRepository.findByInvoiceId(invoiceId);
 
         BigDecimal totalPaid = payments.stream()
+                .filter(p -> "completed".equalsIgnoreCase(p.getStatus()))
                 .map(Payment::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 

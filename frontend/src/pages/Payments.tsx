@@ -89,7 +89,7 @@ export default function Payments() {
 
             let filtered = data;
             if (statusFilter !== "all") {
-                filtered = filtered.filter(p => p.status === statusFilter);
+                filtered = filtered.filter(p => p.status?.toLowerCase() === statusFilter.toLowerCase());
             }
             setPayments(filtered);
         } catch (error) {
@@ -164,6 +164,7 @@ export default function Payments() {
                                         <SelectItem value="completed">Completed</SelectItem>
                                         <SelectItem value="pending">Pending</SelectItem>
                                         <SelectItem value="failed">Failed</SelectItem>
+                                        <SelectItem value="refunded">Refunded</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>

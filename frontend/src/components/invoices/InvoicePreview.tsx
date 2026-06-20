@@ -55,7 +55,7 @@ export interface InvoicePreviewProps {
 
 const fmt = {
   currency: (v?: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v ?? 0),
+    new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(v ?? 0),
 
   date: (d?: string) => {
     if (!d || d === 'N/A') return 'N/A';

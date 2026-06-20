@@ -7,11 +7,14 @@ import com.freelance.freelancepm.dto.ProjectUpdateRequest;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 public interface IProjectService {
     ProjectResponse create(Integer managerId, ProjectCreateRequest req);
 
-    List<ProjectResponse> list(Integer managerId, String status, Integer clientId, String search, LocalDate from,
-            LocalDate to, Boolean isCritical);
+    Page<ProjectResponse> list(Integer managerId, String status, Integer clientId, String search, LocalDate from,
+            LocalDate to, Boolean isCritical, Pageable pageable);
 
     ProjectResponse get(Integer managerId, Integer projectId);
 

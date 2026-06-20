@@ -4,6 +4,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState, useRef } from "react";
 import { ManagerService, ManagerProfile } from "@/api/managerService";
+import { ActivityService, ActivityResponse } from "@/api/activityService";
 import { useAuth } from "@/context/AuthContext";
 import { LogOut } from "lucide-react";
 
@@ -27,6 +28,10 @@ export function TopBar() {
   const [manager, setManager] = useState<ManagerProfile | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState<ActivityResponse[]>([]);
+  const notificationsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -37,13 +42,25 @@ export function TopBar() {
         console.error("Failed to load manager profile", err);
       }
     };
+    const fetchNotifications = async () => {
+      try {
+        const res = await ActivityService.getActivities({ size: 5 });
+        setNotifications(res.content);
+      } catch (err) {
+        console.error("Failed to load activities", err);
+      }
+    };
     fetchProfile();
+    fetchNotifications();
   }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setDropdownOpen(false);
+      }
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+        setNotificationsOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -68,12 +85,36 @@ export function TopBar() {
       <h1 className="text-sm font-medium text-foreground">{getTitle()}</h1>
 
       <div className="ml-auto flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="relative" asChild>
-          <a href="/notifications">
+        <div className="relative" ref={notificationsRef}>
+          <Button variant="ghost" size="icon" className="relative" onClick={() => setNotificationsOpen(!notificationsOpen)}>
             <Bell className="h-4 w-4 text-muted-foreground" />
-            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive" />
-          </a>
-        </Button>
+            {notifications.length > 0 && (
+              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive" />
+            )}
+          </Button>
+
+          {notificationsOpen && (
+            <div className="absolute right-0 top-full mt-2 w-80 rounded-xl border bg-card p-4 shadow-lg ring-1 ring-black/5 z-50 animate-in fade-in slide-in-from-top-2">
+              <div className="mb-3 border-b pb-3">
+                <p className="font-semibold text-foreground text-sm">Notifications</p>
+              </div>
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No new notifications.</p>
+                ) : (
+                  notifications.map((notif) => (
+                    <div key={notif.id} className="text-sm">
+                      <p className="text-foreground">{notif.description}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(notif.timestamp).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
         <div className="relative ml-2 border-l pl-4" ref={dropdownRef}>
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
