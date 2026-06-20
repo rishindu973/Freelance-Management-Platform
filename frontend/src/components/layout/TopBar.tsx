@@ -78,7 +78,7 @@ export function TopBar() {
   };
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-3 border-b bg-background px-4">
+    <header className="flex h-14 shrink-0 items-center gap-3 border-transparent bg-white/40 backdrop-blur-md px-4 shadow-sm">
       <SidebarTrigger className="-ml-1" />
 
       <div className="h-5 w-px bg-border" />

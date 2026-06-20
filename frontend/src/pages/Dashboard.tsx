@@ -50,7 +50,11 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
+
     fetchData();
+
+    window.addEventListener("focus", fetchData);
+    return () => window.removeEventListener("focus", fetchData);
   }, []);
 
   if (loading) return <div className="flex h-64 items-center justify-center text-muted-foreground">Loading dashboard data...</div>;

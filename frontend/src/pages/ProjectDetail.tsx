@@ -94,7 +94,6 @@ export default function ProjectDetail() {
 
   // Progress editing
   const [progressValue, setProgressValue] = useState(0);
-  const [isSavingProgress, setIsSavingProgress] = useState(false);
 
   // Local-state tasks
   const [tasks, setTasks] = useState<LocalTask[]>([]);
@@ -187,20 +186,6 @@ export default function ProjectDetail() {
     }
   };
 
-  const handleSaveProgress = async () => {
-    if (!id) return;
-    setIsSavingProgress(true);
-    try {
-      await ProjectService.updateProgress(Number(id), "in-progress", progressValue);
-      toast({ title: "Progress updated", description: `Progress set to ${progressValue}%.` });
-      fetchProject();
-    } catch (error) {
-      console.error(error);
-      toast({ title: "Error", description: "Failed to update progress.", variant: "destructive" });
-    } finally {
-      setIsSavingProgress(false);
-    }
-  };
 
   const handleSaveTeam = async () => {
     try {
@@ -394,31 +379,12 @@ export default function ProjectDetail() {
 
         {/* Progress */}
         <Card>
-          <CardContent className="flex flex-col gap-2 p-4">
+          <CardContent className="flex flex-col justify-center h-full gap-2 p-4">
             <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground">Progress</p>
               <span className="text-xs tabular-nums text-muted-foreground">{progressValue}%</span>
             </div>
             <Progress value={progressValue} className="h-2" />
-            <div className="flex items-center gap-2 mt-1">
-              <Slider
-                value={[progressValue]}
-                onValueChange={([v]) => setProgressValue(v)}
-                min={0}
-                max={100}
-                step={5}
-                className="flex-1"
-              />
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-xs h-7 px-2"
-                onClick={handleSaveProgress}
-                disabled={isSavingProgress}
-              >
-                {isSavingProgress ? "..." : "Save"}
-              </Button>
-            </div>
           </CardContent>
         </Card>
       </div>
