@@ -30,6 +30,7 @@ import {
 import { PaymentService, PaymentResponse, PaymentCreateRequest } from "@/api/paymentService";
 import { InvoiceService, InvoiceListDTO } from "@/api/invoiceService";
 import { ClientService, Client } from "@/api/clientService";
+import { PaginationComponent } from "@/components/PaginationComponent";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
     completed: { label: "Completed", className: "bg-success/15 text-success border-success/30" },
@@ -43,6 +44,9 @@ export default function Payments() {
     const [invoices, setInvoices] = useState<InvoiceListDTO[]>([]);
     const [clients, setClients] = useState<Client[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+
+    const [page, setPage] = useState(0);
+    const [size] = useState(10);
 
     // Filters
     const [clientFilter, setClientFilter] = useState("all");
@@ -73,7 +77,7 @@ export default function Payments() {
 
     useEffect(() => {
         InvoiceService.getAllInvoices({ size: 1000 }).then(res => setInvoices(res.content || [])).catch(console.error);
-        ClientService.getAllClients().then(setClients).catch(console.error);
+        ClientService.getAllClients(0, 100).then(data => setClients(data.content)).catch(console.error);
     }, []);
 
     const fetchPayments = async () => {
@@ -96,8 +100,13 @@ export default function Payments() {
     };
 
     useEffect(() => {
+        setPage(0);
         fetchPayments();
     }, [statusFilter, clientFilter]);
+
+    const totalElements = payments.length;
+    const totalPages = Math.ceil(totalElements / size);
+    const paginatedPayments = payments.slice(page * size, (page + 1) * size);
 
     return (
         <div className="space-y-6">
@@ -209,7 +218,7 @@ export default function Payments() {
                                     Loading payments...
                                 </TableCell>
                             </TableRow>
-                        ) : payments.length === 0 ? (
+                        ) : paginatedPayments.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
                                     <CreditCard className="mx-auto mb-2 h-8 w-8 opacity-40" />
@@ -217,7 +226,7 @@ export default function Payments() {
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            payments.map((payment) => {
+                            paginatedPayments.map((payment) => {
                                 const cfg = statusConfig[payment.status?.toLowerCase()] || statusConfig.pending;
                                 const inv = invoices.find(i => i.id === payment.invoiceId);
                                 return (
@@ -240,6 +249,20 @@ export default function Payments() {
                     </TableBody>
                 </Table>
             </div>
+            {!isLoading && totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between bg-card p-4 border rounded-xl shadow-sm gap-4 mt-6">
+                    <p className="text-sm text-muted-foreground whitespace-nowrap">
+                        Showing <span className="font-medium text-foreground">{page * size + 1}</span> to <span className="font-medium text-foreground">{Math.min((page + 1) * size, totalElements)}</span> of <span className="font-medium text-foreground">{totalElements}</span> results
+                    </p>
+                    <div className="w-auto mx-0 mt-0">
+                        <PaginationComponent
+                            currentPage={page}
+                            totalPages={totalPages}
+                            onPageChange={setPage}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

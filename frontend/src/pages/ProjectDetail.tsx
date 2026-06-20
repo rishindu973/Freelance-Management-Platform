@@ -107,7 +107,7 @@ export default function ProjectDetail() {
   const [newDeliverable, setNewDeliverable] = useState<Partial<LocalDeliverable>>({ status: "pending" });
 
   useEffect(() => {
-    FreelancerService.getAllFreelancers().then(setFreelancers).catch(console.error);
+    FreelancerService.getAllFreelancers(0, 1000).then(data => setFreelancers(data.content || [])).catch(console.error);
   }, []);
 
   // Fetch activity feed

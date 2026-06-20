@@ -5,15 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { AlertCircle } from "lucide-react";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import { PaginationComponent } from "@/components/PaginationComponent";
 import {
   Dialog,
   DialogContent,
@@ -103,7 +95,7 @@ export default function Invoices() {
   };
 
   useEffect(() => {
-    ClientService.getAllClients().then(setClients).catch(console.error);
+    ClientService.getAllClients(0, 100).then(data => setClients(data.content)).catch(console.error);
   }, []);
 
   const fetchInvoices = async (currentPage = page) => {
@@ -378,68 +370,17 @@ export default function Invoices() {
 
       {/* Pagination Controls */}
       {!isLoading && !hasError && totalPages > 1 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between bg-card p-4 border rounded-xl shadow-sm gap-4">
+        <div className="flex flex-col sm:flex-row items-center justify-between bg-card p-4 border rounded-xl shadow-sm gap-4 mt-6">
           <p className="text-sm text-muted-foreground whitespace-nowrap">
             Showing <span className="font-medium text-foreground">{page * size + 1}</span> to <span className="font-medium text-foreground">{Math.min((page + 1) * size, totalElements)}</span> of <span className="font-medium text-foreground">{totalElements}</span> results
           </p>
-          <Pagination className="justify-end w-auto mx-0">
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  onClick={() => setPage(p => Math.max(0, p - 1))}
-                  className={page === 0 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                />
-              </PaginationItem>
-
-              {(() => {
-                const items = [];
-                const maxVisible = 5;
-                let start = Math.max(0, page - Math.floor(maxVisible / 2));
-                let end = Math.min(totalPages - 1, start + maxVisible - 1);
-                if (end - start + 1 < maxVisible) {
-                  start = Math.max(0, end - maxVisible + 1);
-                }
-
-                if (start > 0) {
-                  items.push(
-                    <PaginationItem key={0}>
-                      <PaginationLink className="cursor-pointer" onClick={() => setPage(0)}>1</PaginationLink>
-                    </PaginationItem>
-                  );
-                  if (start > 1) {
-                    items.push(<PaginationEllipsis key="ellipsis-start" />);
-                  }
-                }
-
-                for (let i = start; i <= end; i++) {
-                  items.push(
-                    <PaginationItem key={i}>
-                      <PaginationLink className="cursor-pointer" isActive={page === i} onClick={() => setPage(i)}>{i + 1}</PaginationLink>
-                    </PaginationItem>
-                  );
-                }
-
-                if (end < totalPages - 1) {
-                  if (end < totalPages - 2) {
-                    items.push(<PaginationEllipsis key="ellipsis-end" />);
-                  }
-                  items.push(
-                    <PaginationItem key={totalPages - 1}>
-                      <PaginationLink className="cursor-pointer" onClick={() => setPage(totalPages - 1)}>{totalPages}</PaginationLink>
-                    </PaginationItem>
-                  );
-                }
-                return items;
-              })()}
-
-              <PaginationItem>
-                <PaginationNext
-                  onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                  className={page >= totalPages - 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
+          <div className="w-auto mx-0 mt-0">
+            <PaginationComponent
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
+          </div>
         </div>
       )}
 

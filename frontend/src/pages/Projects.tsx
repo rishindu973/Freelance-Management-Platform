@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/table";
 import { ProjectService, ProjectResponse, ProjectCreateRequest } from "@/api/projectService";
 import { ClientService, Client } from "@/api/clientService";
+import { PaginationComponent } from "@/components/PaginationComponent";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   active: { label: "Active", className: "bg-success/15 text-success border-success/30" },
@@ -44,6 +45,10 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 export default function Projects() {
   const navigate = useNavigate();
   const [projects, setProjects] = useState<ProjectResponse[]>([]);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [size] = useState(10);
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -79,20 +84,23 @@ export default function Projects() {
   };
 
   useEffect(() => {
-    ClientService.getAllClients().then(setClients).catch(console.error);
+    ClientService.getAllClients(0, 100).then(data => setClients(data.content || [])).catch(console.error);
   }, []);
 
-  const fetchProjects = async () => {
+  const fetchProjects = async (currentPage = 0) => {
     setIsLoading(true);
     try {
-      const params: Record<string, any> = {};
+      const params: Record<string, any> = { page: currentPage, size: 10 };
       if (search) params.search = search;
       if (clientFilter !== "all") params.clientId = parseInt(clientFilter, 10);
       if (statusFilter !== "all") params.status = statusFilter;
       if (criticalOnly) params.isCritical = true;
 
       const data = await ProjectService.getAllProjects(params);
-      setProjects(data);
+      setProjects(data.content || []);
+      setTotalPages(data.totalPages);
+      setTotalElements(data.totalElements);
+      setPage(data.number);
     } catch (error) {
       console.error(error);
     } finally {
@@ -101,8 +109,8 @@ export default function Projects() {
   };
 
   useEffect(() => {
-    fetchProjects();
-  }, [search, clientFilter, statusFilter, criticalOnly]);
+    fetchProjects(page);
+  }, [search, clientFilter, statusFilter, criticalOnly, page]);
 
   const getClientName = (id: number) => {
     return clients.find(c => c.id === id)?.name || `Client #${id}`;
@@ -334,6 +342,20 @@ export default function Projects() {
           </TableBody>
         </Table>
       </div>
+      {!isLoading && totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between bg-card p-4 border rounded-xl shadow-sm gap-4 mt-6">
+          <p className="text-sm text-muted-foreground whitespace-nowrap">
+            Showing <span className="font-medium text-foreground">{page * size + 1}</span> to <span className="font-medium text-foreground">{Math.min((page + 1) * size, totalElements)}</span> of <span className="font-medium text-foreground">{totalElements}</span> results
+          </p>
+          <div className="w-auto mx-0 mt-0">
+            <PaginationComponent
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

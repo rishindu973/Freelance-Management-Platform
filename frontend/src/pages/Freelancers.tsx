@@ -12,20 +12,27 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { FreelancerService, Freelancer } from "@/api/freelancerService";
 import { FreelancerFormDialog } from "@/components/freelancers/FreelancerFormDialog";
+import { PaginationComponent } from "@/components/PaginationComponent";
 
 export default function Freelancers() {
     const [freelancers, setFreelancers] = useState<Freelancer[]>([]);
+    const [page, setPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [totalElements, setTotalElements] = useState(0);
+    const [size] = useState(10);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [selectedFreelancer, setSelectedFreelancer] = useState<Freelancer | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const { toast } = useToast();
 
-    const loadFreelancers = async () => {
+    const loadFreelancers = async (currentPage = 0) => {
         setIsLoading(true);
         try {
-            const data = await FreelancerService.getAllFreelancers();
-            // Adjust data mapping if needed, dependent on specific backend payload changes
-            setFreelancers(data);
+            const data = await FreelancerService.getAllFreelancers(currentPage);
+            setFreelancers(data.content);
+            setTotalPages(data.totalPages);
+            setTotalElements(data.totalElements);
+            setPage(data.number);
         } catch (error) {
             console.error(error);
             toast({
@@ -39,8 +46,8 @@ export default function Freelancers() {
     };
 
     useEffect(() => {
-        loadFreelancers();
-    }, []);
+        loadFreelancers(page);
+    }, [page]);
 
     const handleOpenCreateDialog = () => {
         setSelectedFreelancer(null);
@@ -70,7 +77,7 @@ export default function Freelancers() {
                     title: "Freelancer added",
                     description: `${freelancerData.fullName} has been successfully added. Login credentials have been sent to ${freelancerData.email}.`,
                 });
-                loadFreelancers();
+                loadFreelancers(page);
             }
         } catch (error) {
             console.error(error);
@@ -185,6 +192,20 @@ export default function Freelancers() {
                     </TableBody>
                 </Table>
             </div>
+            {!isLoading && totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between bg-card p-4 border rounded-xl shadow-sm gap-4 mt-6">
+                    <p className="text-sm text-muted-foreground whitespace-nowrap">
+                        Showing <span className="font-medium text-foreground">{page * size + 1}</span> to <span className="font-medium text-foreground">{Math.min((page + 1) * size, totalElements)}</span> of <span className="font-medium text-foreground">{totalElements}</span> results
+                    </p>
+                    <div className="w-auto mx-0 mt-0">
+                        <PaginationComponent
+                            currentPage={page}
+                            totalPages={totalPages}
+                            onPageChange={setPage}
+                        />
+                    </div>
+                </div>
+            )}
 
             <FreelancerFormDialog
                 open={isDialogOpen}
