@@ -47,8 +47,8 @@ public class ProjectService implements IProjectService {
         return toResponse(projectRepository.save(p), req.getClientId());
     }
 
-    public List<ProjectResponse> list(Integer managerId, String status, Integer clientId, String search, LocalDate from,
-            LocalDate to, Boolean isCritical) {
+    public org.springframework.data.domain.Page<ProjectResponse> list(Integer managerId, String status, Integer clientId, String search, LocalDate from,
+            LocalDate to, Boolean isCritical, org.springframework.data.domain.Pageable pageable) {
         Specification<Project> spec = Specification.where(ProjectSpecifications.managerIdEquals(managerId));
 
         if (status != null && !status.isBlank()) {
@@ -67,9 +67,8 @@ public class ProjectService implements IProjectService {
             spec = spec.and(ProjectSpecifications.isCritical(LocalDate.now()));
         }
 
-        return projectRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "id"))
-                .stream().map(p -> toResponse(p, p.getClient() != null ? p.getClient().getId() : null))
-                .toList();
+        return projectRepository.findAll(spec, pageable)
+                .map(p -> toResponse(p, p.getClient() != null ? p.getClient().getId() : null));
     }
 
     public ProjectResponse get(Integer managerId, Integer projectId) {
