@@ -111,7 +111,7 @@ export default function Clients() {
         <div className="mx-auto max-w-6xl space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-foreground">Clients</h1>
+                    <h1 className="text-3xl font-bold tracking-tight text-[#064e3b]">Clients</h1>
                     <p className="text-muted-foreground">Manage your clients and their contact information.</p>
                 </div>
                 <Button onClick={handleOpenAddDialog}>

@@ -150,7 +150,7 @@ export default function Invoices() {
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Invoices</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-[#064e3b]">Invoices</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage your {totalElements} invoices</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

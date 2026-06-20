@@ -112,7 +112,7 @@ export default function Payments() {
         <div className="space-y-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h1 className="text-2xl font-semibold text-foreground">Payments</h1>
+                    <h1 className="text-3xl font-bold tracking-tight text-[#064e3b]">Payments</h1>
                     <p className="text-sm text-muted-foreground">{payments.length} recorded payments</p>
                 </div>
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

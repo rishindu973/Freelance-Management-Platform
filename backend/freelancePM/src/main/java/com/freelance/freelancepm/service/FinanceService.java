@@ -7,6 +7,7 @@ import com.freelance.freelancepm.entity.Payment;
 import com.freelance.freelancepm.repository.InvoiceRepository;
 import com.freelance.freelancepm.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -20,6 +21,7 @@ public class FinanceService {
     private final InvoiceRepository invoiceRepository;
     private final PaymentRepository paymentRepository;
 
+    @Cacheable(value = "financeSummary", key = "#period")
     public FinanceSummaryResponse getFinanceSummary(String period) {
         List<FinanceSummaryResponse.ProfitTrendData> profitTrend = new ArrayList<>();
         List<FinanceSummaryResponse.IncomeExpenseData> incomeExpense = new ArrayList<>();

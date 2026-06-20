@@ -99,7 +99,7 @@ const Dashboard = () => {
       {/* KPI Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {kpis.map((kpi) => (
-          <div key={kpi.label} className="rounded-xl border bg-card p-5 shadow-sm">
+          <div key={kpi.label} className="rounded-xl border border-transparent bg-card p-5 shadow-sm transition-all duration-300 hover:border-[#34D399] hover:shadow-[0_0_15px_rgba(52,211,153,0.3)]">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">{kpi.label}</span>
               <kpi.icon className="h-4 w-4 text-muted-foreground" />

@@ -1,6 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Plus, Trash2, Edit, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import {
     Table,
     TableBody,
@@ -19,16 +27,16 @@ export default function Freelancers() {
     const [page, setPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [totalElements, setTotalElements] = useState(0);
-    const [size] = useState(10);
+    const [size, setSize] = useState(10);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [selectedFreelancer, setSelectedFreelancer] = useState<Freelancer | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const { toast } = useToast();
 
-    const loadFreelancers = async (currentPage = 0) => {
+    const loadFreelancers = async (currentPage = page, currentSize = size) => {
         setIsLoading(true);
         try {
-            const data = await FreelancerService.getAllFreelancers(currentPage);
+            const data = await FreelancerService.getAllFreelancers(currentPage, currentSize);
             setFreelancers(data.content);
             setTotalPages(data.totalPages);
             setTotalElements(data.totalElements);
@@ -46,8 +54,21 @@ export default function Freelancers() {
     };
 
     useEffect(() => {
-        loadFreelancers(page);
-    }, [page]);
+        loadFreelancers(page, size);
+    }, [page, size]);
+
+    const handleSizeChange = (newSize: string) => {
+        setSize(Number(newSize));
+        setPage(0); // Reset to first page
+    };
+
+    const parentRef = useRef<HTMLDivElement>(null);
+    const rowVirtualizer = useVirtualizer({
+        count: freelancers.length,
+        getScrollElement: () => parentRef.current,
+        estimateSize: () => 64, // Estimated row height
+        overscan: 5,
+    });
 
     const handleOpenCreateDialog = () => {
         setSelectedFreelancer(null);
@@ -112,7 +133,7 @@ export default function Freelancers() {
         <div className="mx-auto max-w-6xl space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-foreground">Freelancers</h1>
+                    <h1 className="text-3xl font-bold tracking-tight text-[#064e3b]">Freelancers</h1>
                     <p className="text-muted-foreground">Manage your team of freelancers and their details.</p>
                 </div>
                 <Button onClick={handleOpenCreateDialog}>
@@ -121,18 +142,23 @@ export default function Freelancers() {
                 </Button>
             </div>
 
-            <div className="rounded-xl border bg-card shadow-sm">
-                <Table>
-                    <TableHeader>
+            <div ref={parentRef} className="rounded-xl border bg-card shadow-sm h-[550px] overflow-auto">
+                <Table className="relative min-w-full table-fixed">
+                    <TableHeader className="sticky top-0 bg-card z-10">
                         <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Title</TableHead>
-                            <TableHead>Contact</TableHead>
-                            <TableHead>Drive Link</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                            <TableHead className="w-[30%]">Name</TableHead>
+                            <TableHead className="w-[20%]">Title</TableHead>
+                            <TableHead className="w-[20%]">Contact</TableHead>
+                            <TableHead className="w-[15%]">Drive Link</TableHead>
+                            <TableHead className="w-[15%] text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
-                    <TableBody>
+                    <TableBody
+                        style={{
+                            height: `${rowVirtualizer.getTotalSize()}px`,
+                            position: 'relative',
+                        }}
+                    >
                         {isLoading ? (
                             <TableRow>
                                 <TableCell colSpan={5} className="text-center">
@@ -146,23 +172,37 @@ export default function Freelancers() {
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            freelancers.map((freelancer) => (
-                                <TableRow key={freelancer.id}>
-                                    <TableCell className="font-medium">
-                                        <div>{freelancer.fullName}</div>
-                                        <div className="text-xs text-muted-foreground">{freelancer.email}</div>
+                            rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                                const freelancer = freelancers[virtualRow.index];
+                                return (
+                                <TableRow 
+                                    key={freelancer.id}
+                                    style={{
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        width: '100%',
+                                        height: `${virtualRow.size}px`,
+                                        transform: `translateY(${virtualRow.start}px)`,
+                                        display: 'table',
+                                        tableLayout: 'fixed'
+                                    }}
+                                >
+                                    <TableCell className="font-medium truncate">
+                                        <div className="truncate">{freelancer.fullName}</div>
+                                        <div className="text-xs text-muted-foreground truncate">{freelancer.email}</div>
                                     </TableCell>
-                                    <TableCell>{freelancer.title}</TableCell>
-                                    <TableCell>{freelancer.contactNumber}</TableCell>
-                                    <TableCell>
+                                    <TableCell className="truncate">{freelancer.title}</TableCell>
+                                    <TableCell className="truncate">{freelancer.contactNumber}</TableCell>
+                                    <TableCell className="truncate">
                                         {freelancer.driveLink ? (
                                             <a
                                                 href={freelancer.driveLink.startsWith('http') ? freelancer.driveLink : `https://${freelancer.driveLink}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-primary hover:underline flex items-center gap-1"
+                                                className="text-primary hover:underline flex items-center gap-1 truncate"
                                             >
-                                                <ExternalLink className="h-3 w-3" /> Link
+                                                <ExternalLink className="h-3 w-3 shrink-0" /> Link
                                             </a>
                                         ) : (
                                             <span className="text-muted-foreground text-sm">N/A</span>
@@ -187,16 +227,32 @@ export default function Freelancers() {
                                         </Button>
                                     </TableCell>
                                 </TableRow>
-                            ))
+                                );
+                            })
                         )}
                     </TableBody>
                 </Table>
             </div>
             {!isLoading && totalPages > 1 && (
                 <div className="flex flex-col sm:flex-row items-center justify-between bg-card p-4 border rounded-xl shadow-sm gap-4 mt-6">
-                    <p className="text-sm text-muted-foreground whitespace-nowrap">
-                        Showing <span className="font-medium text-foreground">{page * size + 1}</span> to <span className="font-medium text-foreground">{Math.min((page + 1) * size, totalElements)}</span> of <span className="font-medium text-foreground">{totalElements}</span> results
-                    </p>
+                    <div className="flex items-center gap-4">
+                        <p className="text-sm text-muted-foreground whitespace-nowrap">
+                            Showing <span className="font-medium text-foreground">{page * size + 1}</span> to <span className="font-medium text-foreground">{Math.min((page + 1) * size, totalElements)}</span> of <span className="font-medium text-foreground">{totalElements}</span> results
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground">Rows per page:</span>
+                            <Select value={size.toString()} onValueChange={handleSizeChange}>
+                                <SelectTrigger className="w-[70px] h-8 text-sm">
+                                    <SelectValue placeholder="10" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="10">10</SelectItem>
+                                    <SelectItem value="25">25</SelectItem>
+                                    <SelectItem value="50">50</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
                     <div className="w-auto mx-0 mt-0">
                         <PaginationComponent
                             currentPage={page}

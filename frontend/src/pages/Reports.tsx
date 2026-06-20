@@ -112,7 +112,7 @@ export default function Reports() {
         <div className="mx-auto max-w-6xl space-y-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h1 className="text-2xl font-semibold text-foreground">Custom Date Range Reports</h1>
+                    <h1 className="text-3xl font-bold tracking-tight text-[#064e3b]">Custom Date Range Reports</h1>
                     <p className="text-sm text-muted-foreground">Select a timeline to view granular reporting metrics.</p>
                 </div>
                 <div>

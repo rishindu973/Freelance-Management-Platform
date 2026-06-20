@@ -121,7 +121,7 @@ export default function Projects() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Projects</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-[#064e3b]">Projects</h1>
           <p className="text-sm text-muted-foreground">{projects.length} total projects</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
