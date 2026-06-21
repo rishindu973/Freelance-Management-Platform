@@ -29,5 +29,11 @@ public class Task {
     @JoinColumn(name = "freelancer_id")
     private User freelancer;
 
-    private String status = "pending";
+    @ManyToOne
+    @JoinColumn(name = "project_id")
+    private Project project;
+
+    private String status = "todo";
+    private String priority = "medium";
+    private java.time.LocalDate deadline;
 }

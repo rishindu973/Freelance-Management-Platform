@@ -25,7 +25,7 @@ public class ManagerService implements IManagerService {
     @Override
     @Transactional
     public Manager registerNewManager(ManagerDTO managerDTO) {
-        if (userRepository.existsByEmail(managerDTO.getEmail())) {
+        if (userRepository.existsByEmailIgnoreCase(managerDTO.getEmail())) {
             throw new RuntimeException("Email is already registered");
         }
         String token = UUID.randomUUID().toString();

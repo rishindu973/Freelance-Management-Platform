@@ -10,7 +10,6 @@ import com.freelance.freelancepm.repository.FreelancerRepository;
 import com.freelance.freelancepm.repository.ClientRepository;
 import com.freelance.freelancepm.model.Client;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -46,12 +45,14 @@ public class ProjectService implements IProjectService {
                 .build();
 
         Project saved = projectRepository.save(p);
-        activityService.logActivity(managerId, com.freelance.freelancepm.entity.Activity.ActivityType.PROJECT_CREATED, "Created new project: " + req.getName());
+        activityService.logActivity(managerId, com.freelance.freelancepm.entity.Activity.ActivityType.PROJECT_CREATED,
+                "Created new project: " + req.getName());
 
         return toResponse(saved, req.getClientId());
     }
 
-    public org.springframework.data.domain.Page<ProjectResponse> list(Integer managerId, String status, Integer clientId, String search, LocalDate from,
+    public org.springframework.data.domain.Page<ProjectResponse> list(Integer managerId, String status,
+            Integer clientId, String search, LocalDate from,
             LocalDate to, Boolean isCritical, org.springframework.data.domain.Pageable pageable) {
         Specification<Project> spec = Specification.where(ProjectSpecifications.managerIdEquals(managerId));
 

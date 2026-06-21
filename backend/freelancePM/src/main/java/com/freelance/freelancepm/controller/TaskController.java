@@ -1,18 +1,23 @@
 package com.freelance.freelancepm.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.freelance.freelancepm.entity.Task;
-import com.freelance.freelancepm.service.TaskService;
-import com.freelance.freelancepm.service.IManagerService;
-import com.freelance.freelancepm.dto.TaskRequest;
 import org.springframework.web.bind.annotation.CrossOrigin;
 
+import com.freelance.freelancepm.service.TaskService;
+import com.freelance.freelancepm.service.IManagerService;
+import com.freelance.freelancepm.dto.TaskDTO;
+import com.freelance.freelancepm.dto.TaskRequest;
+
 import lombok.RequiredArgsConstructor;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/tasks")
@@ -30,18 +35,25 @@ public class TaskController {
     }
 
     @PostMapping
-    public ResponseEntity<Task> assign(
+    public ResponseEntity<TaskDTO> assign(
             java.security.Principal principal,
             @RequestBody TaskRequest request) {
 
         Integer managerId = requireManagerId(principal);
 
-        Task task = taskService.assignTask(
-                request.getFreelancerEmail(),
-                request.getTitle(),
-                request.getDescription(),
-                managerId);
+        TaskDTO task = taskService.assignTask(request, managerId);
         return ResponseEntity.ok(task);
     }
 
+    @GetMapping("/project/{projectId}")
+    public ResponseEntity<List<TaskDTO>> getTasksByProject(@PathVariable Integer projectId) {
+        return ResponseEntity.ok(taskService.getTasksByProjectId(projectId));
+    }
+
+    @PatchMapping("/{taskId}/status")
+    public ResponseEntity<TaskDTO> updateStatus(
+            @PathVariable Integer taskId,
+            @RequestParam String status) {
+        return ResponseEntity.ok(taskService.updateTaskStatus(taskId, status));
+    }
 }

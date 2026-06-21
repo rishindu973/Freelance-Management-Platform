@@ -11,16 +11,16 @@ import java.util.Properties;
 @Configuration
 public class MailConfig {
 
-    @Value("${spring.mail.host:smtp.sendgrid.net}")
+    @Value("${spring.mail.host:smtp-relay.brevo.com}")
     private String host;
 
     @Value("${spring.mail.port:587}")
     private int port;
 
-    @Value("${spring.mail.username:apikey}")
+    @Value("${spring.mail.username:}")
     private String username;
 
-    @Value("${spring.mail.password:${sendgrid.api.key:}}")
+    @Value("${spring.mail.password:${Brevo.api.key:}}")
     private String password;
 
     @Value("${spring.mail.properties.mail.smtp.auth:true}")

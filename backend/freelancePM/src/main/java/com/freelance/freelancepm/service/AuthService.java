@@ -34,7 +34,7 @@ public class AuthService implements IAuthService {
         UserDetails userDetails = userDetailsService.loadUserByUsername(loginDTO.getEmail());
         String jwt = jwtUtil.generateToken(userDetails);
 
-        User user = userRepository.findByEmail(loginDTO.getEmail()).orElseThrow();
+        User user = userRepository.findByEmailIgnoreCase(loginDTO.getEmail()).orElseThrow();
 
         return new AuthResponseDTO(jwt, user.getEmail(), user.getRole());
     }
@@ -43,7 +43,7 @@ public class AuthService implements IAuthService {
     public void requestPasswordReset(String email) {
         // Find user by email. If not found, do nothing silently (prevents email
         // enumeration).
-        userRepository.findByEmail(email).ifPresent(user -> {
+        userRepository.findByEmailIgnoreCase(email).ifPresent(user -> {
             String resetToken = java.util.UUID.randomUUID().toString();
             user.setResetPasswordToken(resetToken);
             user.setResetPasswordExpires(java.time.LocalDateTime.now().plusHours(1));
