@@ -29,7 +29,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 @RequestMapping("/api/invoices")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174" })
+
 public class InvoiceController {
 
     private final IInvoiceService invoiceService;

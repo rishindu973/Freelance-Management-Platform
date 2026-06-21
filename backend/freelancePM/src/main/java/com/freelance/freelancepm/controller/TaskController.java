@@ -22,7 +22,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/tasks")
 @RequiredArgsConstructor
-@CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174" })
+
 public class TaskController {
     private final TaskService taskService;
     private final IManagerService managerService;
