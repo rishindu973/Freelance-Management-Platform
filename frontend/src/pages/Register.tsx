@@ -68,7 +68,7 @@ export default function Register() {
                             <FormField control={form.control} name="fullName" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Full Name</FormLabel>
-                                    <FormControl><Input placeholder="Harry Hart" {...field} /></FormControl>
+                                    <FormControl><Input placeholder="Full Name" {...field} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )} />
@@ -76,7 +76,7 @@ export default function Register() {
                             <FormField control={form.control} name="email" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Work Email</FormLabel>
-                                    <FormControl><Input placeholder="manager@kingsman.com" {...field} /></FormControl>
+                                    <FormControl><Input placeholder="manager@example.com" {...field} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )} />
@@ -85,7 +85,7 @@ export default function Register() {
                                 <FormField control={form.control} name="companyName" render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Company</FormLabel>
-                                        <FormControl><Input placeholder="Kingsman Agency" {...field} /></FormControl>
+                                        <FormControl><Input placeholder="Example Agency" {...field} /></FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )} />

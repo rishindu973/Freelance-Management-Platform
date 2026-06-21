@@ -1,27 +1,20 @@
 import { Outlet } from "react-router-dom";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { FreelancerSidebar } from "./FreelancerSidebar";
 import { FreelancerTopBar } from "./FreelancerTopBar";
 
 export default function FreelancerLayout() {
     return (
-        <div className="flex h-screen overflow-hidden bg-gray-50">
-            {/* Desktop Sidebar */}
-            <div className="hidden md:flex md:flex-shrink-0">
+        <SidebarProvider>
+            <div className="flex min-h-screen w-full">
                 <FreelancerSidebar />
+                <div className="flex flex-1 flex-col">
+                    <FreelancerTopBar />
+                    <main className="flex-1 overflow-auto bg-cream p-6">
+                        <Outlet />
+                    </main>
+                </div>
             </div>
-
-            {/* Main Content Area */}
-            <div className="flex w-0 flex-1 flex-col overflow-hidden">
-                <FreelancerTopBar />
-
-                <main className="relative flex-1 overflow-y-auto focus:outline-none">
-                    <div className="py-6">
-                        <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
-                            <Outlet />
-                        </div>
-                    </div>
-                </main>
-            </div>
-        </div>
+        </SidebarProvider>
     );
 }

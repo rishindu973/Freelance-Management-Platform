@@ -10,7 +10,6 @@ import com.freelance.freelancepm.repository.FreelancerRepository;
 import com.freelance.freelancepm.repository.ClientRepository;
 import com.freelance.freelancepm.model.Client;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +23,7 @@ public class ProjectService implements IProjectService {
     private final ProjectRepository projectRepository;
     private final FreelancerRepository freelancerRepository;
     private final ClientRepository clientRepository;
+    private final ActivityService activityService;
 
     public ProjectResponse create(Integer managerId, ProjectCreateRequest req) {
         Client client = null;
@@ -44,11 +44,16 @@ public class ProjectService implements IProjectService {
                 .budget(req.getBudget())
                 .build();
 
-        return toResponse(projectRepository.save(p), req.getClientId());
+        Project saved = projectRepository.save(p);
+        activityService.logActivity(managerId, com.freelance.freelancepm.entity.Activity.ActivityType.PROJECT_CREATED,
+                "Created new project: " + req.getName());
+
+        return toResponse(saved, req.getClientId());
     }
 
-    public List<ProjectResponse> list(Integer managerId, String status, Integer clientId, String search, LocalDate from,
-            LocalDate to, Boolean isCritical) {
+    public org.springframework.data.domain.Page<ProjectResponse> list(Integer managerId, String status,
+            Integer clientId, String search, LocalDate from,
+            LocalDate to, Boolean isCritical, org.springframework.data.domain.Pageable pageable) {
         Specification<Project> spec = Specification.where(ProjectSpecifications.managerIdEquals(managerId));
 
         if (status != null && !status.isBlank()) {
@@ -67,9 +72,8 @@ public class ProjectService implements IProjectService {
             spec = spec.and(ProjectSpecifications.isCritical(LocalDate.now()));
         }
 
-        return projectRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "id"))
-                .stream().map(p -> toResponse(p, p.getClient() != null ? p.getClient().getId() : null))
-                .toList();
+        return projectRepository.findAll(spec, pageable)
+                .map(p -> toResponse(p, p.getClient() != null ? p.getClient().getId() : null));
     }
 
     public ProjectResponse get(Integer managerId, Integer projectId) {

@@ -13,12 +13,18 @@ export function WorkSummaryWidget() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
+    const fetchSummary = () => {
         setIsLoading(true);
         WorkSummaryService.getWorkSummary()
             .then(setData)
             .catch((err) => setError(err.message || "Failed to load work summary"))
             .finally(() => setIsLoading(false));
+    };
+
+    useEffect(() => {
+        fetchSummary();
+        window.addEventListener("focus", fetchSummary);
+        return () => window.removeEventListener("focus", fetchSummary);
     }, []);
 
     if (error) {

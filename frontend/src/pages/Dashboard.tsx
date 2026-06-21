@@ -50,7 +50,11 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
+
     fetchData();
+
+    window.addEventListener("focus", fetchData);
+    return () => window.removeEventListener("focus", fetchData);
   }, []);
 
   if (loading) return <div className="flex h-64 items-center justify-center text-muted-foreground">Loading dashboard data...</div>;
@@ -99,7 +103,7 @@ const Dashboard = () => {
       {/* KPI Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {kpis.map((kpi) => (
-          <div key={kpi.label} className="rounded-xl border bg-card p-5 shadow-sm">
+          <div key={kpi.label} className="rounded-xl border border-transparent bg-card p-5 shadow-sm transition-all duration-300 hover:border-[#34D399] hover:shadow-[0_0_15px_rgba(52,211,153,0.3)]">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">{kpi.label}</span>
               <kpi.icon className="h-4 w-4 text-muted-foreground" />
@@ -113,45 +117,11 @@ const Dashboard = () => {
       </div>
 
       {/* Finance Charts */}
-      <FinanceCharts />
+      <FinanceCharts projectStatus={projectStatus} totalProjects={data.totalProjects} />
 
       {/* Project row */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="col-span-2">
-          <NearDeadlineProjects />
-        </div>
-        {/* Project status pie */}
-        <div className="rounded-xl border bg-card p-5 shadow-sm">
-          <h3 className="text-sm font-medium text-foreground">Project Status</h3>
-          <p className="mt-0.5 text-xs text-muted-foreground">{data.totalProjects} total projects</p>
-          <div className="mt-4 h-48">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={projectStatus} cx="50%" cy="50%" innerRadius={50} outerRadius={75} paddingAngle={3} dataKey="value">
-                  {projectStatus.map((entry, i) => (
-                    <Cell key={i} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    background: "hsl(48, 80%, 99%)",
-                    border: "1px solid hsl(45, 20%, 88%)",
-                    borderRadius: "8px",
-                    fontSize: 12,
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="mt-2 flex flex-wrap gap-3">
-            {projectStatus.map((s) => (
-              <div key={s.name} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span className="h-2 w-2 rounded-full" style={{ background: s.color }} />
-                {s.name} ({s.value})
-              </div>
-            ))}
-          </div>
-        </div>
+      <div className="grid gap-4 grid-cols-1">
+        <NearDeadlineProjects />
       </div>
 
       {/* Module rows */}

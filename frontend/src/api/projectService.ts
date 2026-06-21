@@ -1,4 +1,5 @@
 import { apiClient } from "./axiosClient";
+import { PageResponse } from "./types";
 
 export interface TeamMemberDTO {
     id: number;
@@ -50,7 +51,7 @@ export interface ProjectCreateRequest {
 }
 
 export const ProjectService = {
-    getAllProjects: async (params?: Record<string, any>): Promise<ProjectResponse[]> => {
+    getAllProjects: async (params?: Record<string, any>): Promise<PageResponse<ProjectResponse>> => {
         const response = await apiClient.get('/api/projects', { params });
         return response.data;
     },

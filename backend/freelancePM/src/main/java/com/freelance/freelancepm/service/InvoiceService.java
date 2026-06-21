@@ -39,6 +39,7 @@ public class InvoiceService implements IInvoiceService {
     private final InvoiceCalculationService calculationService;
     private final InvoiceStatusTransitionService transitionService;
     private final PaymentValidationService paymentValidationService;
+    private final ActivityService activityService;
 
     private boolean regeneratePdfOnUpdate = true; // Configuration flag
 
@@ -58,6 +59,7 @@ public class InvoiceService implements IInvoiceService {
                 .description(req.getDescription())
                 .lineItems(new ArrayList<>())
                 .year(LocalDate.now().getYear())
+                .managerId(client.getManagerId())
                 .build();
 
         assignInvoiceNumber(invoice);
@@ -116,13 +118,13 @@ public class InvoiceService implements IInvoiceService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<InvoiceListDTO> listAll(Integer clientId, LocalDate startDate, LocalDate endDate, Pageable pageable) {
+    public Page<InvoiceListDTO> listAll(Integer managerId, Integer clientId, LocalDate startDate, LocalDate endDate,
+            Pageable pageable) {
         if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
             throw new IllegalArgumentException("startDate must not be after endDate");
         }
 
-        Specification<Invoice> spec = Specification
-                .where((root, query, criteriaBuilder) -> criteriaBuilder.conjunction());
+        Specification<Invoice> spec = Specification.where(InvoiceSpecifications.managerIdEquals(managerId));
 
         if (clientId != null) {
             spec = spec.and(InvoiceSpecifications.clientIdEquals(clientId));
@@ -194,6 +196,8 @@ public class InvoiceService implements IInvoiceService {
                 dueDate,
                 pdfBytes,
                 filename);
+
+        activityService.logActivity(manager.getId(), com.freelance.freelancepm.entity.Activity.ActivityType.INVOICE_SENT, "Sent invoice to client: " + invoice.getClient().getName());
     }
 
     @Override
@@ -348,3 +352,4 @@ public class InvoiceService implements IInvoiceService {
                 .orElseThrow(() -> new NotFoundException("Invoice not found"));
     }
 }
+//

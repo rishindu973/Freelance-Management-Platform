@@ -1,4 +1,5 @@
 import { apiClient } from "./axiosClient";
+import { PageResponse } from "./types";
 
 export interface Client {
   id?: number;
@@ -9,8 +10,8 @@ export interface Client {
 }
 
 export const ClientService = {
-  getAllClients: async (): Promise<Client[]> => {
-    const response = await apiClient.get('/api/clients');
+  getAllClients: async (page = 0, size = 10): Promise<PageResponse<Client>> => {
+    const response = await apiClient.get('/api/clients', { params: { page, size } });
     return response.data;
   },
 

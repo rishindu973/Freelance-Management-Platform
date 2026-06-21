@@ -72,6 +72,10 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      boxShadow: {
+        'antigravity': '0 4px 24px rgba(6, 78, 59, 0.04), 0 16px 56px rgba(15, 23, 42, 0.06)',
+        'glow': '0 0 20px rgba(16, 185, 129, 0.35)',
+      },
       keyframes: {
         "accordion-down": {
           from: {

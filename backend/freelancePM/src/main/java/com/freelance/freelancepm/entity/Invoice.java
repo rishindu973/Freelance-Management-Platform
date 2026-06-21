@@ -53,6 +53,9 @@ public class Invoice {
     @JoinColumn(name = "client_id", nullable = false)
     private Client client;
 
+    @Column(name = "manager_id")
+    private Integer managerId;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "invoice_project", joinColumns = @JoinColumn(name = "invoice_id"), inverseJoinColumns = @JoinColumn(name = "project_id"))
     @Builder.Default
@@ -116,7 +119,7 @@ public class Invoice {
 
     public static final BigDecimal TAX_RATE = new BigDecimal("0.10");
 
-    // Helper methods for bidirectional relationship
+    // Helper methods for bidirectional relationship.
     public void addLineItem(InvoiceLineItem lineItem) {
         lineItems.add(lineItem);
         lineItem.setInvoice(this);

@@ -40,16 +40,19 @@ public class ProjectController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ProjectResponse>> list(
+    public ResponseEntity<org.springframework.data.domain.Page<ProjectResponse>> list(
             java.security.Principal principal,
             @RequestParam(value = "status", required = false) String status,
             @RequestParam(value = "clientId", required = false) Integer clientId,
             @RequestParam(value = "search", required = false) String search,
             @RequestParam(value = "from", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(value = "to", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
-            @RequestParam(value = "isCritical", required = false) Boolean isCritical) {
+            @RequestParam(value = "isCritical", required = false) Boolean isCritical,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
         Integer managerId = requireManagerId(principal);
-        return ResponseEntity.ok(projectService.list(managerId, status, clientId, search, from, to, isCritical));
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"));
+        return ResponseEntity.ok(projectService.list(managerId, status, clientId, search, from, to, isCritical, pageable));
     }
 
     @GetMapping("/{id}")

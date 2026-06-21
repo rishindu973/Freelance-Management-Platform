@@ -19,6 +19,11 @@ export const DashboardService = {
     getDashboard: async (dueSoonDays: number = 7, limit: number = 5): Promise<DashboardResponse> => {
         const response = await apiClient.get('/api/dashboard', {
             params: { dueSoonDays, limit },
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache',
+                'Expires': '0',
+            }
         });
         return response.data;
     }

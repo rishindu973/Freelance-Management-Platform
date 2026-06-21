@@ -19,8 +19,8 @@ export function NearDeadlineProjects() {
     const fetchProjects = async () => {
         try {
             setLoading(true);
-            const data = await ProjectService.getAllProjects({ isCritical: true });
-            const sortedData = data.sort(
+            const data = await ProjectService.getAllProjects({ isCritical: true, size: 100 });
+            const sortedData = data.content.sort(
                 (a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
             );
             setProjects(sortedData);

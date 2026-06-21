@@ -94,7 +94,7 @@ export default function FreelancerDashboard() {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold tracking-tight text-gray-900">My Dashboard</h1>
+                <h1 className="text-3xl font-bold tracking-tight text-[#064e3b]">My Dashboard</h1>
                 <p className="text-gray-500">Track your assigned projects and deliverables.</p>
             </div>
 
@@ -154,7 +154,7 @@ export default function FreelancerDashboard() {
 
             {/* KPI Cards */}
             <div className="grid gap-4 md:grid-cols-4">
-                <Card>
+                <Card className="rounded-xl border-transparent bg-card shadow-sm transition-all duration-300 hover:border-[#34D399] hover:shadow-[0_0_15px_rgba(52,211,153,0.3)]">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium text-gray-500">My Tasks</CardTitle>
                         <Briefcase className="h-4 w-4 text-primary" />
@@ -164,7 +164,7 @@ export default function FreelancerDashboard() {
                         <p className="text-xs text-gray-400 mt-1">Total assigned projects</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="rounded-xl border-transparent bg-card shadow-sm transition-all duration-300 hover:border-[#34D399] hover:shadow-[0_0_15px_rgba(52,211,153,0.3)]">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium text-gray-500">Pending</CardTitle>
                         <Clock className="h-4 w-4 text-gray-400" />
@@ -173,7 +173,7 @@ export default function FreelancerDashboard() {
                         <div className="text-2xl font-bold">{pending}</div>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="rounded-xl border-transparent bg-card shadow-sm transition-all duration-300 hover:border-[#34D399] hover:shadow-[0_0_15px_rgba(52,211,153,0.3)]">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium text-gray-500">In Progress</CardTitle>
                         <AlertCircle className="h-4 w-4 text-blue-400" />
@@ -182,7 +182,7 @@ export default function FreelancerDashboard() {
                         <div className="text-2xl font-bold">{inProgress}</div>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="rounded-xl border-transparent bg-card shadow-sm transition-all duration-300 hover:border-[#34D399] hover:shadow-[0_0_15px_rgba(52,211,153,0.3)]">
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                         <CardTitle className="text-sm font-medium text-gray-500">Completed</CardTitle>
                         <CheckCircle2 className="h-4 w-4 text-green-400" />

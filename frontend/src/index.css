@@ -10,11 +10,18 @@
   font-style: normal;
 }
 
+@font-face {
+  font-family: 'Gebuk';
+  src: url('/fonts/gebuk.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 @layer base {
   :root {
     /* Backgrounds — light warm yellow */
     --background: 48 100% 98%;
-    --foreground: 220 20% 20%;
+    --foreground: 160 90% 9%;
 
     /* Cream secondary surface — warm yellow tint */
     --cream: 45 60% 95%;
@@ -124,7 +131,14 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply text-foreground antialiased;
+    background: linear-gradient(to bottom right, #F4F6F5, #E6EBE8);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+@layer components {
+  .bg-card {
+    @apply bg-white/85 backdrop-blur-md border-transparent shadow-antigravity;
   }
 }

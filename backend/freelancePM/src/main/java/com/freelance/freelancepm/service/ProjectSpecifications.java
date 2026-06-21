@@ -33,7 +33,7 @@ public class ProjectSpecifications {
     public static Specification<Project> isCritical(LocalDate now) {
         LocalDate sevenDaysFromNow = now.plusDays(7);
         return (root, query, cb) -> cb.and(
-                cb.between(root.get("deadline"), now, sevenDaysFromNow),
+                cb.lessThanOrEqualTo(root.get("deadline"), sevenDaysFromNow),
                 cb.notEqual(cb.lower(root.get("status")), "completed"));
     }
 }

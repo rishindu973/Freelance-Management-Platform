@@ -34,6 +34,7 @@ public class InvoiceController {
 
     private final IInvoiceService invoiceService;
     private final InvoicePdfService invoicePdfService;
+    private final com.freelance.freelancepm.service.IManagerService managerService;
 
     @PostMapping
     public ResponseEntity<InvoiceResponse> create(@Valid @RequestBody InvoiceCreateRequest req) {
@@ -54,6 +55,7 @@ public class InvoiceController {
 
     @GetMapping
     public ResponseEntity<Page<InvoiceListDTO>> list(
+            java.security.Principal principal,
             @RequestParam(name = "clientId", required = false) Integer clientId,
             @RequestParam(name = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(name = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
@@ -61,6 +63,11 @@ public class InvoiceController {
             @RequestParam(name = "size", defaultValue = "10") int size,
             @RequestParam(name = "sortBy", defaultValue = "date") String sortBy,
             @RequestParam(name = "direction", defaultValue = "desc") String direction) {
+
+        Integer managerId = null;
+        if (principal != null) {
+            managerId = managerService.getManagerIdByEmail(principal.getName());
+        }
 
         Sort.Direction sortDirection = direction.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
         String sortProperty = switch (sortBy.toLowerCase()) {
@@ -71,7 +78,7 @@ public class InvoiceController {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortProperty));
 
-        return ResponseEntity.ok(invoiceService.listAll(clientId, startDate, endDate, pageable));
+        return ResponseEntity.ok(invoiceService.listAll(managerId, clientId, startDate, endDate, pageable));
     }
 
     @GetMapping("/{id}/pdf")

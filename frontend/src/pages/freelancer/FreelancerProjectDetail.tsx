@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ProjectResponse, ProjectService } from "@/api/projectService";
+import { TaskService, TaskDTO } from "@/api/taskService";
 import { FreelancerPortalService } from "@/api/freelancerPortalService";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 import {
     ArrowLeft, UploadCloud, FileText, Calendar,
     CheckCircle2, Circle, Clock, Briefcase, Users
@@ -36,16 +40,22 @@ const priorityStyle: Record<string, string> = {
 
 export default function FreelancerProjectDetail() {
     const { id } = useParams();
+    const { toast } = useToast();
     const [project, setProject] = useState<ProjectResponse | null>(null);
+    const [tasks, setTasks] = useState<TaskDTO[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         if (!id) return;
 
-        FreelancerPortalService.getAssignments()
-            .then(projects => {
+        Promise.all([
+            FreelancerPortalService.getAssignments(),
+            TaskService.getTasksByProject(Number(id))
+        ])
+            .then(([projects, tasksData]) => {
                 const found = projects.find(p => p.id === Number(id));
                 setProject(found || null);
+                setTasks(tasksData || []);
             })
             .catch(console.error)
             .finally(() => setIsLoading(false));
@@ -57,6 +67,16 @@ export default function FreelancerProjectDetail() {
         if (daysLeft < 0) return { color: "text-red-600 bg-red-50", text: `Overdue by ${Math.abs(daysLeft)} days` };
         if (daysLeft <= 3) return { color: "text-red-600 bg-red-50", text: `${daysLeft} days left` };
         return null;
+    };
+
+    const handleTaskStatusChange = async (taskId: number, newStatus: string) => {
+        try {
+            const updatedTask = await TaskService.updateTaskStatus(taskId, newStatus);
+            setTasks(tasks.map(t => t.id === taskId ? updatedTask : t));
+        } catch (error) {
+            console.error(error);
+            toast({ title: "Error", description: "Failed to update task status.", variant: "destructive" });
+        }
     };
 
     if (isLoading) return <div className="p-8 text-center text-gray-500">Loading project details...</div>;
@@ -194,16 +214,52 @@ export default function FreelancerProjectDetail() {
                             <CardTitle>Assigned Tasks</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-sm text-gray-500 mb-6 italic">
-                                Note: Tasks are managed by your project manager.
-                            </p>
+                                    <p className="text-sm text-gray-500 mb-6 italic">
+                                        Update your task status as you make progress.
+                                    </p>
 
-                            {/* In a real app, we'd fetch tasks for this project. 
-                                For now, we'll show a placeholder as per Fix 5 local state suggestion. */}
-                            <div className="text-center py-12 border-2 border-dashed rounded-lg bg-gray-50">
-                                <FileText className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-                                <p className="text-gray-600">Tasks information will be synced by your manager.</p>
-                            </div>
+                                    {tasks.length === 0 ? (
+                                        <div className="text-center py-12 border-2 border-dashed rounded-lg bg-gray-50">
+                                            <FileText className="w-12 h-12 text-gray-200 mx-auto mb-4" />
+                                            <p className="text-gray-600">No tasks assigned yet.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="rounded-md border bg-white overflow-hidden">
+                                            <Table>
+                                                <TableHeader className="bg-slate-50/50">
+                                                    <TableRow>
+                                                        <TableHead>Task</TableHead>
+                                                        <TableHead>Deadline</TableHead>
+                                                        <TableHead>Priority</TableHead>
+                                                        <TableHead>Status</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {tasks.map((t) => (
+                                                        <TableRow key={t.id}>
+                                                            <TableCell className="font-medium text-foreground">{t.title}</TableCell>
+                                                            <TableCell className="text-muted-foreground">
+                                                                {t.deadline ? format(new Date(t.deadline), 'MMM d, yyyy') : "N/A"}
+                                                            </TableCell>
+                                                            <TableCell><Badge variant="outline" className={priorityStyle[t.priority]}>{t.priority}</Badge></TableCell>
+                                                            <TableCell>
+                                                                <Select value={t.status} onValueChange={(v) => handleTaskStatusChange(t.id, v)}>
+                                                                    <SelectTrigger className={`w-[130px] h-8 text-xs border ${taskStatusStyle[t.status]}`}>
+                                                                        <SelectValue />
+                                                                    </SelectTrigger>
+                                                                    <SelectContent>
+                                                                        <SelectItem value="todo">To Do</SelectItem>
+                                                                        <SelectItem value="in-progress">In Progress</SelectItem>
+                                                                        <SelectItem value="done">Done</SelectItem>
+                                                                    </SelectContent>
+                                                                </Select>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
+                                    )}
                         </CardContent>
                     </Card>
                 </TabsContent>

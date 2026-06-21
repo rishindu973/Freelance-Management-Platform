@@ -33,43 +33,49 @@ public class PdfStyle {
     private final Color secondaryColor = COLOR_SECTION_LABEL;
 
     // ─────────────────────────────────────────────────────────────
-    // Warm Yellow Invoice Palette
+    // Alpine Green Invoice Palette
     // ─────────────────────────────────────────────────────────────
 
-    /** Header bar and Total box background — soft pastel yellow */
-    public static final Color COLOR_HEADER_BG   = new Color(0xFA, 0xE5, 0x88); // #FAE588
+    /** Header bar and Total box background — Deep Forest Alpine Green */
+    public static final Color COLOR_HEADER_BG = new Color(0x06, 0x4E, 0x3B); // #064E3B
+
+    /** Header Text Color — Solid White */
+    public static final Color COLOR_HEADER_TEXT = new Color(0xFF, 0xFF, 0xFF); // #FFFFFF
 
     /** Section labels ("BILL TO", "PAYMENT INFO") */
-    public static final Color COLOR_SECTION_LABEL = new Color(0xF9, 0xDC, 0x5C); // #F9DC5C
+    public static final Color COLOR_SECTION_LABEL = new Color(0x0F, 0x17, 0x2A); // #0F172A
 
     /** Table header row background */
-    public static final Color COLOR_TABLE_HEADER = new Color(0xFC, 0xEF, 0xB4); // #FCEFB4
+    public static final Color COLOR_TABLE_HEADER = new Color(0xF4, 0xF6, 0xF5); // #F4F6F5
 
     /** Footer verified-line highlight background */
-    public static final Color COLOR_FOOTER_HL   = new Color(0xFC, 0xEF, 0xB4); // #FCEFB4
+    public static final Color COLOR_FOOTER_HL = new Color(0xF4, 0xF6, 0xF5); // #F4F6F5
 
     /** Invoice status badge — warm orange */
-    public static final Color COLOR_STATUS      = new Color(0xFF, 0xA7, 0x26); // #FFA726
+    public static final Color COLOR_STATUS = new Color(0xFF, 0xA7, 0x26); // #FFA726
 
-    /** All primary body text — pure black */
-    public static final Color COLOR_TEXT        = new Color(0x00, 0x00, 0x00); // #000000
+    /** All primary body text — Deep Slate Midnight Navy */
+    public static final Color COLOR_TEXT = new Color(0x0F, 0x17, 0x2A); // #0F172A
 
     /** "OFFICIAL DOCUMENT" secondary muted label */
-    public static final Color COLOR_MUTED       = new Color(0xBD, 0xBD, 0xBD); // #BDBDBD
+    public static final Color COLOR_MUTED = new Color(0xBD, 0xBD, 0xBD); // #BDBDBD
 
     /** Borders / divider lines */
-    public static final Color COLOR_BORDER      = new Color(0xE2, 0xE8, 0xF0); // #E2E8F0
+    public static final Color COLOR_BORDER = new Color(0xE2, 0xE8, 0xF0); // #E2E8F0
 
     /** Pure white (for any fills that stay white) */
-    public static final Color COLOR_WHITE       = Color.WHITE;
+    public static final Color COLOR_WHITE = Color.WHITE;
 
     // Keep legacy aliases for any references outside this file
     /** @deprecated Use COLOR_HEADER_BG */
-    @Deprecated public static final Color COLOR_PRIMARY   = COLOR_HEADER_BG;
+    @Deprecated
+    public static final Color COLOR_PRIMARY = COLOR_HEADER_BG;
     /** @deprecated Use COLOR_TEXT */
-    @Deprecated public static final Color COLOR_SECONDARY = COLOR_SECTION_LABEL;
+    @Deprecated
+    public static final Color COLOR_SECONDARY = COLOR_SECTION_LABEL;
     /** @deprecated Use COLOR_MUTED */
-    @Deprecated public static final Color COLOR_HIGHLIGHT = new Color(0xFA, 0xE5, 0x88);
+    @Deprecated
+    public static final Color COLOR_HIGHLIGHT = new Color(0xFA, 0xE5, 0x88);
 
     // ─────────────────────────────────────────────────────────────
 

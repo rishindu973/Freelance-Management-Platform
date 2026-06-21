@@ -9,7 +9,12 @@ import {
     XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine
 } from "recharts";
 
-export function FinanceCharts() {
+export interface FinanceChartsProps {
+    projectStatus?: { name: string; value: number; color: string }[];
+    totalProjects?: number;
+}
+
+export function FinanceCharts({ projectStatus, totalProjects }: FinanceChartsProps = {}) {
     const [period, setPeriod] = useState<"week" | "month" | "year">("month");
     const [data, setData] = useState<FinanceSummaryResponse | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -154,6 +159,38 @@ export function FinanceCharts() {
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
+
+                {/* Project Status Pie Chart */}
+                {projectStatus && totalProjects !== undefined && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-base font-medium">Project Status</CardTitle>
+                        <CardDescription>{totalProjects} total projects</CardDescription>
+                    </CardHeader>
+                    <CardContent className="h-72">
+                        <ResponsiveContainer width="100%" height="80%">
+                            <PieChart>
+                                <Pie data={projectStatus} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={3} dataKey="value">
+                                  {projectStatus.map((entry, i) => (
+                                    <Cell key={i} fill={entry.color} />
+                                  ))}
+                                </Pie>
+                                <Tooltip
+                                  contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: 12 }}
+                                />
+                            </PieChart>
+                        </ResponsiveContainer>
+                        <div className="mt-2 flex flex-wrap justify-center gap-3">
+                            {projectStatus.map((s) => (
+                                <div key={s.name} className="flex items-center gap-1.5 text-xs text-gray-500">
+                                    <span className="h-2 w-2 rounded-full" style={{ background: s.color }} />
+                                    {s.name} ({s.value})
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+                )}
             </div>
         </div>
     );

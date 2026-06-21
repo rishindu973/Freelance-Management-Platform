@@ -12,6 +12,7 @@ import com.freelance.freelancepm.entity.Manager;
 import com.freelance.freelancepm.util.PasswordGenerator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -26,11 +27,12 @@ public class FreelancerService implements IFreelancerService {
     private final ManagerRepository managerRepository;
     private final PasswordEncoder passwordEncoder;
     private final IEmailService emailService;
+    private final ActivityService activityService;
 
     @Transactional
     @Override
     public TeamResponseDTO createFreelancer(FreelancerDTO freelancerDTO, Integer managerId) {
-        if (freelancerRepository.existsByFullName(freelancerDTO.getFullName())) {
+        if (freelancerRepository.findByFullName(freelancerDTO.getFullName()).filter(f -> f.getManager().getId().equals(managerId)).isPresent()) {
             throw new IllegalArgumentException("Freelancer already exists");
         }
         String rawPassword = PasswordGenerator.generatePassword(12);
@@ -71,6 +73,8 @@ public class FreelancerService implements IFreelancerService {
         emailService.sendWelcomeEmail(newUser.getEmail(), rawPassword);
         emailService.sendVerificationEmail(newUser.getEmail(), token);
 
+        activityService.logActivity(managerId, com.freelance.freelancepm.entity.Activity.ActivityType.MEMBER_ADDED, "Added new freelancer: " + freelancerDTO.getFullName());
+
         TeamResponseDTO response = new TeamResponseDTO();
         response.setMemberName(freelancerDTO.getFullName());
         response.setEmail(newUser.getEmail());
@@ -79,21 +83,39 @@ public class FreelancerService implements IFreelancerService {
     }
 
     @Override
-    public List<Freelancer> getAllFreelancers() {
-        return freelancerRepository.findAll();
+    public Page<FreelancerDTO> getAllFreelancers(Integer managerId, org.springframework.data.domain.Pageable pageable) {
+        return freelancerRepository.findAllByManagerId(managerId, pageable)
+                .map(this::mapToDTO);
+    }
+    
+    private FreelancerDTO mapToDTO(Freelancer freelancer) {
+        FreelancerDTO dto = new FreelancerDTO();
+        dto.setId(freelancer.getId());
+        dto.setFullName(freelancer.getFullName());
+        dto.setTitle(freelancer.getTitle());
+        dto.setContactNumber(freelancer.getContactNumber());
+        dto.setSalary(freelancer.getSalary());
+        dto.setStatus(freelancer.getStatus());
+        dto.setDriveLink(freelancer.getDriveLink());
+        if (freelancer.getUser() != null) {
+            dto.setEmail(freelancer.getUser().getEmail());
+            dto.setRole(freelancer.getUser().getRole());
+        }
+        return dto;
     }
 
     @Override
-    public Freelancer getFreelancerById(Integer user_id) {
-        return freelancerRepository.findById(user_id)
+    public Freelancer getFreelancerById(Integer user_id, Integer managerId) {
+        return freelancerRepository.findByIdAndManagerId(user_id, managerId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + user_id));
     }
 
     @Override
-    public FreelancerDTO updateFreelancer(Integer user_id, FreelancerDTO freelancerDTO) {
-        Freelancer FreelancerToUpdate = getFreelancerById(user_id);
+    public FreelancerDTO updateFreelancer(Integer user_id, FreelancerDTO freelancerDTO, Integer managerId) {
+        Freelancer FreelancerToUpdate = getFreelancerById(user_id, managerId);
         Optional<Freelancer> freelancerWithNewUsername = freelancerRepository
-                .findByFullName(freelancerDTO.getFullName());
+                .findByFullName(freelancerDTO.getFullName())
+                .filter(f -> f.getManager().getId().equals(managerId));
         if (freelancerWithNewUsername.isPresent() && !freelancerWithNewUsername.get().getId().equals(user_id)) {
             throw new IllegalArgumentException("Freelancer already exists");
         }
@@ -110,27 +132,14 @@ public class FreelancerService implements IFreelancerService {
         }
 
         Freelancer saved = freelancerRepository.save(FreelancerToUpdate);
-
-        FreelancerDTO result = new FreelancerDTO();
-        result.setFullName(saved.getFullName());
-        result.setTitle(saved.getTitle());
-        result.setContactNumber(saved.getContactNumber());
-        result.setSalary(saved.getSalary());
-        result.setStatus(saved.getStatus());
-        result.setDriveLink(saved.getDriveLink());
-        if (saved.getUser() != null) {
-            result.setEmail(saved.getUser().getEmail());
-            result.setRole(saved.getUser().getRole());
-        }
-        return result;
+        return mapToDTO(saved);
     }
 
     @Override
-    public void deleteFreelancer(Integer user_id) {
-        if (!userRepository.existsById(user_id)) {
-            throw new IllegalArgumentException("Freelancer not found with id: " + user_id);
-        }
-        userRepository.deleteById(user_id);
+    public void deleteFreelancer(Integer user_id, Integer managerId) {
+        Freelancer freelancer = getFreelancerById(user_id, managerId);
+        freelancerRepository.delete(freelancer);
+        userRepository.deleteById(freelancer.getId());
     }
 
 }

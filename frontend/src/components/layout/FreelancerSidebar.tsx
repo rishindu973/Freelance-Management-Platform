@@ -1,49 +1,88 @@
-import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Briefcase } from "lucide-react";
+import {
+  LayoutDashboard,
+  Briefcase,
+} from "lucide-react";
+import { useLocation } from "react-router-dom";
+import { NavLink } from "@/components/NavLink";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@/components/ui/sidebar";
+
+const mainItems = [
+  { title: "Dashboard", url: "/freelancer/dashboard", icon: LayoutDashboard },
+  { title: "My Projects", url: "/freelancer/projects", icon: Briefcase },
+];
 
 export function FreelancerSidebar() {
-    const location = useLocation();
+  const { state } = useSidebar();
+  const collapsed = state === "collapsed";
+  const location = useLocation();
 
-    const navigation = [
-        { name: "Dashboard", href: "/freelancer/dashboard", icon: LayoutDashboard },
-        { name: "My Projects", href: "/freelancer/projects", icon: Briefcase },
-    ];
+  const isActive = (url: string) =>
+    location.pathname === url || location.pathname.startsWith(url + "/");
 
-    return (
-        <div className="flex h-full w-64 flex-col bg-white border-r">
-            <div className="flex h-16 shrink-0 items-center px-6">
-                <span className="text-xl font-bold bg-gradient-to-r from-primary to-blue-600 outline-none text-transparent bg-clip-text">
-                    FreelanceFlow
-                </span>
-            </div>
-            <div className="flex flex-1 flex-col overflow-y-auto">
-                <nav className="flex-1 space-y-1 px-4 py-4">
-                    {navigation.map((item) => {
-                        const isActive =
-                            location.pathname === item.href ||
-                            location.pathname.startsWith(item.href + "/");
-                        return (
-                            <Link
-                                key={item.name}
-                                to={item.href}
-                                className={`
-                                    group flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors
-                                    ${isActive
-                                        ? "bg-primary/10 text-primary"
-                                        : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-                                    }
-                                `}
-                            >
-                                <item.icon
-                                    className={`mr-3 h-5 w-5 flex-shrink-0 transition-colors ${isActive ? "text-primary" : "text-gray-400 group-hover:text-gray-500"}`}
-                                    aria-hidden="true"
-                                />
-                                {item.name}
-                            </Link>
-                        );
-                    })}
-                </nav>
-            </div>
+  return (
+    <Sidebar 
+      collapsible="icon" 
+      className={`border-r transition-all duration-300 ${
+        collapsed 
+          ? "bg-[#0A1F1A] border-transparent shadow-antigravity" 
+          : "bg-[#FBF9F4] border-slate-200/50"
+      }`}
+    >
+      <SidebarContent className={`pt-4 ${collapsed ? "text-slate-200" : "text-[#0F172A]"}`}>
+        {/* Brand */}
+        <div className="flex h-12 items-center px-4">
+          {!collapsed && (
+            <span className="text-base font-semibold tracking-tight text-foreground font-gebuk text-[#064e3b]">
+              FreelanceFlow
+            </span>
+          )}
+          {collapsed && (
+            <span className="text-base font-semibold text-foreground font-gebuk text-[#10B981]">FF</span>
+          )}
         </div>
-    );
+
+        {/* Main nav */}
+        <SidebarGroup>
+          <SidebarGroupLabel className={`text-xs uppercase tracking-wider ${collapsed ? "text-slate-400" : "text-slate-500"}`}>
+            Main
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {mainItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.url)}
+                    tooltip={item.title}
+                  >
+                    <NavLink
+                      to={item.url}
+                      className={`flex items-center gap-2 p-2 rounded-md transition-all duration-200 ${
+                        collapsed 
+                          ? "text-slate-400 hover:bg-[#12362D] hover:text-[#10B981]" 
+                          : "text-slate-600 hover:text-[#0F172A] hover:bg-slate-100"
+                      }`}
+                    >
+                      <item.icon className={`h-4 w-4 ${isActive(item.url) && !collapsed ? "text-[#0F172A]" : ""}`} />
+                      <span>{item.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+    </Sidebar>
+  );
 }

@@ -26,6 +26,7 @@ public class InvoiceSpecifications {
 
     /**
      * Filters invoices created on or after the given date-time.
+     * 
      */
     public static Specification<Invoice> createdOnOrAfter(LocalDateTime from) {
         return (root, query, cb) -> cb.greaterThanOrEqualTo(root.get("createdAt"), from);
@@ -36,5 +37,12 @@ public class InvoiceSpecifications {
      */
     public static Specification<Invoice> createdOnOrBefore(LocalDateTime to) {
         return (root, query, cb) -> cb.lessThanOrEqualTo(root.get("createdAt"), to);
+    }
+
+    /**
+     * Filters invoices by the owning manager's ID.
+     */
+    public static Specification<Invoice> managerIdEquals(Integer managerId) {
+        return (root, query, cb) -> cb.equal(root.get("managerId"), managerId);
     }
 }

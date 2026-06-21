@@ -24,13 +24,16 @@ public interface IInvoiceService {
     /**
      * Returns all invoices matching the optional filters.
      *
+     * @param managerId filter by manager
      * @param clientId  filter by client (nullable — no filter if null)
      * @param startDate filter invoices created on or after this date (nullable)
      * @param endDate   filter invoices created on or before this date (nullable)
      * @param pageable  pagination and sorting options
      * @return matching invoices as paginated lightweight list DTOs
+     * 
      */
-    Page<InvoiceListDTO> listAll(Integer clientId, LocalDate startDate, LocalDate endDate, Pageable pageable);
+    Page<InvoiceListDTO> listAll(Integer managerId, Integer clientId, LocalDate startDate, LocalDate endDate,
+            Pageable pageable);
 
     void sendInvoice(Integer invoiceId, SendInvoiceRequest request);
 

@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 
 @Data
 public class FreelancerDTO {
+    private Integer id;
     private String email;
     private String password;
     private String role;

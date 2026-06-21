@@ -21,20 +21,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ProjectService, ProjectResponse, ProjectUpdateRequest } from "@/api/projectService";
 import { FreelancerService, Freelancer } from "@/api/freelancerService";
 import { ActivityService } from "@/api/activityService";
+import { TaskService, TaskDTO, TaskRequest } from "@/api/taskService";
 
-// ----- Local types for tasks and deliverables (session-only) -----
+// ----- Local types for deliverables (session-only) -----
 type Priority = "high" | "medium" | "low";
 type TaskStatus = "todo" | "in-progress" | "done";
 type DeliverableStatus = "pending" | "approved" | "revision";
-
-interface LocalTask {
-  id: string;
-  title: string;
-  assignee: string;
-  deadline: string;
-  priority: Priority;
-  status: TaskStatus;
-}
 
 interface LocalDeliverable {
   id: string;
@@ -94,12 +86,11 @@ export default function ProjectDetail() {
 
   // Progress editing
   const [progressValue, setProgressValue] = useState(0);
-  const [isSavingProgress, setIsSavingProgress] = useState(false);
 
-  // Local-state tasks
-  const [tasks, setTasks] = useState<LocalTask[]>([]);
+  // Backend tasks
+  const [tasks, setTasks] = useState<TaskDTO[]>([]);
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
-  const [newTask, setNewTask] = useState<Partial<LocalTask>>({ priority: "medium", status: "todo" });
+  const [newTask, setNewTask] = useState<Partial<TaskRequest>>({ priority: "medium" });
 
   // Local-state deliverables
   const [deliverables, setDeliverables] = useState<LocalDeliverable[]>([]);
@@ -107,7 +98,7 @@ export default function ProjectDetail() {
   const [newDeliverable, setNewDeliverable] = useState<Partial<LocalDeliverable>>({ status: "pending" });
 
   useEffect(() => {
-    FreelancerService.getAllFreelancers().then(setFreelancers).catch(console.error);
+    FreelancerService.getAllFreelancers(0, 1000).then(data => setFreelancers(data.content || [])).catch(console.error);
   }, []);
 
   // Fetch activity feed
@@ -134,10 +125,13 @@ export default function ProjectDetail() {
           clientId: data.clientId,
           budget: data.budget,
         });
+
+        const taskData = await TaskService.getTasksByProject(Number(id));
+        setTasks(taskData);
       }
     } catch (error) {
       console.error(error);
-      toast({ title: "Error", description: "Could not load project details.", variant: "destructive" });
+      toast({ title: "Error", description: "Could not load project details or tasks.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -147,9 +141,41 @@ export default function ProjectDetail() {
     fetchProject();
   }, [id]);
 
+  // Sync progress automatically with task completion
+  useEffect(() => {
+    if (tasks.length > 0) {
+      const doneCount = tasks.filter((t) => t.status === "done").length;
+      setProgressValue(Math.round((doneCount / tasks.length) * 100));
+    }
+  }, [tasks]);
+
+  const handleTaskStatusChange = async (taskId: number, newStatus: TaskStatus) => {
+    try {
+      const updatedTask = await TaskService.updateTaskStatus(taskId, newStatus);
+      setTasks(tasks.map(t => t.id === taskId ? updatedTask : t));
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Error", description: "Failed to update task status.", variant: "destructive" });
+    }
+  };
+
   const handleSave = async () => {
     try {
       if (id) {
+        if (formData.status === "completed") {
+          const hasIncompleteTasks = tasks.some(t => t.status !== "done");
+          if (hasIncompleteTasks) {
+            toast({
+              title: "Caution",
+              description: "Please mark all tasks as 'Done' before completing the project.",
+              variant: "destructive"
+            });
+            return;
+          }
+          setProgressValue(100);
+          await ProjectService.updateProgress(Number(id), "completed", 100);
+        }
+
         await ProjectService.updateProject(Number(id), formData);
         toast({ title: "Project updated", description: "Changes saved successfully." });
         setIsEditing(false);
@@ -161,20 +187,6 @@ export default function ProjectDetail() {
     }
   };
 
-  const handleSaveProgress = async () => {
-    if (!id) return;
-    setIsSavingProgress(true);
-    try {
-      await ProjectService.updateProgress(Number(id), "in-progress", progressValue);
-      toast({ title: "Progress updated", description: `Progress set to ${progressValue}%.` });
-      fetchProject();
-    } catch (error) {
-      console.error(error);
-      toast({ title: "Error", description: "Failed to update progress.", variant: "destructive" });
-    } finally {
-      setIsSavingProgress(false);
-    }
-  };
 
   const handleSaveTeam = async () => {
     try {
@@ -191,20 +203,24 @@ export default function ProjectDetail() {
     }
   };
 
-  const handleAddTask = () => {
-    if (!newTask.title || !newTask.assignee || !newTask.deadline) return;
-    const task: LocalTask = {
-      id: `T-${Date.now()}`,
-      title: newTask.title!,
-      assignee: newTask.assignee!,
-      deadline: newTask.deadline!,
-      priority: newTask.priority as Priority || "medium",
-      status: newTask.status as TaskStatus || "todo",
-    };
-    setTasks([...tasks, task]);
-    setNewTask({ priority: "medium", status: "todo" });
-    setIsAddTaskOpen(false);
-    toast({ title: "Task added", description: `"${task.title}" added successfully.` });
+  const handleAddTask = async () => {
+    if (!newTask.title || !newTask.freelancerId || !newTask.deadline || !id) return;
+    try {
+      const createdTask = await TaskService.createTask({
+        title: newTask.title!,
+        freelancerId: newTask.freelancerId!,
+        deadline: newTask.deadline!,
+        priority: newTask.priority || "medium",
+        projectId: Number(id),
+      });
+      setTasks([...tasks, createdTask]);
+      setNewTask({ priority: "medium" });
+      setIsAddTaskOpen(false);
+      toast({ title: "Task added", description: `"${createdTask.title}" added successfully.` });
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Error", description: "Failed to add task.", variant: "destructive" });
+    }
   };
 
   const handleAddDeliverable = () => {
@@ -368,31 +384,12 @@ export default function ProjectDetail() {
 
         {/* Progress */}
         <Card>
-          <CardContent className="flex flex-col gap-2 p-4">
+          <CardContent className="flex flex-col justify-center h-full gap-2 p-4">
             <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground">Progress</p>
               <span className="text-xs tabular-nums text-muted-foreground">{progressValue}%</span>
             </div>
             <Progress value={progressValue} className="h-2" />
-            <div className="flex items-center gap-2 mt-1">
-              <Slider
-                value={[progressValue]}
-                onValueChange={([v]) => setProgressValue(v)}
-                min={0}
-                max={100}
-                step={5}
-                className="flex-1"
-              />
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-xs h-7 px-2"
-                onClick={handleSaveProgress}
-                disabled={isSavingProgress}
-              >
-                {isSavingProgress ? "..." : "Save"}
-              </Button>
-            </div>
           </CardContent>
         </Card>
       </div>
@@ -431,10 +428,21 @@ export default function ProjectDetail() {
                   {tasks.map((t) => (
                     <TableRow key={t.id}>
                       <TableCell className="font-medium text-foreground">{t.title}</TableCell>
-                      <TableCell className="text-muted-foreground">{t.assignee}</TableCell>
+                      <TableCell className="text-muted-foreground">{t.freelancerName}</TableCell>
                       <TableCell className="text-muted-foreground">{fmt(t.deadline)}</TableCell>
                       <TableCell><Badge variant="outline" className={priorityStyle[t.priority]}>{t.priority}</Badge></TableCell>
-                      <TableCell><Badge variant="outline" className={taskStatusStyle[t.status]}>{t.status.replace("-", " ")}</Badge></TableCell>
+                      <TableCell>
+                        <Select value={t.status} onValueChange={(v) => handleTaskStatusChange(t.id, v as TaskStatus)}>
+                          <SelectTrigger className={`w-[130px] h-8 text-xs border ${taskStatusStyle[t.status]}`}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="todo">To Do</SelectItem>
+                            <SelectItem value="in-progress">In Progress</SelectItem>
+                            <SelectItem value="done">Done</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -453,17 +461,17 @@ export default function ProjectDetail() {
                 </div>
                 <div className="space-y-1">
                   <Label>Assignee</Label>
-                  <Select value={newTask.assignee || ""} onValueChange={(v) => setNewTask({ ...newTask, assignee: v })}>
+                  <Select value={newTask.freelancerId?.toString() || ""} onValueChange={(v) => setNewTask({ ...newTask, freelancerId: Number(v) })}>
                     <SelectTrigger><SelectValue placeholder="Select team member" /></SelectTrigger>
                     <SelectContent>
                       {currentTeam.length > 0
-                        ? currentTeam.map((m) => <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>)
+                        ? currentTeam.map((m) => <SelectItem key={m.id} value={m.id.toString()}>{m.name}</SelectItem>)
                         : <SelectItem value="__none__" disabled>No team members assigned</SelectItem>
                       }
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <Label>Deadline</Label>
                     <Input type="date" value={newTask.deadline || ""} onChange={(e) => setNewTask({ ...newTask, deadline: e.target.value })} />
@@ -476,17 +484,6 @@ export default function ProjectDetail() {
                         <SelectItem value="high">High</SelectItem>
                         <SelectItem value="medium">Medium</SelectItem>
                         <SelectItem value="low">Low</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Status</Label>
-                    <Select value={newTask.status} onValueChange={(v) => setNewTask({ ...newTask, status: v as TaskStatus })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="todo">To Do</SelectItem>
-                        <SelectItem value="in-progress">In Progress</SelectItem>
-                        <SelectItem value="done">Done</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

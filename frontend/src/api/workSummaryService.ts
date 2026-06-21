@@ -15,7 +15,13 @@ export interface WorkSummaryResponse {
 
 export const WorkSummaryService = {
     getWorkSummary: async (): Promise<WorkSummaryResponse> => {
-        const response = await apiClient.get('/api/dashboard/work-summary');
+        const response = await apiClient.get('/api/dashboard/work-summary', {
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache',
+                'Expires': '0',
+            }
+        });
         return response.data;
     }
 };
