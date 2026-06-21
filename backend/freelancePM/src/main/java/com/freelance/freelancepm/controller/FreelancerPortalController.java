@@ -13,7 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/freelancer")
-@CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174" })
+
 @RequiredArgsConstructor
 public class FreelancerPortalController {
 

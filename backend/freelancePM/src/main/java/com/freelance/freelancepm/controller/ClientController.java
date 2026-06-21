@@ -16,7 +16,7 @@ import java.security.Principal;
 // Open/Closed Principle: Controller handles HTTP requests, can be extended without modifying existing code
 @RestController
 @RequestMapping("/api/clients")
-@CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174" })
+
 public class ClientController {
 
     private final ClientService clientService;
