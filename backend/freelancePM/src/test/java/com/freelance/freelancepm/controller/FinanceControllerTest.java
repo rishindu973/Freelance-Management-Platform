@@ -23,6 +23,12 @@ public class FinanceControllerTest {
     @Mock
     private FinanceService financeService;
 
+    @Mock
+    private com.freelance.freelancepm.service.IManagerService managerService;
+
+    @Mock
+    private java.security.Principal principal;
+
     @InjectMocks
     private FinanceController controller;
 
@@ -39,23 +45,27 @@ public class FinanceControllerTest {
 
     @Test
     void getFinanceSummary_ReturnsSummaryForDefaultPeriod() {
-        when(financeService.getFinanceSummary("month")).thenReturn(mockResponse);
+        when(principal.getName()).thenReturn("test@test.com");
+        when(managerService.getManagerIdByEmail("test@test.com")).thenReturn(1);
+        when(financeService.getFinanceSummary(1, "month")).thenReturn(mockResponse);
 
-        ResponseEntity<FinanceSummaryResponse> response = controller.getFinanceSummary("month");
+        ResponseEntity<FinanceSummaryResponse> response = controller.getFinanceSummary(principal, "month");
 
         assertEquals(200, response.getStatusCode().value());
         assertNotNull(response.getBody());
         assertEquals(1, response.getBody().getProfitTrend().size());
-        verify(financeService).getFinanceSummary("month");
+        verify(financeService).getFinanceSummary(1, "month");
     }
 
     @Test
     void getFinanceSummary_ReturnsSummaryForWeek() {
-        when(financeService.getFinanceSummary("week")).thenReturn(mockResponse);
+        when(principal.getName()).thenReturn("test@test.com");
+        when(managerService.getManagerIdByEmail("test@test.com")).thenReturn(1);
+        when(financeService.getFinanceSummary(1, "week")).thenReturn(mockResponse);
 
-        ResponseEntity<FinanceSummaryResponse> response = controller.getFinanceSummary("week");
+        ResponseEntity<FinanceSummaryResponse> response = controller.getFinanceSummary(principal, "week");
 
         assertEquals(200, response.getStatusCode().value());
-        verify(financeService).getFinanceSummary("week");
+        verify(financeService).getFinanceSummary(1, "week");
     }
 }
