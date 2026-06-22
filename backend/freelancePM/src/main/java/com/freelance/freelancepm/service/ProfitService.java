@@ -15,8 +15,8 @@ public class ProfitService {
     private final InvoiceRepository invoiceRepository;
 
     @Transactional(readOnly = true)
-    public BigDecimal calculateTotalIncome() {
-        return invoiceRepository.findByStatus(InvoiceStatus.PAID)
+    public BigDecimal calculateTotalIncome(Integer managerId) {
+        return invoiceRepository.findByManagerIdAndStatus(managerId, InvoiceStatus.PAID)
                 .stream()
                 .map(invoice -> invoice.getTotal() != null ? invoice.getTotal() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
