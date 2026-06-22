@@ -6,7 +6,6 @@ import { Menu, X, Zap } from "lucide-react";
 const navLinks = [
   { label: "Features", href: "#features" },
   { label: "How It Works", href: "#how-it-works" },
-  { label: "Pricing", href: "#pricing" },
   { label: "FAQ", href: "#faq" },
 ];
 
@@ -64,7 +63,7 @@ export function Navbar() {
             <Link to="/login">Log In</Link>
           </Button>
           <Button size="sm" className="shadow-md shadow-primary/25" asChild>
-            <Link to="/register">Start Free Trial</Link>
+            <Link to="/register">Sign Up</Link>
           </Button>
         </div>
 
@@ -96,7 +95,7 @@ export function Navbar() {
                 <Link to="/login">Log In</Link>
               </Button>
               <Button size="lg" className="shadow-md shadow-primary/25" asChild>
-                <Link to="/register">Start Free Trial</Link>
+                <Link to="/register">Sign Up</Link>
               </Button>
             </div>
           </div>
