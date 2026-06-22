@@ -155,10 +155,17 @@ public interface ProjectRepository extends JpaRepository<Project, Integer>, JpaS
 
   // ----------------- Reporting Queries -----------------
   long countByStartDateBetween(LocalDate start, LocalDate end);
+  long countByManagerIdAndStartDateBetween(Integer managerId, LocalDate start, LocalDate end);
 
   @Query("SELECT COUNT(p) FROM Project p WHERE p.startDate BETWEEN :start AND :end AND LOWER(p.status) = 'completed'")
   long countCompletedInDateRange(@Param("start") LocalDate start, @Param("end") LocalDate end);
 
+  @Query("SELECT COUNT(p) FROM Project p WHERE p.managerId = :managerId AND p.startDate BETWEEN :start AND :end AND LOWER(p.status) = 'completed'")
+  long countCompletedInDateRangeByManagerId(@Param("managerId") Integer managerId, @Param("start") LocalDate start, @Param("end") LocalDate end);
+
   @Query("SELECT p FROM Project p WHERE p.startDate BETWEEN :start AND :end")
   List<Project> findByStartDateBetween(@Param("start") LocalDate start, @Param("end") LocalDate end);
+
+  @Query("SELECT p FROM Project p WHERE p.managerId = :managerId AND p.startDate BETWEEN :start AND :end")
+  List<Project> findByManagerIdAndStartDateBetween(@Param("managerId") Integer managerId, @Param("start") LocalDate start, @Param("end") LocalDate end);
 }
