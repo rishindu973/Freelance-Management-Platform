@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import GradientText from "./GradientText";
 import {
   ArrowRight,
   LayoutDashboard,
@@ -88,15 +89,9 @@ export function Hero() {
           {/* Main headline */}
           <h1 className="max-w-3xl text-4xl font-bold leading-[1.1] tracking-tight text-foreground sm:text-5xl md:text-6xl">
             Your Team. Your Projects.{" "}
-            <span
-              className="bg-clip-text text-transparent"
-              style={{
-                backgroundImage:
-                  "linear-gradient(135deg, hsl(152,45%,40%) 0%, hsl(152,35%,55%) 50%, hsl(40,70%,52%) 100%)",
-              }}
-            >
+            <GradientText colors={["#2d6a4f", "#aacc00", "#2d6a4f", "#aacc00", "#2d6a4f"]} animationSpeed={3}>
               Effortlessly in Sync.
-            </span>
+            </GradientText>
           </h1>
 
           {/* Sub-headline */}
