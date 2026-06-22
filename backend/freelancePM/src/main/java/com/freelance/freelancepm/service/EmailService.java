@@ -22,6 +22,8 @@ public class EmailService implements IEmailService {
     @Value("${Brevo.from.email:${BREVO_FROM_EMAIL:noreply@freelanceflow.com}}")
     private String fromEmail;
 
+    @Value("${frontend.url:http://localhost:5173}")
+    private String frontendUrl;
 
     @Override
     public void sendWelcomeEmail(String to, String temporaryPassword) {
@@ -36,7 +38,7 @@ public class EmailService implements IEmailService {
 
     @Override
     public void sendPasswordResetEmail(String to, String resetToken) {
-        String resetLink = "http://localhost:5173/reset-password?token=" + resetToken;
+        String resetLink = frontendUrl + "/reset-password?token=" + resetToken;
 
         String body = "<h2>Password Reset Request</h2>" +
                 "<p>We received a request to reset your password. Click the button below to choose a new one:</p>" +
@@ -59,7 +61,7 @@ public class EmailService implements IEmailService {
 
     @Override
     public void sendVerificationEmail(String to, String token) {
-        String verificationLink = "http://localhost:5173/verify?token=" + token;
+        String verificationLink = frontendUrl + "/verify?token=" + token;
 
         String body = "<h2>Verify Your Account</h2>" +
                 "<p>Thank you for joining FreelanceFlow. Please click the button below to verify your email:</p>" +
@@ -111,8 +113,7 @@ public class EmailService implements IEmailService {
             String managerAddress,
             String paymentInstructions,
             byte[] pdfBytes,
-            String filename
-    ) {
+            String filename) {
         String subject = "Invoice " + invoiceNumber + " from " + managerCompanyName;
         String body = templateService.generateInvoiceEmailBody(
                 clientName,
@@ -125,8 +126,7 @@ public class EmailService implements IEmailService {
                 managerPhone,
                 managerLogoUrl,
                 managerAddress,
-                paymentInstructions
-        );
+                paymentInstructions);
         sendInvoiceEmail(List.of(toEmail), subject, body, pdfBytes, filename);
     }
 
