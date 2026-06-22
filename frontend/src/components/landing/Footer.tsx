@@ -4,18 +4,8 @@ import { Zap } from "lucide-react";
 const footerLinks = {
   Product: [
     { label: "Features", href: "#features" },
-    { label: "Pricing", href: "#pricing" },
     { label: "FAQ", href: "#faq" },
     { label: "Changelog", href: "/changelog" },
-  ],
-  Company: [
-    { label: "About", href: "/about" },
-    { label: "Contact", href: "/contact" },
-    { label: "Careers", href: "/careers" },
-  ],
-  Legal: [
-    { label: "Privacy Policy", href: "/privacy" },
-    { label: "Terms of Service", href: "/terms" },
   ],
 };
 
@@ -70,9 +60,7 @@ export function Footer() {
             © {new Date().getFullYear()} FreelanceFlow. All rights reserved.
           </p>
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            Made with
-            <span className="text-destructive mx-0.5">♥</span>
-            for productive teams
+            { }
           </div>
         </div>
       </div>
