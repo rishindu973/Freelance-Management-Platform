@@ -19,8 +19,9 @@ public class EmailService implements IEmailService {
     private final JavaMailSender mailSender;
     private final EmailTemplateService templateService;
 
-    @Value("${mail.from:noreply@freelanceflow.com}")
+    @Value("${Brevo.from.email:${BREVO_FROM_EMAIL:noreply@freelanceflow.com}}")
     private String fromEmail;
+
 
     @Override
     public void sendWelcomeEmail(String to, String temporaryPassword) {
