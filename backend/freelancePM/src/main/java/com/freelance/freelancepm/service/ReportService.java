@@ -22,14 +22,16 @@ public class ReportService {
     private final ProjectRepository projectRepository;
     private final InvoiceRepository invoiceRepository;
 
-    public ReportResponse getReport(LocalDate startDate, LocalDate endDate) {
-        long projectsStarted = projectRepository.countByStartDateBetween(startDate, endDate);
-        long projectsCompleted = projectRepository.countCompletedInDateRange(startDate, endDate);
-        long invoicesGenerated = invoiceRepository.countByCreatedAtBetween(
+    public ReportResponse getReport(Integer managerId, LocalDate startDate, LocalDate endDate) {
+        long projectsStarted = projectRepository.countByManagerIdAndStartDateBetween(managerId, startDate, endDate);
+        long projectsCompleted = projectRepository.countCompletedInDateRangeByManagerId(managerId, startDate, endDate);
+        long invoicesGenerated = invoiceRepository.countByManagerIdAndCreatedAtBetween(
+                managerId,
                 startDate.atStartOfDay(),
                 endDate.atTime(23, 59, 59));
 
-        List<Payment> payments = paymentRepository.findByPaymentDateBetween(
+        List<Payment> payments = paymentRepository.findByInvoice_ManagerIdAndPaymentDateBetween(
+                managerId,
                 startDate.atStartOfDay(),
                 endDate.atTime(23, 59, 59));
 
