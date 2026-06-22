@@ -21,5 +21,9 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer>, JpaS
 
     List<Invoice> findByStatus(InvoiceStatus status);
 
+    List<Invoice> findByManagerIdAndStatus(Integer managerId, InvoiceStatus status);
+
     long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
+    long countByManagerIdAndCreatedAtBetween(Integer managerId, LocalDateTime start, LocalDateTime end);
 }
