@@ -55,7 +55,7 @@ public class DashboardService implements IDashboardService {
                 .completedProjects(completed)
                 .overdueProjects(overdue)
                 .dueSoonProjects(dueSoon)
-                .totalIncome(profitService.calculateTotalIncome())
+                .totalIncome(profitService.calculateTotalIncome(managerId))
                 .statusBreakdown(breakdown)
                 .upcomingDeadlines(upcoming)
                 .recentCompleted(recentCompleted)
