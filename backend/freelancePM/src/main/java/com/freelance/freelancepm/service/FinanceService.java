@@ -21,16 +21,16 @@ public class FinanceService {
     private final InvoiceRepository invoiceRepository;
     private final PaymentRepository paymentRepository;
 
-    @Cacheable(value = "financeSummary", key = "#period")
-    public FinanceSummaryResponse getFinanceSummary(String period) {
+    @Cacheable(value = "financeSummary", key = "#managerId + '_' + #period")
+    public FinanceSummaryResponse getFinanceSummary(Integer managerId, String period) {
         List<FinanceSummaryResponse.ProfitTrendData> profitTrend = new ArrayList<>();
         List<FinanceSummaryResponse.IncomeExpenseData> incomeExpense = new ArrayList<>();
         List<FinanceSummaryResponse.ExpenseBreakdownData> expenseBreakdown = new ArrayList<>();
 
         // Fetch paid invoices for income
-        List<Invoice> paidInvoices = invoiceRepository.findByStatus(InvoiceStatus.PAID);
+        List<Invoice> paidInvoices = invoiceRepository.findByManagerIdAndStatus(managerId, InvoiceStatus.PAID);
         // Fetch all payments for date-based grouping
-        List<Payment> allPayments = paymentRepository.findAll();
+        List<Payment> allPayments = paymentRepository.findByInvoice_ManagerId(managerId);
 
         if ("week".equalsIgnoreCase(period)) {
             LocalDate startOfWeek = LocalDate.now().minusDays(6);
