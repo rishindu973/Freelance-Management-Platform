@@ -89,7 +89,7 @@ public class PaymentService {
         return paymentRepository.findByInvoice_ClientId(clientId);
     }
 
-    public List<Payment> getAllPayments() {
-        return paymentRepository.findAll();
+    public List<Payment> getAllPayments(Integer managerId) {
+        return paymentRepository.findByInvoice_ManagerId(managerId);
     }
 }
