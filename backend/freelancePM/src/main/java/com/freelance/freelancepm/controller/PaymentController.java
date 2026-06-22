@@ -14,6 +14,14 @@ import org.springframework.web.bind.annotation.*;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final com.freelance.freelancepm.service.IManagerService managerService;
+
+    private Integer requireManagerId(java.security.Principal principal) {
+        if (principal == null) {
+            throw new IllegalArgumentException("Not authenticated");
+        }
+        return managerService.getManagerIdByEmail(principal.getName());
+    }
 
     // SCRUM 46: Record client payment
     @PostMapping
@@ -46,8 +54,9 @@ public class PaymentController {
     }
 
     @GetMapping
-    public ResponseEntity<java.util.List<PaymentDTO>> getAllPayments() {
-        java.util.List<Payment> payments = paymentService.getAllPayments();
+    public ResponseEntity<java.util.List<PaymentDTO>> getAllPayments(java.security.Principal principal) {
+        Integer managerId = requireManagerId(principal);
+        java.util.List<Payment> payments = paymentService.getAllPayments(managerId);
         java.util.List<PaymentDTO> dtos = payments.stream().map(payment -> PaymentDTO.builder()
                 .id(payment.getId())
                 .invoiceId(payment.getInvoice().getId())
