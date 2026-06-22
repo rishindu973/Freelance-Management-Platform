@@ -16,7 +16,11 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer> {
 
         List<Payment> findByInvoice_ClientId(Integer clientId);
 
+        List<Payment> findByInvoice_ManagerId(Integer managerId);
+
         List<Payment> findByPaymentDateBetween(LocalDateTime start, LocalDateTime end);
+
+        List<Payment> findByInvoice_ManagerIdAndPaymentDateBetween(Integer managerId, LocalDateTime start, LocalDateTime end);
 
         @Query("SELECT SUM(p.amount) FROM Payment p JOIN p.invoice.projects proj WHERE proj.id = :projectId " +
                         "AND p.paymentDate BETWEEN :start AND :end")
