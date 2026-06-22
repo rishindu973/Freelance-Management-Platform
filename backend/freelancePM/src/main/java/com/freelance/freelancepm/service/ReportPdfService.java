@@ -36,11 +36,12 @@ public class ReportPdfService {
     }
 
     @Transactional(readOnly = true)
-    public byte[] generateReportPdf(LocalDate startDate, LocalDate endDate) {
+    public byte[] generateReportPdf(Integer managerId, LocalDate startDate, LocalDate endDate) {
 
-        ReportResponse reportData = reportService.getReport(startDate, endDate);
-        Manager manager = managerRepository.findAll().stream().findFirst().orElse(null);
-        List<Payment> payments = paymentRepository.findByPaymentDateBetween(
+        ReportResponse reportData = reportService.getReport(managerId, startDate, endDate);
+        Manager manager = managerRepository.findById(managerId).orElse(null);
+        List<Payment> payments = paymentRepository.findByInvoice_ManagerIdAndPaymentDateBetween(
+                managerId,
                 startDate.atStartOfDay(),
                 endDate.atTime(23, 59, 59));
 
