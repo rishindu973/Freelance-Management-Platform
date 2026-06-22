@@ -106,7 +106,7 @@ export function Hero() {
           </p>
 
           {/* CTA buttons */}
-          <div className="mt-10 flex flex-col gap-3.5 sm:flex-row">
+          <div className="mt-10 flex flex-col justify-center gap-3.5 sm:flex-row">
             <Button
               size="lg"
               className="h-12 px-8 text-base shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30"
@@ -116,14 +116,6 @@ export function Hero() {
                 Get Started Free
                 <ArrowRight className="ml-1 h-4 w-4" />
               </Link>
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className="h-12 px-8 text-base"
-              asChild
-            >
-              <Link to="/login">View Live Demo</Link>
             </Button>
           </div>
 
