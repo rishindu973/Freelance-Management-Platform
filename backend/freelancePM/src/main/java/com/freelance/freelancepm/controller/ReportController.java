@@ -18,24 +18,36 @@ public class ReportController {
 
     private final ReportService reportService;
     private final ReportPdfService reportPdfService;
+    private final com.freelance.freelancepm.service.IManagerService managerService;
+
+    private Integer requireManagerId(java.security.Principal principal) {
+        if (principal == null) {
+            throw new IllegalArgumentException("Not authenticated");
+        }
+        return managerService.getManagerIdByEmail(principal.getName());
+    }
 
     @GetMapping
     public ResponseEntity<ReportResponse> getReport(
+            java.security.Principal principal,
             @RequestParam(name = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(name = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        Integer managerId = requireManagerId(principal);
 
         if (endDate == null)
             endDate = LocalDate.now();
         if (startDate == null)
             startDate = endDate.minusDays(30);
 
-        return ResponseEntity.ok(reportService.getReport(startDate, endDate));
+        return ResponseEntity.ok(reportService.getReport(managerId, startDate, endDate));
     }
 
     @GetMapping("/download")
     public ResponseEntity<byte[]> downloadReport(
+            java.security.Principal principal,
             @RequestParam(name = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(name = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        Integer managerId = requireManagerId(principal);
 
         if (endDate == null)
             endDate = LocalDate.now();
@@ -43,7 +55,7 @@ public class ReportController {
             startDate = endDate.minusDays(30);
 
         try {
-            byte[] pdfContent = reportPdfService.generateReportPdf(startDate, endDate);
+            byte[] pdfContent = reportPdfService.generateReportPdf(managerId, startDate, endDate);
 
             String fileName = "FreelanceFlow_Report_" + startDate + "_to_" + endDate + ".pdf";
 
