@@ -127,10 +127,7 @@ export function Hero() {
             </Button>
           </div>
 
-          {/* Social proof line */}
-          <p className="mt-6 text-sm text-muted-foreground">
-            Free 14-day trial · No credit card required
-          </p>
+
         </div>
 
         {/* Floating dashboard preview with stats */}
