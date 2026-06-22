@@ -151,6 +151,10 @@ public class EmailService implements IEmailService {
             mailSender.send(message);
             System.out.println("Email sent successfully to: " + to);
         } catch (Exception e) {
+            System.err.println("Underlying mail error: " + e.getMessage());
+            if (e.getCause() != null) {
+                System.err.println("Caused by: " + e.getCause().getMessage());
+            }
             throw new EmailException("Failed to send email to " + to, e);
         }
     }
